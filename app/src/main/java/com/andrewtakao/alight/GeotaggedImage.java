@@ -11,6 +11,8 @@ public class GeotaggedImage {
     public double latitude;
     public double longitude;
     public String localStorageLocation;
+    public String audioLocalStorageLocation;
+    public String audio;
 
     public GeotaggedImage(String imageName, double latitude, double longitude) {
         this.imageName = imageName;
@@ -24,5 +26,9 @@ public class GeotaggedImage {
 
     public void setLocalStorageLocation(String localStorageLocation) {
         this.localStorageLocation = localStorageLocation;
+    }
+
+    public void setAudioLocalStorageLocation(String audioLocalStorageLocation) {
+        this.audioLocalStorageLocation = audioLocalStorageLocation;
     }
 }

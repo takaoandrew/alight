@@ -53,7 +53,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
 
     @Override
     public int getItemCount() {
-        Log.d(TAG, "getItemCount-- count = " + busRoutes.size());
+//        Log.d(TAG, "getItemCount-- count = " + busRoutes.size());
         return busRoutes.size();
     }
 
