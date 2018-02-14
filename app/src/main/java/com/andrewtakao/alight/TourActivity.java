@@ -10,11 +10,13 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.TextView;
 
 import com.andrewtakao.alight.databinding.ActivityTourBinding;
@@ -31,11 +33,14 @@ import com.google.firebase.storage.StorageReference;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class TourActivity extends AppCompatActivity {
 
     private StorageReference mStorageRef;
+    private StorageReference mImageRef;
     private StorageReference mTempStorageRef;
+    private HashMap<String, GeotaggedImage> mImagesHashMap;
     private ArrayList<GeotaggedImage> mImagesList;
     private ChildEventListener mImagesListener;
     public static DatabaseReference mImagesDatabaseRef;
@@ -44,9 +49,9 @@ public class TourActivity extends AppCompatActivity {
     private String busRoute;
     private final String TAG = TourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
+    private String currentKey;
 
     //GPS
-    TextView locationView;
     Context mContext;
     LocationManager locationManager;
     private final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 3463;
@@ -56,13 +61,20 @@ public class TourActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_tour);
 
+
+        //Initialize
         mContext = this;
-        locationView = findViewById(R.id.location);
+        mImagesList = new ArrayList<>();
+        currentKey = "";
+        mImagesHashMap = new HashMap<>();
+
+
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         LocationListener locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
-                makeUseOfNewLocation(location);
+                //Commented out while using button to debug
+//                makeUseOfNewLocation(location);
             }
 
             @Override
@@ -85,7 +97,7 @@ public class TourActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            locationView.setText("no permission");
+            binding.location.setText("no permission");
 
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -97,14 +109,13 @@ public class TourActivity extends AppCompatActivity {
             }
         } else {
             getLastLocation();
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationListener);
         }
 
         //Get bus route
         Intent intent = getIntent();
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
 
-        mImagesList = new ArrayList<>();
         mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
 
         //Listens to firebase database for changes in route content pointers
@@ -112,10 +123,22 @@ public class TourActivity extends AppCompatActivity {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
 
-                mImagesList.add(new GeotaggedImage(
+//                mImagesList.add(new GeotaggedImage(
+//                        dataSnapshot.getKey(),
+//                        (double) dataSnapshot.child("latitude").getValue(),
+//                        (double) dataSnapshot.child("longitude").getValue()));
+                mImagesHashMap.put(dataSnapshot.getKey(), new GeotaggedImage(
                         dataSnapshot.getKey(),
                         (double) dataSnapshot.child("latitude").getValue(),
                         (double) dataSnapshot.child("longitude").getValue()));
+
+                Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
+
+                try {
+                    addImageToTempFile(dataSnapshot.getKey());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
 //                if (("image/png").equals((String) dataSnapshot.child("contentType").getValue()) ||
 //                        ("image/png").equals((String) dataSnapshot.child("contentType").getValue())) {
@@ -132,7 +155,7 @@ public class TourActivity extends AppCompatActivity {
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
-                mImagesList.remove(dataSnapshot.getKey());
+                mImagesHashMap.remove(dataSnapshot.getKey());
             }
 
             @Override
@@ -150,27 +173,68 @@ public class TourActivity extends AppCompatActivity {
         mImagesDatabaseRef.addChildEventListener(mImagesListener);
     }
 
+    private void addImageToTempFile(final String key) throws IOException {
+
+        mImageRef = mStorageRef.child(readableKey(key));
+        Log.d(TAG, "mImageRef.getPath() = " + mImageRef.getPath());
+
+        final File localFile = File.createTempFile(key, "");
+        Log.d(TAG, "localFile = " + localFile);
+
+        mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                Log.d(TAG,"onSuccess");
+                mImagesHashMap.get(key).setLocalStorageLocation(localFile.toString());
+//                mImagesList.get(mImagesList.indexOf(key)).setLocalStorageLocation(localFile.toString());
+                // Local temp file has been created
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                Log.d(TAG,"onFailure");
+                // Handle any errors
+            }
+        });
+    }
+
     private void addImage(String key) {
-        try {
+//        try {
             Log.d(TAG, "key = " + key);
             Log.d(TAG, "readable key = " + readableKey(key));
-            final File localFile = File.createTempFile("images", "png");
-            mTempStorageRef = mStorageRef.child(readableKey(key));
-            mTempStorageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    Bitmap bitmap = BitmapFactory.decodeFile(localFile.getAbsolutePath());
-                    binding.tourBackgroundImage.setImageBitmap(bitmap);
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                    Log.d(TAG, ""+e);
-                    Log.d(TAG, "onFailure");
-                }
-            });
-        }
-        catch (IOException e) {}
+            //Get local file
+            String fileName;
+//            try {
+//                fileName = File.createTempFile(key, "").toString();
+//                Log.d(TAG, "try: fileName = " + fileName);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//                fileName = "";
+//            }
+//            final File localFile = new File(fileName);
+//            final File localFile = File.createTempFile("images", "png");
+//            fileName = mImagesList.get(mImagesList.indexOf(key)).localStorageLocation;
+            fileName = mImagesHashMap.get(key).localStorageLocation;
+            Bitmap bmp = BitmapFactory.decodeFile(fileName);
+//            imageView.setImageBitmap(bmp);
+            binding.tourBackgroundImage.setImageBitmap(bmp);
+//            binding.tourBackgroundImage.setImageBitmap(BitmapFactory.decodeFile(localFile.getAbsolutePath()));
+//            mTempStorageRef = mStorageRef.child(readableKey(key));
+//            mTempStorageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+//                @Override
+//                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+//                    Bitmap bitmap = BitmapFactory.decodeFile(localFile.getAbsolutePath());
+//                    binding.tourBackgroundImage.setImageBitmap(bitmap);
+//                }
+//            }).addOnFailureListener(new OnFailureListener() {
+//                @Override
+//                public void onFailure(@NonNull Exception e) {
+//                    Log.d(TAG, ""+e);
+//                    Log.d(TAG, "onFailure");
+//                }
+//            });
+//        }
+//        catch (IOException e) {}
     }
 
 
@@ -212,11 +276,36 @@ public class TourActivity extends AppCompatActivity {
         }
     }
 
+    public void getLocation(View view) {
+        Log.d(TAG, "getLocation pressed");
+        getLastLocation();
+    }
     public void makeUseOfNewLocation(Location location) {
-        Log.d(TAG, "makeUseOfNewLocation");
+//        Log.d(TAG, "makeUseOfNewLocation");
         String latitude = String.valueOf(location.getLatitude());
         String longitude = String.valueOf(location.getLongitude());
         String currentLocation = latitude + ", " + longitude;
-        locationView.setText(currentLocation);
+        double minDistance = 999999;
+        String closestPOI = "";
+        for (GeotaggedImage geotaggedImage : mImagesHashMap.values()) {
+            if (geotaggedImage.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
+                minDistance = geotaggedImage.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude));
+                closestPOI = geotaggedImage.imageName;
+            }
+        }
+        if (currentKey.equals(closestPOI)) {
+            if (currentKey.equals("")) {
+                return;
+            }
+            //For debugging purposes. Otherwise, comment this out.
+            addImage(currentKey);
+            //Do nothing
+        } else {
+            currentKey = closestPOI;
+            binding.closestPoi.setText(closestPOI);
+            addImage(currentKey);
+        }
+        binding.location.setText(currentLocation);
+
     }
 }
