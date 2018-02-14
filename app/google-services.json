@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "741583361490",
+    "firebase_url": "https://alight-5214e.firebaseio.com",
+    "project_id": "alight-5214e",
+    "storage_bucket": "alight-5214e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741583361490:android:a3c08bb096227578",
+        "android_client_info": {
+          "package_name": "com.andrewtakao.alight"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "741583361490-4bhke453mfuqjmtbtvt55jn88ia4ti0g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1ICiixmvjWkNkQer4U-twQK-O0i7M-TU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
