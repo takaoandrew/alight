@@ -55,13 +55,17 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
         POI poi = poiArrayList.get(position);
         Log.d(TAG, "onBindViewHolder-- position, MainActivity.poiArrayList.get(position) = " + position + ", "
         + poi.imageName);
-
+//TODO Toggle this bug fix by forty vs ordered
         OrderedTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//        FortySevenTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
                 // Got the download URL for 'users/me/profile.png'
                 // Pass it to Picasso to download, show in ImageView and caching
-                Picasso.with(context).load(uri.toString()).into(holder.backgroundImage);
+                Picasso.with(context).load(uri.toString())
+//                        .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
+                        .fit()
+                        .into(holder.backgroundImage);
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override

@@ -18,6 +18,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.View;
 
+import com.andrewtakao.alight.databinding.ActivityFourtySevenTourBinding;
 import com.andrewtakao.alight.databinding.ActivityOrderedTourBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -28,14 +29,13 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class OrderedTourActivity extends AppCompatActivity {
+public class FortySevenTourActivity extends AppCompatActivity {
 
     public static StorageReference mStorageRef;
     public static StorageReference mAudioRef;
@@ -43,11 +43,12 @@ public class OrderedTourActivity extends AppCompatActivity {
     private ChildEventListener mImagesListener;
     public static DatabaseReference mImagesDatabaseRef;
 
-    private ActivityOrderedTourBinding binding;
+    private ActivityFourtySevenTourBinding binding;
     private String busRoute;
-    private final String TAG = OrderedTourActivity.class.getSimpleName();
+    private final String TAG = FortySevenTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
     private String currentKey;
+    private POI closestPOI;
 
     //RecyclerView
     private POIAdapter mPOIAdapter;
@@ -64,7 +65,7 @@ public class OrderedTourActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_ordered_tour);
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_fourty_seven_tour);
 
         //Initialize
         mContext = this;
@@ -107,30 +108,35 @@ public class OrderedTourActivity extends AppCompatActivity {
         //Get bus route
         Intent intent = getIntent();
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
-        Log.d(TAG, "busRoute = "+busRoute);
 
         mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
 
         //run first time only
         if (savedInstanceState == null) {
+            Log.d(TAG, "savedInstanceState == null");
             //Listens to firebase database for changes in route content pointers
             mImagesListener = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    mPOIHashMap.put(dataSnapshot.getKey(), new POI(
-                            dataSnapshot.getKey(),
-                            (double) dataSnapshot.child("latitude").getValue(),
-                            (double) dataSnapshot.child("longitude").getValue()));
+                    Log.d(TAG, "onChildAdded-- dataSnapshot.getKey() = " + dataSnapshot.getKey());
+                    String tourSpecificUpdatedJpgKey = dataSnapshot.getKey()+"*jpg";
+                    //TODO Hash key is now weird *jpg too
+                    mPOIHashMap.put(tourSpecificUpdatedJpgKey, new POI(
+                            //TODO weird *jpg is here if you get naming right on database
+                            tourSpecificUpdatedJpgKey,
+                            (double) dataSnapshot.child("latitude").child("0").getValue(),
+                            (double) dataSnapshot.child("longitude").child("0").getValue()));
                     mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
 
                     //Store audio location
                     try {
-                        addAudioToTempFile(dataSnapshot.getKey());
+                        //TODO weird *jpg fix is here too
+                        addAudioToTempFile(tourSpecificUpdatedJpgKey);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
 
-                    Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
+//                    Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
 
 
                 }
@@ -154,7 +160,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 
                 }
             };
-            mImagesDatabaseRef = MainActivity.routesRef.child(busRoute);
+            mImagesDatabaseRef = MainActivity.database.getReference().child(busRoute);
             mImagesDatabaseRef.addChildEventListener(mImagesListener);
         }
 
@@ -266,6 +272,7 @@ public class OrderedTourActivity extends AppCompatActivity {
     public void getLocation(View view) {
         Log.d(TAG, "getLocation pressed");
         getLastLocation();
+        binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
     }
     public void makeUseOfNewLocation(Location location) {
         Log.d(TAG, "makeUseOfNewLocation");
@@ -273,7 +280,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         String longitude = String.valueOf(location.getLongitude());
         String currentLocation = latitude + ", " + longitude;
         double minDistance = 999999;
-        POI closestPOI = new POI();
+        closestPOI = new POI();
         for (POI POI : mPOIHashMap.values()) {
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
                 minDistance = POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude));
@@ -296,7 +303,6 @@ public class OrderedTourActivity extends AppCompatActivity {
                 binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
             }
             binding.location.setText(currentLocation);
-            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
         }
 
     }

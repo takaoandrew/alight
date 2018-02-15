@@ -19,7 +19,7 @@ public class MainActivity extends AppCompatActivity {
 
     private final String TAG = MainActivity.class.getSimpleName();
     private ActivityMainBinding binding;
-    private FirebaseDatabase database;
+    public static FirebaseDatabase database;
     public static DatabaseReference routesRef;
     private ChildEventListener routesRefListener;
     public static ArrayList<String> busRoutes;
