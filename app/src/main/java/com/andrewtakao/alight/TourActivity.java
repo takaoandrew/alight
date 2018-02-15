@@ -113,8 +113,9 @@ public class TourActivity extends AppCompatActivity {
                         MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
             }
         } else {
+            Log.d(TAG, "onCreate-- getLastLocation(), then locationmanager.requestLocationupdates()");
             getLastLocation();
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 1, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 2, locationListener);
         }
 
         //Get bus route
@@ -262,8 +263,13 @@ public class TourActivity extends AppCompatActivity {
 
         fileName = mImagesHashMap.get(key).audioLocalStorageLocation;
 
+        if (mMediaPlayer!=null) {
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.stop();
+            }
+        }
+
         mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
-        mMediaPlayer.setLooping(true);
         mMediaPlayer.start();
     }
 
