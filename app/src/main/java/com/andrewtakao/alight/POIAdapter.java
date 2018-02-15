@@ -1,0 +1,111 @@
+package com.andrewtakao.alight;
+
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+
+/**
+ * Created by andrewtakao on 2/12/18.
+ */
+
+public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
+    private Context context;
+    public ArrayList<POI> poiArrayList;
+    private final String TAG = POIAdapter.class.getSimpleName();
+    private final String BUS_ROUTE_EXTRA = "bus_route_extra";
+    LayoutInflater inflater;
+
+    public POIAdapter(Context context, ArrayList<POI> poiArrayList) {
+        this.context = context;
+        Collections.sort(poiArrayList, new Comparator<POI>() {
+            @Override
+            public int compare(POI poi, POI poi2) {
+                return poi.imageName.compareTo(poi2.imageName);
+            }
+        });
+
+        this.poiArrayList = poiArrayList;
+        this.inflater = LayoutInflater.from(context);
+    }
+
+    @Override
+    public POIViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = inflater.inflate(R.layout.poi_row, parent, false);
+        return new POIViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(final POIViewHolder holder, final int position) {
+        POI poi = poiArrayList.get(position);
+        Log.d(TAG, "onBindViewHolder-- position, MainActivity.poiArrayList.get(position) = " + position + ", "
+        + poi.imageName);
+
+        OrderedTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                // Got the download URL for 'users/me/profile.png'
+                // Pass it to Picasso to download, show in ImageView and caching
+                Picasso.with(context).load(uri.toString()).into(holder.backgroundImage);
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle any errors
+            }
+        });
+        String location = poi.latitude + ", " + poi.longitude;
+        holder.locationView.setText(location);
+        holder.imageNameView.setText(poi.imageName);
+    }
+
+    public void updateAdapter(ArrayList<POI> poiArrayList) {
+        Log.d(TAG, "updateAdapter");
+        Collections.sort(poiArrayList, new Comparator<POI>() {
+            @Override
+            public int compare(POI poi, POI poi2) {
+                return poi.imageName.compareTo(poi2.imageName);
+            }
+        });
+        this.poiArrayList = poiArrayList;
+        notifyDataSetChanged();
+    }
+
+    @Override
+    public int getItemCount() {
+//        Log.d(TAG, "getItemCount-- count = " + poiArrayList.size());
+        return poiArrayList.size();
+    }
+
+    class POIViewHolder extends RecyclerView.ViewHolder {
+
+        ImageView backgroundImage;
+        TextView locationView, imageNameView;
+
+        public POIViewHolder(View itemView) {
+            super(itemView);
+            backgroundImage = itemView.findViewById(R.id.ordered_tour_background_image);
+            locationView = itemView.findViewById(R.id.location);
+            imageNameView = itemView.findViewById(R.id.image_name);
+        }
+    }
+
+    private String readableKey(String key) {
+        return key.replace("*", ".");
+    }
+}

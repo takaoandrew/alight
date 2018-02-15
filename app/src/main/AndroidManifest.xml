@@ -20,6 +20,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".TourActivity"></activity>
+        <activity android:name=".OrderedTourActivity"></activity>
     </application>
 
 </manifest>

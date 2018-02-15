@@ -44,7 +44,10 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
             public void onClick(View view) {
                 Log.d(TAG, "onBindViewHolder-- onClick-- position, busRoutes.get(position) = "
                         + position + ", " + busRoutes.get(position));
-                Intent intent = new Intent(context, TourActivity.class);
+                //Toggle between TourActivity and OrderedTourActivity
+//                Intent intent = new Intent(context, TourActivity.class);
+                Intent intent = new Intent(context, OrderedTourActivity.class);
+
                 intent.putExtra(BUS_ROUTE_EXTRA, busRoutes.get(position));
                 context.startActivity(intent);
             }

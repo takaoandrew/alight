@@ -5,21 +5,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
 import android.view.View;
 
-import com.andrewtakao.alight.databinding.ActivityTourBinding;
+import com.andrewtakao.alight.databinding.ActivityOrderedTourBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.ChildEventListener;
@@ -29,31 +28,34 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class TourActivity extends AppCompatActivity {
+public class OrderedTourActivity extends AppCompatActivity {
 
-    private StorageReference mStorageRef;
-    private StorageReference mImageRef;
-    private StorageReference mTempStorageRef;
-    private HashMap<String, POI> mImagesHashMap;
-    private ArrayList<POI> mImagesList;
+    public static StorageReference mStorageRef;
+    public static StorageReference mAudioRef;
+    private HashMap<String, POI> mPOIHashMap;
     private ChildEventListener mImagesListener;
     public static DatabaseReference mImagesDatabaseRef;
 
-    private ActivityTourBinding binding;
+    private ActivityOrderedTourBinding binding;
     private String busRoute;
-    private final String TAG = TourActivity.class.getSimpleName();
+    private final String TAG = OrderedTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
     private String currentKey;
+
+    //RecyclerView
+    private POIAdapter mPOIAdapter;
 
     //GPS
     Context mContext;
     LocationManager locationManager;
+    LocationListener locationListener;
     private final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 3463;
 
     //Audio
@@ -62,21 +64,25 @@ public class TourActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_tour);
-
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_ordered_tour);
 
         //Initialize
         mContext = this;
-        mImagesList = new ArrayList<>();
         currentKey = "";
-        mImagesHashMap = new HashMap<>();
+        mPOIHashMap = new HashMap<>();
 
+
+        //Initialize Adapter
+        mPOIAdapter =  new POIAdapter(this, new ArrayList<>(mPOIHashMap.values()));
+        binding.rvPois.setLayoutManager(new LinearLayoutManager(this));
+        binding.rvPois.setAdapter(mPOIAdapter);
 
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        LocationListener locationListener = new LocationListener() {
+        locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 //Commented out while using button to debug
+                Log.d(TAG, "onLocationChanged");
                 makeUseOfNewLocation(location);
             }
 
@@ -96,25 +102,7 @@ public class TourActivity extends AppCompatActivity {
             }
         };
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            binding.location.setText("no permission");
-
-
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    android.Manifest.permission.ACCESS_FINE_LOCATION)) {
-            } else {
-                ActivityCompat.requestPermissions(this,
-                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
-                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
-            }
-        } else {
-            Log.d(TAG, "onCreate-- getLastLocation(), then locationmanager.requestLocationupdates()");
-            getLastLocation();
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 2, locationListener);
-        }
+        checkPermission();
 
         //Get bus route
         Intent intent = getIntent();
@@ -122,44 +110,28 @@ public class TourActivity extends AppCompatActivity {
 
         mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
 
-
         //run first time only
         if (savedInstanceState == null) {
             //Listens to firebase database for changes in route content pointers
             mImagesListener = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-
-//                mImagesList.add(new POI(
-//                        dataSnapshot.getKey(),
-//                        (double) dataSnapshot.child("latitude").getValue(),
-//                        (double) dataSnapshot.child("longitude").getValue()));
-                    mImagesHashMap.put(dataSnapshot.getKey(), new POI(
+                    mPOIHashMap.put(dataSnapshot.getKey(), new POI(
                             dataSnapshot.getKey(),
                             (double) dataSnapshot.child("latitude").getValue(),
                             (double) dataSnapshot.child("longitude").getValue()));
+                    mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
 
-                    Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
-
-                    try {
-                        addImageToTempFile(dataSnapshot.getKey());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
+                    //Store audio location
                     try {
                         addAudioToTempFile(dataSnapshot.getKey());
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
 
-//                if (("image/png").equals((String) dataSnapshot.child("contentType").getValue()) ||
-//                        ("image/png").equals((String) dataSnapshot.child("contentType").getValue())) {
-//                } else {
-//                    Log.d(TAG, "contentType = " +
-//                            dataSnapshot.child("contentType").getValue());
-//                }
-//                addImage(dataSnapshot.getKey());
+                    Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
+
+
                 }
 
                 @Override
@@ -168,7 +140,7 @@ public class TourActivity extends AppCompatActivity {
 
                 @Override
                 public void onChildRemoved(DataSnapshot dataSnapshot) {
-                    mImagesHashMap.remove(dataSnapshot.getKey());
+                    mPOIHashMap.remove(dataSnapshot.getKey());
                 }
 
                 @Override
@@ -184,70 +156,7 @@ public class TourActivity extends AppCompatActivity {
             mImagesDatabaseRef = MainActivity.routesRef.child(busRoute);
             mImagesDatabaseRef.addChildEventListener(mImagesListener);
         }
-    }
 
-    private void addImageToTempFile(final String key) throws IOException {
-
-        mImageRef = mStorageRef.child(readableKey(key));
-        Log.d(TAG, "mImageRef.getPath() = " + mImageRef.getPath());
-
-        final File localFile = File.createTempFile(key, "");
-        Log.d(TAG, "localFile = " + localFile);
-
-        mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-            @Override
-            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG,"onSuccess");
-                mImagesHashMap.get(key).setLocalStorageLocation(localFile.toString());
-//                mImagesList.get(mImagesList.indexOf(key)).setLocalStorageLocation(localFile.toString());
-                // Local temp file has been created
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception exception) {
-                Log.d(TAG,"onFailure");
-                // Handle any errors
-            }
-        });
-    }
-
-    private void addImage(String key) {
-//        try {
-        Log.d(TAG, "key = " + key);
-        Log.d(TAG, "readable key = " + readableKey(key));
-        //Get local file
-        String fileName;
-//            try {
-//                fileName = File.createTempFile(key, "").toString();
-//                Log.d(TAG, "try: fileName = " + fileName);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//                fileName = "";
-//            }
-//            final File localFile = new File(fileName);
-//            final File localFile = File.createTempFile("images", "png");
-//            fileName = mImagesList.get(mImagesList.indexOf(key)).localStorageLocation;
-        fileName = mImagesHashMap.get(key).localStorageLocation;
-        Bitmap bmp = BitmapFactory.decodeFile(fileName);
-//            imageView.setImageBitmap(bmp);
-        binding.tourBackgroundImage.setImageBitmap(bmp);
-//            binding.tourBackgroundImage.setImageBitmap(BitmapFactory.decodeFile(localFile.getAbsolutePath()));
-//            mTempStorageRef = mStorageRef.child(readableKey(key));
-//            mTempStorageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-//                @Override
-//                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-//                    Bitmap bitmap = BitmapFactory.decodeFile(localFile.getAbsolutePath());
-//                    binding.tourBackgroundImage.setImageBitmap(bitmap);
-//                }
-//            }).addOnFailureListener(new OnFailureListener() {
-//                @Override
-//                public void onFailure(@NonNull Exception e) {
-//                    Log.d(TAG, ""+e);
-//                    Log.d(TAG, "onFailure");
-//                }
-//            });
-//        }
-//        catch (IOException e) {}
     }
 
     private void addAudio(String key) {
@@ -259,7 +168,7 @@ public class TourActivity extends AppCompatActivity {
 
         String fileName;
 
-        fileName = mImagesHashMap.get(key).audioLocalStorageLocation;
+        fileName = mPOIHashMap.get(key).audioLocalStorageLocation;
 
         if (mMediaPlayer!=null) {
             if (mMediaPlayer.isPlaying()) {
@@ -271,26 +180,25 @@ public class TourActivity extends AppCompatActivity {
         mMediaPlayer.start();
     }
 
-
     private void addAudioToTempFile(final String key) throws IOException {
 
         Log.d(TAG, "addAudioToTempFile-- key = " + key);
         Log.d(TAG, "addAudioToTempFile-- readable key = " + readableKey(key));
         Log.d(TAG, "addAudioToTempFile-- audio key = " + audioKey(readableKey(key)));
         //Get local file
-        mImageRef = mStorageRef.child(audioKey(readableKey(key)));
+        mAudioRef = mStorageRef.child(audioKey(readableKey(key)));
 
-        Log.d(TAG, "addAudioToTempFile-- mImageRef.getPath() = " + mImageRef.getPath());
+        Log.d(TAG, "addAudioToTempFile-- mAudioRef.getPath() = " + mAudioRef.getPath());
 
         final File localFile = File.createTempFile(key, "");
         Log.d(TAG, "addAudioToTempFile-- localFile = " + localFile);
 
-        mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+        mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
-                mImagesHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-//                mImagesList.get(mImagesList.indexOf(key)).setLocalStorageLocation(localFile.toString());
+                mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
+//                mPOIList.get(mPOIList.indexOf(key)).setLocalStorageLocation(localFile.toString());
                 // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -316,14 +224,20 @@ public class TourActivity extends AppCompatActivity {
     //Location
 
     public void getLastLocation() {
+        Log.d(TAG, "getLastLocation");
 
-        String locationProvider = LocationManager.NETWORK_PROVIDER;
+        //TODO Choose between GPS and network provider
+        String locationProvider = LocationManager.GPS_PROVIDER;
+//        String locationProvider = LocationManager.NETWORK_PROVIDER;
+
+
 // Or use LocationManager.GPS_PROVIDER
-        if (ActivityCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "getLastLocation-- you don't have permission to access gps");
             return;
         }
         Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+        Log.d(TAG, "lastKnownLocation = " + lastKnownLocation);
         makeUseOfNewLocation(lastKnownLocation);
     }
 
@@ -353,32 +267,63 @@ public class TourActivity extends AppCompatActivity {
         getLastLocation();
     }
     public void makeUseOfNewLocation(Location location) {
-//        Log.d(TAG, "makeUseOfNewLocation");
+        Log.d(TAG, "makeUseOfNewLocation");
         String latitude = String.valueOf(location.getLatitude());
         String longitude = String.valueOf(location.getLongitude());
         String currentLocation = latitude + ", " + longitude;
         double minDistance = 999999;
-        String closestPOI = "";
-        for (POI POI : mImagesHashMap.values()) {
+        POI closestPOI = new POI();
+        for (POI POI : mPOIHashMap.values()) {
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
                 minDistance = POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude));
-                closestPOI = POI.imageName;
+                closestPOI = POI;
             }
         }
-        if (currentKey.equals(closestPOI)) {
-            if (currentKey.equals("")) {
-                return;
+        if (closestPOI.imageName != null) {
+            if (currentKey.equals(closestPOI.imageName)) {
+                if (currentKey.equals("")) {
+                    return;
+                }
+                //For debugging purposes. Otherwise, comment this out.
+//            addImage(currentKey);
+                //Do nothing
+            } else {
+                currentKey = closestPOI.imageName;
+                binding.closestPoi.setText(closestPOI.imageName);
+//            addImage(currentKey);
+                addAudio(currentKey);
+                binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
             }
-            //For debugging purposes. Otherwise, comment this out.
-            addImage(currentKey);
-            //Do nothing
-        } else {
-            currentKey = closestPOI;
-            binding.closestPoi.setText(closestPOI);
-            addImage(currentKey);
-            addAudio(currentKey);
+            binding.location.setText(currentLocation);
+            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
         }
-        binding.location.setText(currentLocation);
 
+    }
+
+    private void checkPermission() {
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            binding.location.setText("no permission");
+
+
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+            } else {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            }
+        } else {
+            Log.d(TAG, "onCreate-- getLastLocation(), then locationmanager.requestLocationupdates()");
+            getLastLocation();
+
+            //TODO Choose between GPS and network provider
+            //TODO listen to both GPS AND Network, then use timestamps to find most recent
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+//            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        }
     }
 }
