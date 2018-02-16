@@ -42,6 +42,7 @@ public class OrderedTourActivity extends AppCompatActivity {
     private HashMap<String, POI> mPOIHashMap;
     private ChildEventListener mImagesListener;
     public static DatabaseReference mImagesDatabaseRef;
+    DataSnapshot firstChildSnapshot;
 
     private ActivityOrderedTourBinding binding;
     private String busRoute;
@@ -117,20 +118,28 @@ public class OrderedTourActivity extends AppCompatActivity {
             mImagesListener = new ChildEventListener() {
                 @Override
                 public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    mPOIHashMap.put(dataSnapshot.getKey(), new POI(
-                            dataSnapshot.getKey(),
-                            (double) dataSnapshot.child("latitude").getValue(),
-                            (double) dataSnapshot.child("longitude").getValue()));
-                    mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
+                    if (dataSnapshot.hasChildren()) {
+                        firstChildSnapshot = dataSnapshot.getChildren().iterator().next();
+                        Log.d(TAG, "firstChildSnapshot.getKey() = " + firstChildSnapshot.getKey());
 
-                    //Store audio location
-                    try {
-                        addAudioToTempFile(dataSnapshot.getKey());
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        mPOIHashMap.put(firstChildSnapshot.getKey(), new POI(
+                                firstChildSnapshot.getKey(),
+                                Double.valueOf((String) firstChildSnapshot.child("latitude").getValue()),
+                                Double.valueOf((String) firstChildSnapshot.child("longitude").getValue()),
+                                Integer.valueOf(dataSnapshot.getKey())));
+                        mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
+
+                        //Store audio location
+                        try {
+                            addAudioToTempFile(firstChildSnapshot.getKey());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                     }
-
-                    Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
+                    else {
+                        Log.d(TAG, "onChildAdded-- this snapshot has no children");
+                    }
 
 
                 }

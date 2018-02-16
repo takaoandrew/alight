@@ -137,7 +137,8 @@ public class TourActivity extends AppCompatActivity {
                     mImagesHashMap.put(dataSnapshot.getKey(), new POI(
                             dataSnapshot.getKey(),
                             (double) dataSnapshot.child("latitude").getValue(),
-                            (double) dataSnapshot.child("longitude").getValue()));
+                            (double) dataSnapshot.child("longitude").getValue(),
+                            Integer.valueOf(dataSnapshot.getKey())));
 
                     Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
 

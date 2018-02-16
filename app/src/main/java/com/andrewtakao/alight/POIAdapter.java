@@ -83,7 +83,12 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
         Collections.sort(poiArrayList, new Comparator<POI>() {
             @Override
             public int compare(POI poi, POI poi2) {
-                return poi.imageName.compareTo(poi2.imageName);
+                if (poi.order>poi2.order) {
+                    return 1;
+                } else if (poi.order == poi2.order) {
+                    return 0;
+                }
+                return -1;
             }
         });
         this.poiArrayList = poiArrayList;

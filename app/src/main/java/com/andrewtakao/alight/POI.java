@@ -12,16 +12,17 @@ public class POI {
     public double longitude;
     public String localStorageLocation;
     public String audioLocalStorageLocation;
-    public String audio;
+    public int order;
 
     public POI() {
 
     }
 
-    public POI(String imageName, double latitude, double longitude) {
+    public POI(String imageName, double latitude, double longitude, int order) {
         this.imageName = imageName;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.order = order;
     }
 
     public double distanceFrom(double latitude, double longitude) {

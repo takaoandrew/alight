@@ -125,7 +125,8 @@ public class FortySevenTourActivity extends AppCompatActivity {
                             //TODO weird *jpg is here if you get naming right on database
                             tourSpecificUpdatedJpgKey,
                             (double) dataSnapshot.child("latitude").child("0").getValue(),
-                            (double) dataSnapshot.child("longitude").child("0").getValue()));
+                            (double) dataSnapshot.child("longitude").child("0").getValue(),
+                            Integer.valueOf(dataSnapshot.getKey())));
                     mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
 
                     //Store audio location
