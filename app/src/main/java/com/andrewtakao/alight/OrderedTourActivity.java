@@ -243,7 +243,6 @@ public class OrderedTourActivity extends AppCompatActivity {
         String locationProvider = LocationManager.GPS_PROVIDER;
 //        String locationProvider = LocationManager.NETWORK_PROVIDER;
 
-
 // Or use LocationManager.GPS_PROVIDER
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "getLastLocation-- you don't have permission to access gps");
@@ -277,6 +276,8 @@ public class OrderedTourActivity extends AppCompatActivity {
 
     public void getLocation(View view) {
         Log.d(TAG, "getLocation pressed");
+        //reset currentKey so it will snap to correct location
+        currentKey = "";
         getLastLocation();
     }
 
