@@ -72,7 +72,6 @@ public class FortySevenTourActivity extends AppCompatActivity {
         currentKey = "";
         mPOIHashMap = new HashMap<>();
 
-
         //Initialize Adapter
         mPOIAdapter =  new POIAdapter(this, new ArrayList<>(mPOIHashMap.values()));
         binding.rvPois.setLayoutManager(new LinearLayoutManager(this));
@@ -195,9 +194,7 @@ public class FortySevenTourActivity extends AppCompatActivity {
         Log.d(TAG, "addAudioToTempFile-- audio key = " + audioKey(readableKey(key)));
         //Get local file
         mAudioRef = mStorageRef.child(audioKey(readableKey(key)));
-
         Log.d(TAG, "addAudioToTempFile-- mAudioRef.getPath() = " + mAudioRef.getPath());
-
         final File localFile = File.createTempFile(key, "");
         Log.d(TAG, "addAudioToTempFile-- localFile = " + localFile);
 
@@ -238,7 +235,6 @@ public class FortySevenTourActivity extends AppCompatActivity {
         String locationProvider = LocationManager.GPS_PROVIDER;
 //        String locationProvider = LocationManager.NETWORK_PROVIDER;
 
-
 // Or use LocationManager.GPS_PROVIDER
         if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "getLastLocation-- you don't have permission to access gps");
@@ -264,7 +260,6 @@ public class FortySevenTourActivity extends AppCompatActivity {
                     Log.d(TAG, "permission denied");
                 }
             }
-
             // other 'case' lines to check for other
             // permissions this app might request.
         }
@@ -275,6 +270,25 @@ public class FortySevenTourActivity extends AppCompatActivity {
         getLastLocation();
         binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
     }
+
+    public void playAudio(View view) {
+        Log.d(TAG, "playAudio pressed");
+        if (mMediaPlayer!=null) {
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.stop();
+            }
+        }
+
+        String fileName;
+        fileName = mPOIHashMap.get(currentKey).audioLocalStorageLocation;
+
+        mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
+        mMediaPlayer.start();
+        if (!mMediaPlayer.isPlaying()) {
+            mMediaPlayer.start();
+        }
+    }
+
     public void makeUseOfNewLocation(Location location) {
         Log.d(TAG, "makeUseOfNewLocation");
         String latitude = String.valueOf(location.getLatitude());

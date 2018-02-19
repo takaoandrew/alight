@@ -179,6 +179,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         String fileName;
 
         fileName = mPOIHashMap.get(key).audioLocalStorageLocation;
+        Log.d(TAG, "addAudio-- fileName = " + fileName);
 
         if (mMediaPlayer!=null) {
             if (mMediaPlayer.isPlaying()) {
@@ -186,8 +187,10 @@ public class OrderedTourActivity extends AppCompatActivity {
             }
         }
 
-        mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
-        mMediaPlayer.start();
+        if (fileName != null) {
+            mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
+            mMediaPlayer.start();
+        }
     }
 
     private void addAudioToTempFile(final String key) throws IOException {
@@ -276,6 +279,44 @@ public class OrderedTourActivity extends AppCompatActivity {
         Log.d(TAG, "getLocation pressed");
         getLastLocation();
     }
+
+    public void playAudio(View view) {
+        Log.d(TAG, "playAudio pressed");
+
+        String fileName;
+
+        if (mPOIHashMap.get(currentKey) != null) {
+            fileName = mPOIHashMap.get(currentKey).audioLocalStorageLocation;
+            Log.d(TAG, "playAudio-- fileName = " + fileName);
+        } else {
+            fileName = null;
+        }
+
+//        if (mMediaPlayer!=null) {
+//            if (mMediaPlayer.isPlaying()) {
+//                mMediaPlayer.stop();
+//            }
+//
+//        }
+        if (mMediaPlayer != null ) {
+            if (fileName != null) {
+                if (mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.stop();
+                }
+                else {
+                    mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
+                    mMediaPlayer.start();
+                }
+
+            }
+        } else {
+            mMediaPlayer = new MediaPlayer();
+        }
+
+
+    }
+
+
     public void makeUseOfNewLocation(Location location) {
         Log.d(TAG, "makeUseOfNewLocation");
         String latitude = String.valueOf(location.getLatitude());
@@ -305,7 +346,8 @@ public class OrderedTourActivity extends AppCompatActivity {
                 binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
             }
             binding.location.setText(currentLocation);
-            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
+            //Uncomment if you want it to always scroll to current position.
+//            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
         }
 
     }

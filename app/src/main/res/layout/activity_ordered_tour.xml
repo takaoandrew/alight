@@ -37,8 +37,18 @@
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
-            android:text="GetLocation"
+            android:text="Get Location"
             android:onClick="getLocation"
+            android:layout_margin="12dp"/>
+
+        <Button
+            android:id="@+id/play_audio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:text="Play Audio"
+            android:onClick="playAudio"
             android:layout_margin="12dp"/>
 
     </android.support.constraint.ConstraintLayout>
