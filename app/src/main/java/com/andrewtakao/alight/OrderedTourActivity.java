@@ -1,6 +1,7 @@
 package com.andrewtakao.alight;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -34,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class OrderedTourActivity extends AppCompatActivity {
 
@@ -58,6 +60,9 @@ public class OrderedTourActivity extends AppCompatActivity {
     LocationManager locationManager;
     LocationListener locationListener;
     private final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 3463;
+
+    //GPS test
+    LocationManager mLocationManager;
 
     //Audio
     MediaPlayer mMediaPlayer;
@@ -199,6 +204,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         Log.d(TAG, "addAudioToTempFile-- readable key = " + readableKey(key));
         Log.d(TAG, "addAudioToTempFile-- audio key = " + audioKey(readableKey(key)));
         //Get local file
+
         mAudioRef = mStorageRef.child(audioKey(readableKey(key)));
 
         Log.d(TAG, "addAudioToTempFile-- mAudioRef.getPath() = " + mAudioRef.getPath());
@@ -215,10 +221,23 @@ public class OrderedTourActivity extends AppCompatActivity {
                 // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {
+            //Try wav?
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG,"addAudioToTempFile-- onFailure");
-                // Handle any errors
+                mAudioRef = mStorageRef.child(audioWavKey(audioKey(readableKey(key))));
+                mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                        Log.d(TAG,"addAudioToTempFile-- onSuccess, trying to get wav");
+                        mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.d(TAG,"addAudioToTempFile-- onFailure, trying to get wav");
+                    }
+                });
             }
         });
     }
@@ -231,7 +250,13 @@ public class OrderedTourActivity extends AppCompatActivity {
     private String audioKey(String key) {
         key = key.replace(".jpeg", ".mp3");
         key = key.replace(".png", ".mp3");
+        key = key.replace(".JPG", ".mp3");
+        key = key.replace(".PNG", ".mp3");
         return key.replace(".jpg", ".mp3");
+    }
+
+    private String audioWavKey(String key) {
+        return key.replace(".mp3", ".wav");
     }
 
     //Location
@@ -248,7 +273,12 @@ public class OrderedTourActivity extends AppCompatActivity {
             Log.d(TAG, "getLastLocation-- you don't have permission to access gps");
             return;
         }
-        Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+
+//        Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+
+        // Test 2
+        Location lastKnownLocation = getLastKnownLocation();
+
         Log.d(TAG, "lastKnownLocation = " + lastKnownLocation);
         makeUseOfNewLocation(lastKnownLocation);
     }
@@ -268,9 +298,6 @@ public class OrderedTourActivity extends AppCompatActivity {
                     Log.d(TAG, "permission denied");
                 }
             }
-
-            // other 'case' lines to check for other
-            // permissions this app might request.
         }
     }
 
@@ -279,6 +306,24 @@ public class OrderedTourActivity extends AppCompatActivity {
         //reset currentKey so it will snap to correct location
         currentKey = "";
         getLastLocation();
+    }
+
+    //GPS test 2
+    private Location getLastKnownLocation() {
+        mLocationManager = (LocationManager)getApplicationContext().getSystemService(LOCATION_SERVICE);
+        List<String> providers = mLocationManager.getProviders(true);
+        Location bestLocation = null;
+        for (String provider : providers) {
+            @SuppressLint("MissingPermission") Location l = mLocationManager.getLastKnownLocation(provider);
+            if (l == null) {
+                continue;
+            }
+            if (bestLocation == null || l.getAccuracy() < bestLocation.getAccuracy()) {
+                // Found best last known location: %s", l);
+                bestLocation = l;
+            }
+        }
+        return bestLocation;
     }
 
     public void playAudio(View view) {
@@ -313,17 +358,21 @@ public class OrderedTourActivity extends AppCompatActivity {
         } else {
             mMediaPlayer = new MediaPlayer();
         }
-
-
     }
 
 
     public void makeUseOfNewLocation(Location location) {
         Log.d(TAG, "makeUseOfNewLocation");
+        if (location == null) {
+            return;
+        }
         String latitude = String.valueOf(location.getLatitude());
         String longitude = String.valueOf(location.getLongitude());
         String currentLocation = latitude + ", " + longitude;
-        double minDistance = 999999;
+        //.001 is around a block away
+        double minDistance = .001;
+        //Choosing this as minDistance will show closest POI, as opposed to the POI right around the corner
+//        double minDistance = 999999;
         POI closestPOI = new POI();
         for (POI POI : mPOIHashMap.values()) {
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
@@ -340,6 +389,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 //            addImage(currentKey);
                 //Do nothing
             } else {
+                Log.d(TAG,"minDistance = "+ minDistance);
                 currentKey = closestPOI.imageName;
                 binding.closestPoi.setText(closestPOI.imageName);
 //            addImage(currentKey);
@@ -371,6 +421,7 @@ public class OrderedTourActivity extends AppCompatActivity {
             }
         } else {
             Log.d(TAG, "onCreate-- getLastLocation(), then locationmanager.requestLocationupdates()");
+            binding.location.setText("");
             getLastLocation();
 
             //TODO Choose between GPS and network provider
