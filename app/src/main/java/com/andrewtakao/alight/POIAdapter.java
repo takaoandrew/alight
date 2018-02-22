@@ -2,6 +2,7 @@ package com.andrewtakao.alight;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -73,9 +74,15 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
                 // Handle any errors
             }
         });
+//        holder.backgroundImage.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                playAudio();
+//            }
+//        });
         String location = poi.latitude + ", " + poi.longitude;
         holder.locationView.setText(location);
-        holder.imageNameView.setText(poi.imageName);
+        holder.imageNameView.setText(userFriendlyName(poi.imageName));
     }
 
     public void updateAdapter(ArrayList<POI> poiArrayList) {
@@ -117,4 +124,52 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
     private String readableKey(String key) {
         return key.replace("*", ".");
     }
+
+    private String userFriendlyName(String name) {
+        name = name.substring(0, name.indexOf("*"));
+        return name.replaceAll(
+                String.format("%s|%s|%s",
+                        "(?<=[A-Z])(?=[A-Z][a-z])",
+                        "(?<=[^A-Z])(?=[A-Z])",
+                        "(?<=[A-Za-z])(?=[^A-Za-z])"
+                ),
+                " "
+        );
+
+    }
+
+    public void playAudio() {
+        Log.d(TAG, "playAudio pressed");
+
+        String fileName;
+
+        if (OrderedTourActivity.mPOIHashMap.get(OrderedTourActivity.currentKey) != null) {
+            fileName = OrderedTourActivity.mPOIHashMap.get(OrderedTourActivity.currentKey).audioLocalStorageLocation;
+            Log.d(TAG, "playAudio-- fileName = " + fileName);
+        } else {
+            fileName = null;
+        }
+
+//        if (mMediaPlayer!=null) {
+//            if (mMediaPlayer.isPlaying()) {
+//                mMediaPlayer.stop();
+//            }
+//
+//        }
+        if (OrderedTourActivity.mMediaPlayer != null ) {
+            if (fileName != null) {
+                if (OrderedTourActivity.mMediaPlayer.isPlaying()) {
+                    OrderedTourActivity.mMediaPlayer.stop();
+                }
+                else {
+                    OrderedTourActivity.mMediaPlayer = MediaPlayer.create(OrderedTourActivity.mContext, Uri.parse(fileName));
+                    OrderedTourActivity.mMediaPlayer.start();
+                }
+
+            }
+        } else {
+            OrderedTourActivity.mMediaPlayer = new MediaPlayer();
+        }
+    }
+
 }

@@ -41,7 +41,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 
     public static StorageReference mStorageRef;
     public static StorageReference mAudioRef;
-    private HashMap<String, POI> mPOIHashMap;
+    public static HashMap<String, POI> mPOIHashMap;
     private ChildEventListener mImagesListener;
     public static DatabaseReference mImagesDatabaseRef;
     DataSnapshot firstChildSnapshot;
@@ -50,13 +50,13 @@ public class OrderedTourActivity extends AppCompatActivity {
     private String busRoute;
     private final String TAG = OrderedTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
-    private String currentKey;
+    public static String currentKey;
 
     //RecyclerView
     private POIAdapter mPOIAdapter;
 
     //GPS
-    Context mContext;
+    public static Context mContext;
     LocationManager locationManager;
     LocationListener locationListener;
     private final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 3463;
@@ -65,7 +65,7 @@ public class OrderedTourActivity extends AppCompatActivity {
     LocationManager mLocationManager;
 
     //Audio
-    MediaPlayer mMediaPlayer;
+    public static MediaPlayer mMediaPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -391,12 +391,19 @@ public class OrderedTourActivity extends AppCompatActivity {
             } else {
                 Log.d(TAG,"minDistance = "+ minDistance);
                 currentKey = closestPOI.imageName;
-                binding.closestPoi.setText(closestPOI.imageName);
+
+                //DEBUG ONLY
+//                binding.closestPoi.setText(closestPOI.imageName);
+
+
 //            addImage(currentKey);
                 addAudio(currentKey);
                 binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
             }
-            binding.location.setText(currentLocation);
+            //DEBUG ONLY
+//            binding.location.setText(currentLocation);
+
+
             //Uncomment if you want it to always scroll to current position.
 //            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
         }
