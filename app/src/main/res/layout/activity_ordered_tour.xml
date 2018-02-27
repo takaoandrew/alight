@@ -1,13 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
-
-    <android.support.constraint.ConstraintLayout
+    <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         tools:context="com.andrewtakao.alight.OrderedTourActivity">
+
+        <!--<android.support.v7.widget.Toolbar-->
+            <!--android:id="@+id/my_toolbar"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="?attr/actionBarSize"-->
+            <!--android:background="?attr/colorPrimary"-->
+            <!--android:elevation="4dp"-->
+            <!--android:theme="@style/ThemeOverlay.AppCompat.ActionBar"-->
+            <!--app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>-->
+
+        <android.support.v7.widget.Toolbar
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="?attr/colorPrimary">
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/toolbar_title"
+                    android:orientation="horizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_marginRight="?attr/actionBarSize"
+                    android:layout_gravity="center"
+                    android:gravity="center_vertical"
+                    android:visibility="gone"
+                    android:text="@string/app_name"
+                    android:textColor="@android:color/white"
+                    style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title.Inverse"
+                    />
+
+                <TextView
+                    android:id="@+id/closest_poi_toolbar"
+                    android:layout_width="?attr/actionBarSize"
+                    android:layout_height="?attr/actionBarSize"
+                    android:layout_marginRight="?attr/actionBarSize"
+                    android:layout_gravity="start|center_vertical"/>
+
+                <TextView
+                    android:id="@+id/direction_toolbar"
+                    android:layout_width="?attr/actionBarSize"
+                    android:layout_height="?attr/actionBarSize"
+                    android:layout_gravity="end"/>
+
+            </FrameLayout>
+        </android.support.v7.widget.Toolbar>
+
+    <android.support.constraint.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_pois"
@@ -51,6 +107,9 @@
             android:onClick="playAudio"
             android:layout_margin="12dp"/>
 
+
     </android.support.constraint.ConstraintLayout>
+
+    </LinearLayout>
 
 </layout>

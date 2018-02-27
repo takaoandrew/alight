@@ -199,8 +199,8 @@ public class TourActivity extends AppCompatActivity {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"onSuccess");
-                mImagesHashMap.get(key).setLocalStorageLocation(localFile.toString());
-//                mImagesList.get(mImagesList.indexOf(key)).setLocalStorageLocation(localFile.toString());
+                mImagesHashMap.get(key).setImageLocalStorageLocation(localFile.toString());
+//                mImagesList.get(mImagesList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
                 // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -227,8 +227,8 @@ public class TourActivity extends AppCompatActivity {
 //            }
 //            final File localFile = new File(fileName);
 //            final File localFile = File.createTempFile("images", "png");
-//            fileName = mImagesList.get(mImagesList.indexOf(key)).localStorageLocation;
-        fileName = mImagesHashMap.get(key).localStorageLocation;
+//            fileName = mImagesList.get(mImagesList.indexOf(key)).imageLocalStorageLocation;
+        fileName = mImagesHashMap.get(key).imageLocalStorageLocation;
         Bitmap bmp = BitmapFactory.decodeFile(fileName);
 //            imageView.setImageBitmap(bmp);
         binding.tourBackgroundImage.setImageBitmap(bmp);
@@ -291,7 +291,7 @@ public class TourActivity extends AppCompatActivity {
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
                 mImagesHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-//                mImagesList.get(mImagesList.indexOf(key)).setLocalStorageLocation(localFile.toString());
+//                mImagesList.get(mImagesList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
                 // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {

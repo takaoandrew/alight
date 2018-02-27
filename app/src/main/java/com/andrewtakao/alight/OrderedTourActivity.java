@@ -14,8 +14,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 
@@ -41,6 +43,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 
     public static StorageReference mStorageRef;
     public static StorageReference mAudioRef;
+    public static StorageReference mImageRef;
     public static HashMap<String, POI> mPOIHashMap;
     private ChildEventListener mImagesListener;
     public static DatabaseReference mImagesDatabaseRef;
@@ -71,6 +74,24 @@ public class OrderedTourActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_ordered_tour);
+
+
+        Toolbar tb = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(tb);
+        tb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                getLocation(view);
+            }
+        });
+
+//        // Get the ActionBar here to configure the way it behaves.
+        final ActionBar ab = getSupportActionBar();
+//        ab.setHomeAsUpIndicator(R.drawable.ic_menu); // set a custom icon for the default home button
+        ab.setDisplayShowHomeEnabled(false); // show or hide the default home button
+        ab.setDisplayHomeAsUpEnabled(false);
+        ab.setDisplayShowCustomEnabled(true); // enable overriding the default toolbar layout
+        ab.setDisplayShowTitleEnabled(false); // disable the default title element here (for centered title)
 
         //Initialize
         mContext = this;
@@ -133,6 +154,15 @@ public class OrderedTourActivity extends AppCompatActivity {
                                 Double.valueOf((String) firstChildSnapshot.child("longitude").getValue()),
                                 Integer.valueOf(dataSnapshot.getKey())));
                         mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
+
+//                        Log.d(TAG, (String) firstChildSnapshot.child("imageName").getValue());
+                        try {
+                            addImageToTempFile(firstChildSnapshot.getKey()
+//                                    , (String) firstChildSnapshot.child("imageName").getValue()
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
                         //Store audio location
                         try {
@@ -209,7 +239,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 
         Log.d(TAG, "addAudioToTempFile-- mAudioRef.getPath() = " + mAudioRef.getPath());
 
-        final File localFile = File.createTempFile(key, "");
+        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
         Log.d(TAG, "addAudioToTempFile-- localFile = " + localFile);
 
         mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
@@ -217,7 +247,7 @@ public class OrderedTourActivity extends AppCompatActivity {
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
                 mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-//                mPOIList.get(mPOIList.indexOf(key)).setLocalStorageLocation(localFile.toString());
+//                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
                 // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -225,19 +255,55 @@ public class OrderedTourActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG,"addAudioToTempFile-- onFailure");
-                mAudioRef = mStorageRef.child(audioWavKey(audioKey(readableKey(key))));
-                mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                        Log.d(TAG,"addAudioToTempFile-- onSuccess, trying to get wav");
-                        mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.d(TAG,"addAudioToTempFile-- onFailure, trying to get wav");
-                    }
-                });
+//                mAudioRef = mStorageRef.child(audioWavKey(audioKey(readableKey(key))));
+//                mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+//                    @Override
+//                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+//                        Log.d(TAG,"addAudioToTempFile-- onSuccess, trying to get wav");
+//                        mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
+//                    }
+//                }).addOnFailureListener(new OnFailureListener() {
+//                    @Override
+//                    public void onFailure(@NonNull Exception e) {
+//                        Log.d(TAG,"addAudioToTempFile-- onFailure, trying to get wav");
+//                    }
+//                });
+            }
+        });
+    }
+
+    private void addImageToTempFile(final String key) throws IOException {
+
+        Log.d(TAG, "addImageToTempFile-- key = " + key);
+        Log.d(TAG, "addImageToTempFile-- readable key = " + readableKey(key));
+        //Get local file
+
+        mImageRef = mStorageRef.child(readableKey(key));
+
+        Log.d(TAG, "addImageToTempFile-- mImageRef.getPath() = " + mImageRef.getPath());
+
+        //TODO there is a / here before the imageName child. It may not be there in the future and cause errors.
+        //For now we get rid of it
+
+        String slashlessKey = key.replace("/", "");
+        slashlessKey = slashlessKey.replace("*", ".");
+
+        final File localFile = File.createTempFile(slashlessKey, "");
+        Log.d(TAG, "addImageToTempFile-- localFile = " + localFile);
+
+        mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                Log.d(TAG,"addImageToTempFile-- onSuccess");
+                mPOIHashMap.get(key).setImageLocalStorageLocation(localFile.toString());
+//                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
+                // Local temp file has been created
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            //Try wav?
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                Log.d(TAG,"addImageToTempFile-- onFailure");
             }
         });
     }
@@ -370,9 +436,9 @@ public class OrderedTourActivity extends AppCompatActivity {
         String longitude = String.valueOf(location.getLongitude());
         String currentLocation = latitude + ", " + longitude;
         //.001 is around a block away
-        double minDistance = .001;
+//        double minDistance = .001;
         //Choosing this as minDistance will show closest POI, as opposed to the POI right around the corner
-//        double minDistance = 999999;
+        double minDistance = 1000;
         POI closestPOI = new POI();
         for (POI POI : mPOIHashMap.values()) {
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
@@ -398,7 +464,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 
 //            addImage(currentKey);
                 addAudio(currentKey);
-                binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
+                binding.rvPois.scrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
             }
             //DEBUG ONLY
 //            binding.location.setText(currentLocation);
@@ -407,6 +473,9 @@ public class OrderedTourActivity extends AppCompatActivity {
             //Uncomment if you want it to always scroll to current position.
 //            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
         }
+
+        binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
+        binding.directionToolbar.setText((int) minDistance+"m");
 
     }
 
@@ -436,5 +505,22 @@ public class OrderedTourActivity extends AppCompatActivity {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 //            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         }
+    }
+
+
+    private String userFriendlyName(String name) {
+        if (name.indexOf("*") > 0) {
+
+            name = name.substring(0, name.indexOf("*"));
+
+        }
+        return name.replaceAll(
+                String.format("%s|%s|%s",
+                        "(?<=[A-Z])(?=[A-Z][a-z])",
+                        "(?<=[^A-Z])(?=[A-Z])",
+                        "(?<=[A-Za-z])(?=[^A-Za-z])"
+                ),
+                " "
+        );
     }
 }

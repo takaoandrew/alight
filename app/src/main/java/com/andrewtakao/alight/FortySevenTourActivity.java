@@ -203,7 +203,7 @@ public class FortySevenTourActivity extends AppCompatActivity {
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
                 mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-//                mPOIList.get(mPOIList.indexOf(key)).setLocalStorageLocation(localFile.toString());
+//                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
                 // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {
