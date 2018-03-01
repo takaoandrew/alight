@@ -2,6 +2,7 @@ package com.andrewtakao.alight;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -11,6 +12,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -70,11 +72,23 @@ public class OrderedTourActivity extends AppCompatActivity {
     //Audio
     public static MediaPlayer mMediaPlayer;
 
+    //Dao Database
+    private static AppDatabase db;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
+                "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%onCreate onBin");
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_ordered_tour);
-
 
         Toolbar tb = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(tb);
@@ -104,6 +118,108 @@ public class OrderedTourActivity extends AppCompatActivity {
         binding.rvPois.setLayoutManager(new LinearLayoutManager(this));
         binding.rvPois.setAdapter(mPOIAdapter);
 
+        //Get bus route
+        Intent intent = getIntent();
+        busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
+        Log.d(TAG, "busRoute = "+busRoute);
+
+        mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
+
+        //run first time only
+        if (db == null) {
+            Log.d(TAG, "Creating database");
+            db = Room.databaseBuilder(getApplicationContext(),
+                    AppDatabase.class, "database-name").allowMainThreadQueries().build();
+
+        }
+        Log.d(TAG, "size of database is " + db.poiDao().getAll(busRoute).size());
+
+        if (db.poiDao().getAll(busRoute).size() > 0) {
+            Log.d(TAG, "Setting mPOIHashMap from local database!");
+            for (POI databasePoi : db.poiDao().getAll(busRoute)) {
+                Log.d(TAG, "databasePoi image name is " + databasePoi.imageName);
+                mPOIHashMap.put(databasePoi.imageName, databasePoi);
+            }
+            mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
+            mPOIAdapter.notifyDataSetChanged();
+//            Log.d(TAG, "");
+        }
+
+        Log.d(TAG, "Creating and setting listener");
+
+        //Listens to firebase database for changes in route content pointers
+        mImagesListener = new ChildEventListener() {
+            @Override
+            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                if (dataSnapshot.hasChildren()) {
+                    firstChildSnapshot = dataSnapshot.getChildren().iterator().next();
+                    if (mPOIHashMap.containsKey(firstChildSnapshot.getKey())) {
+                        Log.d(TAG, "key " + firstChildSnapshot.getKey() + " is already in mPOIHashMap");
+                        return;
+                    }
+                    Log.d(TAG, "firstChildSnapshot.getKey() = " + firstChildSnapshot.getKey());
+                    POI addedPoi = new POI(
+                        firstChildSnapshot.getKey(),
+                        Double.valueOf((String) firstChildSnapshot.child("latitude").getValue()),
+                        Double.valueOf((String) firstChildSnapshot.child("longitude").getValue()),
+                        Integer.valueOf(dataSnapshot.getKey()),
+                        busRoute
+                    );
+
+                    db.poiDao().insertAll(addedPoi);
+                    mPOIHashMap.put(firstChildSnapshot.getKey(), addedPoi);
+                    mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
+                    mPOIAdapter.notifyDataSetChanged();
+
+//                        Log.d(TAG, (String) firstChildSnapshot.child("imageName").getValue());
+                    try {
+                        addImageToTempFile(firstChildSnapshot.getKey()
+//                                    , (String) firstChildSnapshot.child("imageName").getValue()
+                        );
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    //Store audio location
+                    try {
+                        addAudioToTempFile(firstChildSnapshot.getKey());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+                else {
+//                        Log.d(TAG, "onChildAdded-- this snapshot has no children");
+                }
+
+
+            }
+
+            @Override
+            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+            }
+
+            @Override
+            public void onChildRemoved(DataSnapshot dataSnapshot) {
+                mPOIHashMap.remove(dataSnapshot.getKey());
+                mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
+                mPOIAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
+        mImagesDatabaseRef = MainActivity.routesRef.child(busRoute);
+        mImagesDatabaseRef.addChildEventListener(mImagesListener);
+
+        //Location
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
             @Override
@@ -131,77 +247,15 @@ public class OrderedTourActivity extends AppCompatActivity {
 
         checkPermission();
 
-        //Get bus route
-        Intent intent = getIntent();
-        busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
-        Log.d(TAG, "busRoute = "+busRoute);
 
-        mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
+    }
 
-        //run first time only
-        if (savedInstanceState == null) {
-            //Listens to firebase database for changes in route content pointers
-            mImagesListener = new ChildEventListener() {
-                @Override
-                public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                    if (dataSnapshot.hasChildren()) {
-                        firstChildSnapshot = dataSnapshot.getChildren().iterator().next();
-                        Log.d(TAG, "firstChildSnapshot.getKey() = " + firstChildSnapshot.getKey());
-
-                        mPOIHashMap.put(firstChildSnapshot.getKey(), new POI(
-                                firstChildSnapshot.getKey(),
-                                Double.valueOf((String) firstChildSnapshot.child("latitude").getValue()),
-                                Double.valueOf((String) firstChildSnapshot.child("longitude").getValue()),
-                                Integer.valueOf(dataSnapshot.getKey())));
-                        mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
-
-//                        Log.d(TAG, (String) firstChildSnapshot.child("imageName").getValue());
-                        try {
-                            addImageToTempFile(firstChildSnapshot.getKey()
-//                                    , (String) firstChildSnapshot.child("imageName").getValue()
-                            );
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                        //Store audio location
-                        try {
-                            addAudioToTempFile(firstChildSnapshot.getKey());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-                    }
-                    else {
-                        Log.d(TAG, "onChildAdded-- this snapshot has no children");
-                    }
-
-
-                }
-
-                @Override
-                public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-                }
-
-                @Override
-                public void onChildRemoved(DataSnapshot dataSnapshot) {
-                    mPOIHashMap.remove(dataSnapshot.getKey());
-                }
-
-                @Override
-                public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            };
-            mImagesDatabaseRef = MainActivity.routesRef.child(busRoute);
-            mImagesDatabaseRef.addChildEventListener(mImagesListener);
-        }
-
+    @Override
+    protected void onDestroy() {
+        if (mMediaPlayer!=null && mMediaPlayer.isPlaying())
+        mMediaPlayer.stop();
+        mImagesDatabaseRef.removeEventListener(mImagesListener);
+        super.onDestroy();
     }
 
     private void addAudio(String key) {
@@ -246,28 +300,22 @@ public class OrderedTourActivity extends AppCompatActivity {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
+                if (db == null) {
+                    Log.d(TAG, "The db was null!");
+                    return;
+                }
                 mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
+                db.poiDao().insertAll(mPOIHashMap.get(key));
+                mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
+                mPOIAdapter.notifyDataSetChanged();
+
 //                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
-                // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {
             //Try wav?
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG,"addAudioToTempFile-- onFailure");
-//                mAudioRef = mStorageRef.child(audioWavKey(audioKey(readableKey(key))));
-//                mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-//                    @Override
-//                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-//                        Log.d(TAG,"addAudioToTempFile-- onSuccess, trying to get wav");
-//                        mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-//                    }
-//                }).addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        Log.d(TAG,"addAudioToTempFile-- onFailure, trying to get wav");
-//                    }
-//                });
             }
         });
     }
@@ -295,7 +343,16 @@ public class OrderedTourActivity extends AppCompatActivity {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addImageToTempFile-- onSuccess");
+
+                if (db == null) {
+                    Log.d(TAG, "The db was null!");
+                    return;
+                }
+                Log.d(TAG, "Setting imageLocalStorageLocation");
                 mPOIHashMap.get(key).setImageLocalStorageLocation(localFile.toString());
+                db.poiDao().insertAll(mPOIHashMap.get(key));
+                mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
+                mPOIAdapter.notifyDataSetChanged();
 //                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
                 // Local temp file has been created
             }
@@ -308,7 +365,6 @@ public class OrderedTourActivity extends AppCompatActivity {
         });
     }
 
-
     private String readableKey(String key) {
         return key.replace("*", ".");
     }
@@ -319,10 +375,6 @@ public class OrderedTourActivity extends AppCompatActivity {
         key = key.replace(".JPG", ".mp3");
         key = key.replace(".PNG", ".mp3");
         return key.replace(".jpg", ".mp3");
-    }
-
-    private String audioWavKey(String key) {
-        return key.replace(".mp3", ".wav");
     }
 
     //Location
@@ -485,7 +537,6 @@ public class OrderedTourActivity extends AppCompatActivity {
                 != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-            binding.location.setText("no permission");
 
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,

@@ -1,26 +1,44 @@
 package com.andrewtakao.alight;
 
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
+import android.support.annotation.NonNull;
+
 /**
  * Created by andrewtakao on 2/13/18.
  */
 
+@Entity
 public class POI {
+    @PrimaryKey
+    @NonNull
     public String imageName;
+
+    @ColumnInfo(name = "latitude")
     public double latitude;
+    @ColumnInfo(name = "longitude")
     public double longitude;
+    @ColumnInfo(name = "imageLocalStorageLocation")
     public String imageLocalStorageLocation;
+    @ColumnInfo(name = "audioLocalStorageLocation")
     public String audioLocalStorageLocation;
+    @ColumnInfo(name = "order")
     public int order;
+    @ColumnInfo(name = "busRoute")
+    public String busRoute;
 
     public POI() {
 
     }
 
-    public POI(String imageName, double latitude, double longitude, int order) {
+
+    public POI(String imageName, double latitude, double longitude, int order, String busRoute) {
         this.imageName = imageName;
         this.latitude = latitude;
         this.longitude = longitude;
         this.order = order;
+        this.busRoute = busRoute;
     }
 
     public double distanceFrom(double latitude, double longitude) {

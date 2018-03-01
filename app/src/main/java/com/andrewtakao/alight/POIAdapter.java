@@ -59,7 +59,6 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
         final String fileName = poi.imageLocalStorageLocation;
         Log.d(TAG, "onBindViewHolder-- position, MainActivity.poiArrayList.get(position) = " + position + ", "
         + fileName);
-//TODO Toggle this bug fix by forty vs ordered
 
         if (fileName != null) {
             Log.d(TAG, "onBindViewHolder-- fileName (localFile) is " + fileName);
@@ -67,42 +66,30 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
             Log.d(TAG, "onBindViewHolder-- Uri.parse(fileName) = " + Uri.parse(fileName));
 
             Picasso.with(context).load(new File(fileName))
-                    .fit().centerCrop()
 //                    .placeholder(R.drawable.profile_wall_picture)
 //                    .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
-//                    .centerCrop()
+                    .fit()
+                    .centerCrop()
                     .into(holder.backgroundImage);
-
-//            Picasso.with(context).load("file:/" + Uri.parse(fileName))
-////                    .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
-//                    .config(Bitmap.Config.RGB_565)
-//                    .centerCrop()
-//                    .fit()
-//                    .into(holder.backgroundImage);
         } else {
             Log.d(TAG, "onBindViewHolder-- fileName is null, downloading image");
 
-            OrderedTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-    //        FortySevenTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                @Override
-                public void onSuccess(Uri uri) {
-                    // Got the download URL for 'users/me/profile.png'
-                    // Pass it to Picasso to download, show in ImageView and caching
-                    Picasso.with(context).load(uri.toString())
-    //                        .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
-                            .fit()
-                            .into(holder.backgroundImage);
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle any errors
-                }
-            });
-//            holder.backgroundImage.setOnClickListener(new View.OnClickListener() {
+//            OrderedTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//    //        FortySevenTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
 //                @Override
-//                public void onClick(View view) {
-//                    playAudio();
+//                public void onSuccess(Uri uri) {
+//                    // Got the download URL for 'users/me/profile.png'
+//                    // Pass it to Picasso to download, show in ImageView and caching
+//                    Picasso.with(context).load(uri.toString())
+//                            .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
+////                            .fit()
+//                            .centerCrop()
+//                            .into(holder.backgroundImage);
+//                }
+//            }).addOnFailureListener(new OnFailureListener() {
+//                @Override
+//                public void onFailure(@NonNull Exception exception) {
+//                    // Handle any errors
 //                }
 //            });
 
@@ -128,7 +115,6 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
             }
         });
         this.poiArrayList = poiArrayList;
-        notifyDataSetChanged();
     }
 
     @Override
@@ -176,6 +162,7 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
             fileName = OrderedTourActivity.mPOIHashMap.get(OrderedTourActivity.currentKey).audioLocalStorageLocation;
             Log.d(TAG, "playAudio-- fileName = " + fileName);
         } else {
+            Log.d(TAG, "mPOIHashMap doesn't have the key " + OrderedTourActivity.currentKey);
             fileName = null;
         }
 
