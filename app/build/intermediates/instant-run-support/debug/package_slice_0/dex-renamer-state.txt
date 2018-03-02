@@ -1,4 +1,4 @@
-#Wed Feb 28 22:57:03 EST 2018
-base.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dexMerger/debug/57
+#Fri Mar 02 16:29:14 EST 2018
+base.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dexMerger/debug/76
 renamed.0=classes.dex
-file.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dexMerger/debug/57/classes.dex
+file.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dexMerger/debug/76/classes.dex

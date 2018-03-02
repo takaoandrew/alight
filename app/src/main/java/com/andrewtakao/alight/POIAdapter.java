@@ -55,8 +55,9 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 
     @Override
     public void onBindViewHolder(final POIViewHolder holder, final int position) {
-        POI poi = poiArrayList.get(position);
+        final POI poi = poiArrayList.get(position);
         final String fileName = poi.imageLocalStorageLocation;
+        holder.backgroundImage.setImageDrawable(null);
         Log.d(TAG, "onBindViewHolder-- position, MainActivity.poiArrayList.get(position) = " + position + ", "
         + fileName);
 
@@ -99,6 +100,16 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
         String location = poi.latitude + ", " + poi.longitude;
         holder.locationView.setText(location);
         holder.imageNameView.setText(userFriendlyName(poi.imageName));
+
+        holder.backgroundImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.d(TAG, "You clicked on poi.imageName " + poi.imageName);
+                Log.d(TAG, "You clicked on poi.imageStorageLocation " + poi.imageLocalStorageLocation);
+                Log.d(TAG, "You clicked on holder.imageNameView " + holder.imageNameView);
+                Log.d(TAG, "You clicked on holder.locationView " + holder.locationView);
+            }
+        });
     }
 
     public void updateAdapter(ArrayList<POI> poiArrayList) {
@@ -130,6 +141,8 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 
         public POIViewHolder(View itemView) {
             super(itemView);
+            //Set is Recyclable fixes wrong images being displayed. AMAZING!!!
+            setIsRecyclable(false);
             backgroundImage = itemView.findViewById(R.id.ordered_tour_background_image);
             locationView = itemView.findViewById(R.id.location);
             imageNameView = itemView.findViewById(R.id.image_name);

@@ -14,11 +14,14 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
@@ -75,6 +78,10 @@ public class OrderedTourActivity extends AppCompatActivity {
     //Dao Database
     private static AppDatabase db;
 
+    //Smooth Scroller
+    LinearLayoutManager layoutManager;
+    RecyclerView.SmoothScroller smoothScroller;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
@@ -112,10 +119,24 @@ public class OrderedTourActivity extends AppCompatActivity {
         currentKey = "";
         mPOIHashMap = new HashMap<>();
 
+        //Set smooth scroller
+
+        smoothScroller = new LinearSmoothScroller(mContext) {
+            @Override protected int getVerticalSnapPreference() {
+                return LinearSmoothScroller.SNAP_TO_START;
+            }
+        };
+
 
         //Initialize Adapter
         mPOIAdapter =  new POIAdapter(this, new ArrayList<>(mPOIHashMap.values()));
-        binding.rvPois.setLayoutManager(new LinearLayoutManager(this));
+        layoutManager = new LinearLayoutManager(this);
+        binding.rvPois.setLayoutManager(new LinearLayoutManager(this) {
+            @Override
+            public boolean canScrollVertically() {
+                return false;
+            }
+        });
         binding.rvPois.setAdapter(mPOIAdapter);
 
         //Get bus route
@@ -168,8 +189,9 @@ public class OrderedTourActivity extends AppCompatActivity {
 
                     db.poiDao().insertAll(addedPoi);
                     mPOIHashMap.put(firstChildSnapshot.getKey(), addedPoi);
-                    mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
-                    mPOIAdapter.notifyDataSetChanged();
+//                    mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
+                    mPOIAdapter = new POIAdapter(mContext, new ArrayList<>(mPOIHashMap.values()));
+//                    mPOIAdapter.notifyDataSetChanged();
 
 //                        Log.d(TAG, (String) firstChildSnapshot.child("imageName").getValue());
                     try {
@@ -245,7 +267,10 @@ public class OrderedTourActivity extends AppCompatActivity {
             }
         };
 
-        checkPermission();
+
+        //TODO toggle this to enable location
+
+//        checkPermission();
 
 
     }
@@ -488,9 +513,9 @@ public class OrderedTourActivity extends AppCompatActivity {
         String longitude = String.valueOf(location.getLongitude());
         String currentLocation = latitude + ", " + longitude;
         //.001 is around a block away
-//        double minDistance = .001;
-        //Choosing this as minDistance will show closest POI, as opposed to the POI right around the corner
-        double minDistance = 1000;
+//        double minDistance = 1000;
+//        Choosing this as minDistance will show closest POI, as opposed to the closest POI within 1000m
+        double minDistance = 100000;
         POI closestPOI = new POI();
         for (POI POI : mPOIHashMap.values()) {
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
@@ -498,6 +523,7 @@ public class OrderedTourActivity extends AppCompatActivity {
                 closestPOI = POI;
             }
         }
+        final POI finalPoi = closestPOI;
         if (closestPOI.imageName != null) {
             if (currentKey.equals(closestPOI.imageName)) {
                 if (currentKey.equals("")) {
@@ -513,10 +539,19 @@ public class OrderedTourActivity extends AppCompatActivity {
                 //DEBUG ONLY
 //                binding.closestPoi.setText(closestPOI.imageName);
 
-
 //            addImage(currentKey);
                 addAudio(currentKey);
-                binding.rvPois.scrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
+                Log.d(TAG, "index is " + mPOIAdapter.poiArrayList.indexOf(closestPOI));
+                //TODO don't need finalPoi anymore since not in a method and doesn't need to be final
+                smoothScroller.setTargetPosition(mPOIAdapter.poiArrayList.indexOf(finalPoi));
+                layoutManager.startSmoothScroll(smoothScroller);
+//                Log.d(TAG, "position is " + binding.rvPois.position)
+//                new Handler().postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        binding.rvPois.scrollToPosition(mPOIAdapter.poiArrayList.indexOf(finalPoi));
+//                    }
+//                }, 300);
             }
             //DEBUG ONLY
 //            binding.location.setText(currentLocation);
@@ -530,6 +565,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         binding.directionToolbar.setText((int) minDistance+"m");
 
     }
+
 
     private void checkPermission() {
 

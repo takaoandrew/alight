@@ -1,5 +1,6 @@
 package com.andrewtakao.alight;
 
+import android.arch.persistence.room.Room;
 import android.databinding.DataBindingUtil;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -25,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     public static ArrayList<String> busRoutes;
     private BusRouteAdapter busRouteAdapter;
 
+    private static RouteDatabase routeDatabase;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,10 +46,37 @@ public class MainActivity extends AppCompatActivity {
         binding.rvBusRoutes.setAdapter(busRouteAdapter);
 
 
+        if (routeDatabase == null) {
+            Log.d(TAG, "Creating database");
+            routeDatabase = Room.databaseBuilder(getApplicationContext(),
+                    RouteDatabase.class, "route-database").allowMainThreadQueries().build();
+
+        }
+        Log.d(TAG, "size of database is " + routeDatabase.routeDao().getAll().size());
+
+        if (routeDatabase.routeDao().getAll().size() > 0) {
+            Log.d(TAG, "Setting mPOIHashMap from local database!");
+            for (Route routeNumber : routeDatabase.routeDao().getAll()) {
+                Log.d(TAG, "routenumber is " + routeNumber);
+                Log.d(TAG, "routenumber.route is " + routeNumber.route);
+                busRoutes.add(routeNumber.route);
+            }
+            busRouteAdapter.notifyDataSetChanged();
+        }
+
         routesRefListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 Log.d(TAG, "onChildAdded-- dataSnapshot.getKey() = " + dataSnapshot.getKey());
+                if (busRoutes.contains(dataSnapshot.getKey())) {
+                    Log.d(TAG, "key " + dataSnapshot.getKey() + " is already in busRoutes");
+                    return;
+                }
+                Route addedRoute = new Route(
+                        dataSnapshot.getKey()
+                );
+
+                routeDatabase.routeDao().insertAll(addedRoute);
                 busRoutes.add(dataSnapshot.getKey());
                 busRouteAdapter.notifyDataSetChanged();
             }
@@ -73,6 +103,7 @@ public class MainActivity extends AppCompatActivity {
             }
         };
         routesRef.addChildEventListener(routesRefListener);
+
 
 
 
