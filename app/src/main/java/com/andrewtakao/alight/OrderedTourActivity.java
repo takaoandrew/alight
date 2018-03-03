@@ -24,6 +24,8 @@ import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.DragEvent;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.andrewtakao.alight.databinding.ActivityOrderedTourBinding;
@@ -81,6 +83,7 @@ public class OrderedTourActivity extends AppCompatActivity {
     //Smooth Scroller
     LinearLayoutManager layoutManager;
     RecyclerView.SmoothScroller smoothScroller;
+    RecyclerView.OnDragListener disabler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,14 +133,21 @@ public class OrderedTourActivity extends AppCompatActivity {
 
         //Initialize Adapter
         mPOIAdapter =  new POIAdapter(this, new ArrayList<>(mPOIHashMap.values()));
-        layoutManager = new LinearLayoutManager(this);
-        binding.rvPois.setLayoutManager(new LinearLayoutManager(this) {
-            @Override
-            public boolean canScrollVertically() {
-                return false;
-            }
-        });
+        layoutManager = new LinearLayoutManager(this) {
+//            @Override
+//            public boolean canScrollVertically() {
+//                return false;
+////                return super.canScrollHorizontally();
+//            }
+        };
+//        CustomLinearLayoutManager customLayoutManager = new CustomLinearLayoutManager(mContext,LinearLayoutManager.VERTICAL,false);
+        binding.rvPois.setLayoutManager(layoutManager);
         binding.rvPois.setAdapter(mPOIAdapter);
+
+        disabler = new RecyclerViewDisabler();
+
+        binding.rvPois.setOnDragListener(disabler);        // disables scolling
+// do stuff while scrolling is disabled
 
         //Get bus route
         Intent intent = getIntent();
@@ -270,9 +280,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 
         //TODO toggle this to enable location
 
-//        checkPermission();
-
-
+        checkPermission();
     }
 
     @Override
@@ -281,6 +289,27 @@ public class OrderedTourActivity extends AppCompatActivity {
         mMediaPlayer.stop();
         mImagesDatabaseRef.removeEventListener(mImagesListener);
         super.onDestroy();
+    }
+
+    public class CustomLinearLayoutManager extends LinearLayoutManager {
+        public CustomLinearLayoutManager(Context context, int orientation, boolean reverseLayout) {
+            super(context, orientation, reverseLayout);
+
+        }
+
+        // it will always pass false to RecyclerView when calling "canScrollVertically()" method.
+        @Override
+        public boolean canScrollVertically() {
+            return false;
+        }
+    }
+
+    public class RecyclerViewDisabler implements RecyclerView.OnDragListener {
+
+        @Override
+        public boolean onDrag(View view, DragEvent dragEvent) {
+            return false;
+        }
     }
 
     private void addAudio(String key) {
@@ -469,40 +498,39 @@ public class OrderedTourActivity extends AppCompatActivity {
         return bestLocation;
     }
 
-    public void playAudio(View view) {
-        Log.d(TAG, "playAudio pressed");
-
-        String fileName;
-
-        if (mPOIHashMap.get(currentKey) != null) {
-            fileName = mPOIHashMap.get(currentKey).audioLocalStorageLocation;
-            Log.d(TAG, "playAudio-- fileName = " + fileName);
-        } else {
-            fileName = null;
-        }
-
-//        if (mMediaPlayer!=null) {
-//            if (mMediaPlayer.isPlaying()) {
-//                mMediaPlayer.stop();
-//            }
+//    public void playAudio(View view) {
+//        Log.d(TAG, "playAudio pressed");
 //
+//        String fileName;
+//
+//        if (mPOIHashMap.get(currentKey) != null) {
+//            fileName = mPOIHashMap.get(currentKey).audioLocalStorageLocation;
+//            Log.d(TAG, "playAudio-- fileName = " + fileName);
+//        } else {
+//            fileName = null;
 //        }
-        if (mMediaPlayer != null ) {
-            if (fileName != null) {
-                if (mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.stop();
-                }
-                else {
-                    mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
-                    mMediaPlayer.start();
-                }
-
-            }
-        } else {
-            mMediaPlayer = new MediaPlayer();
-        }
-    }
-
+//
+////        if (mMediaPlayer!=null) {
+////            if (mMediaPlayer.isPlaying()) {
+////                mMediaPlayer.stop();
+////            }
+////
+////        }
+//        if (mMediaPlayer != null ) {
+//            if (fileName != null) {
+//                if (mMediaPlayer.isPlaying()) {
+//                    mMediaPlayer.stop();
+//                }
+//                else {
+//                    mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
+//                    mMediaPlayer.start();
+//                }
+//
+//            }
+//        } else {
+//            mMediaPlayer = new MediaPlayer();
+//        }
+//    }
 
     public void makeUseOfNewLocation(Location location) {
         Log.d(TAG, "makeUseOfNewLocation");
@@ -511,8 +539,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         }
         String latitude = String.valueOf(location.getLatitude());
         String longitude = String.valueOf(location.getLongitude());
-        String currentLocation = latitude + ", " + longitude;
-        //.001 is around a block away
+
 //        double minDistance = 1000;
 //        Choosing this as minDistance will show closest POI, as opposed to the closest POI within 1000m
         double minDistance = 100000;
@@ -544,7 +571,7 @@ public class OrderedTourActivity extends AppCompatActivity {
                 Log.d(TAG, "index is " + mPOIAdapter.poiArrayList.indexOf(closestPOI));
                 //TODO don't need finalPoi anymore since not in a method and doesn't need to be final
                 smoothScroller.setTargetPosition(mPOIAdapter.poiArrayList.indexOf(finalPoi));
-                layoutManager.startSmoothScroll(smoothScroller);
+                binding.rvPois.getLayoutManager().startSmoothScroll(smoothScroller);
 //                Log.d(TAG, "position is " + binding.rvPois.position)
 //                new Handler().postDelayed(new Runnable() {
 //                    @Override
@@ -565,7 +592,6 @@ public class OrderedTourActivity extends AppCompatActivity {
         binding.directionToolbar.setText((int) minDistance+"m");
 
     }
-
 
     private void checkPermission() {
 

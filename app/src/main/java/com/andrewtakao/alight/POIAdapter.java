@@ -19,6 +19,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -74,26 +75,6 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
                     .into(holder.backgroundImage);
         } else {
             Log.d(TAG, "onBindViewHolder-- fileName is null, downloading image");
-
-//            OrderedTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-//    //        FortySevenTourActivity.mStorageRef.child(readableKey(poi.imageName)).getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-//                @Override
-//                public void onSuccess(Uri uri) {
-//                    // Got the download URL for 'users/me/profile.png'
-//                    // Pass it to Picasso to download, show in ImageView and caching
-//                    Picasso.with(context).load(uri.toString())
-//                            .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
-////                            .fit()
-//                            .centerCrop()
-//                            .into(holder.backgroundImage);
-//                }
-//            }).addOnFailureListener(new OnFailureListener() {
-//                @Override
-//                public void onFailure(@NonNull Exception exception) {
-//                    // Handle any errors
-//                }
-//            });
-
         }
 
 
@@ -108,6 +89,16 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
                 Log.d(TAG, "You clicked on poi.imageStorageLocation " + poi.imageLocalStorageLocation);
                 Log.d(TAG, "You clicked on holder.imageNameView " + holder.imageNameView);
                 Log.d(TAG, "You clicked on holder.locationView " + holder.locationView);
+                if (OrderedTourActivity.mMediaPlayer!=null && OrderedTourActivity.mMediaPlayer.isPlaying()) {
+                    OrderedTourActivity.mMediaPlayer.stop();
+                } else {
+                    String fileName;
+                    fileName = poi.audioLocalStorageLocation;
+                    if (fileName != null) {
+                        OrderedTourActivity.mMediaPlayer = MediaPlayer.create(OrderedTourActivity.mContext, Uri.parse(fileName));
+                        OrderedTourActivity.mMediaPlayer.start();
+                    }
+                }
             }
         });
     }

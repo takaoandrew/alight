@@ -21,8 +21,6 @@ public class ActivityOrderedTourBinding extends android.databinding.ViewDataBind
         sViewsWithIds.put(R.id.rv_pois, 5);
         sViewsWithIds.put(R.id.location, 6);
         sViewsWithIds.put(R.id.closest_poi, 7);
-        sViewsWithIds.put(R.id.get_location, 8);
-        sViewsWithIds.put(R.id.play_audio, 9);
     }
     // views
     @NonNull
@@ -32,13 +30,9 @@ public class ActivityOrderedTourBinding extends android.databinding.ViewDataBind
     @NonNull
     public final android.widget.TextView directionToolbar;
     @NonNull
-    public final android.widget.Button getLocation;
-    @NonNull
     public final android.widget.TextView location;
     @NonNull
     private final android.widget.LinearLayout mboundView0;
-    @NonNull
-    public final android.widget.Button playAudio;
     @NonNull
     public final android.support.v7.widget.RecyclerView rvPois;
     @NonNull
@@ -52,15 +46,13 @@ public class ActivityOrderedTourBinding extends android.databinding.ViewDataBind
 
     public ActivityOrderedTourBinding(@NonNull android.databinding.DataBindingComponent bindingComponent, @NonNull View root) {
         super(bindingComponent, root, 0);
-        final Object[] bindings = mapBindings(bindingComponent, root, 10, sIncludes, sViewsWithIds);
+        final Object[] bindings = mapBindings(bindingComponent, root, 8, sIncludes, sViewsWithIds);
         this.closestPoi = (android.widget.TextView) bindings[7];
         this.closestPoiToolbar = (android.widget.TextView) bindings[3];
         this.directionToolbar = (android.widget.TextView) bindings[4];
-        this.getLocation = (android.widget.Button) bindings[8];
         this.location = (android.widget.TextView) bindings[6];
         this.mboundView0 = (android.widget.LinearLayout) bindings[0];
         this.mboundView0.setTag(null);
-        this.playAudio = (android.widget.Button) bindings[9];
         this.rvPois = (android.support.v7.widget.RecyclerView) bindings[5];
         this.toolbar = (android.support.v7.widget.Toolbar) bindings[1];
         this.toolbarTitle = (android.widget.TextView) bindings[2];
