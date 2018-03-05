@@ -7,6 +7,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -46,7 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class OrderedTourActivity extends AppCompatActivity {
+public class OrderedTourActivity extends AppCompatActivity implements SensorEventListener {
 
     public static StorageReference mStorageRef;
     public static StorageReference mAudioRef;
@@ -85,8 +89,141 @@ public class OrderedTourActivity extends AppCompatActivity {
     RecyclerView.SmoothScroller smoothScroller;
     RecyclerView.OnDragListener disabler;
 
+    //Sensors
+    private SensorManager mSensorManager;
+    private final float[] mAccelerometerReading = new float[3];
+    private final float[] mMagnetometerReading = new float[3];
+
+    private final float[] mRotationMatrix = new float[9];
+    private final float[] mOrientationAngles = new float[3];
+    SensorEventListener sensorEventListener;
+
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+        // Do something here if sensor accuracy changes.
+        // You must implement this callback in your code.
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Get updates from the accelerometer and magnetometer at a constant rate.
+        // To make batch operations more efficient and reduce power consumption,
+        // provide support for delaying updates to the application.
+        //
+        // In this example, the sensor reporting delay is small enough such that
+        // the application receives an update before the system checks the sensor
+        // readings again.
+//        mSensorManager.registerListener(sensorEventListener , Sensor.TYPE_ACCELEROMETER,
+//                SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI);
+//        mSensorManager.registerListener(this, Sensor.TYPE_MAGNETIC_FIELD,
+//                SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI);
+    }
+
+    // Get readings from accelerometer and magnetometer. To simplify calculations,
+    // consider storing these readings as unit vectors.
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (Integer.valueOf((event.sensor).toString()) == Sensor.TYPE_ACCELEROMETER) {
+            System.arraycopy(event.values, 0, mAccelerometerReading,
+                    0, mAccelerometerReading.length);
+        }
+        else if (Integer.valueOf((event.sensor).toString()) == Sensor.TYPE_MAGNETIC_FIELD) {
+            System.arraycopy(event.values, 0, mMagnetometerReading,
+                    0, mMagnetometerReading.length);
+        }
+    }
+
+    // Compute the three orientation angles based on the most recent readings from
+    // the device's accelerometer and magnetometer.
+    public void updateOrientationAngles() {
+        // Update rotation matrix, which is needed to update orientation angles.
+        mSensorManager.getRotationMatrix(mRotationMatrix, null,
+                mAccelerometerReading, mMagnetometerReading);
+
+        // "mRotationMatrix" now has up-to-date information.
+
+        mSensorManager.getOrientation(mRotationMatrix, mOrientationAngles);
+
+        // "mOrientationAngles" now has up-to-date information.
+    }
+
+    //Direction
+//    float[] mGravity;
+//    float[] mGeomagnetic;
+//    float azimut;
+//
+//    private SensorManager mSensorManager;
+//    private Sensor mAccelerometer;
+//
+//    protected void onResume() {
+//        super.onResume();
+//        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
+//    }
+//
+//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+//    }
+//
+//    @Override
+//    public void onSensorChanged(SensorEvent event) {
+//
+//        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+//            Log.d(TAG, "Accelerometer");
+//            mGravity = event.values;
+//        }
+//
+//        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
+//            Log.d(TAG, "Magnetic fields");
+//            mGeomagnetic = event.values;
+//        }
+//
+//        if (mGravity != null && mGeomagnetic != null) {
+//            Log.d(TAG, "nonnull values");
+//            float R[] = new float[9];
+//            float I[] = new float[9];
+//
+//            if (SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic)) {
+//
+//                // orientation contains azimut, pitch and roll
+//                float orientation[] = new float[3];
+//                SensorManager.getOrientation(R, orientation);
+//
+//                azimut = orientation[0];
+//                Log.d(TAG, "azimut = " + azimut);
+//            }
+//        }
+//    }
+//
+
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+//        mSensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_NORMAL);
+//        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+//        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        SensorEventListener _SensorEventListener=   new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+            }
+        };
+//        mSensorManager.registerListener(_SensorEventListener , mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+
+        //This works, amazing
+        Log.d(TAG, "angle should be 180 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
+        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
+
+
         Log.d(TAG, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
                 "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
                 "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
@@ -284,11 +421,17 @@ public class OrderedTourActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onPause() {
+        Log.d(TAG, "onPause");
+        if (locationManager != null) {
+            locationManager.removeUpdates(locationListener);
+        }
         if (mMediaPlayer!=null && mMediaPlayer.isPlaying())
         mMediaPlayer.stop();
         mImagesDatabaseRef.removeEventListener(mImagesListener);
-        super.onDestroy();
+        // Don't receive any more updates from either sensor.
+        mSensorManager.unregisterListener(this);
+        super.onPause();
     }
 
     public class CustomLinearLayoutManager extends LinearLayoutManager {
@@ -635,5 +778,23 @@ public class OrderedTourActivity extends AppCompatActivity {
                 ),
                 " "
         );
+    }
+
+    private double angleFromCoordinate(double lat1, double long1, double lat2,
+                                       double long2) {
+
+        double dLon = (long2 - long1);
+
+        double y = Math.sin(dLon) * Math.cos(lat2);
+        double x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1)
+                * Math.cos(lat2) * Math.cos(dLon);
+
+        double brng = Math.atan2(y, x);
+
+        brng = Math.toDegrees(brng);
+        brng = (brng + 360) % 360;
+        brng = 360 - brng; // count degrees counter-clockwise - remove to make clockwise
+
+        return brng;
     }
 }
