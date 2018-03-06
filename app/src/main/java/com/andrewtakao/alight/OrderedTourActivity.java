@@ -7,18 +7,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.MediaMetadataRetriever;
 import android.media.MediaPlayer;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
@@ -29,8 +24,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.DragEvent;
-import android.view.MotionEvent;
 import android.view.View;
+import android.widget.SeekBar;
 
 import com.andrewtakao.alight.databinding.ActivityOrderedTourBinding;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -42,7 +37,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
-import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,6 +75,10 @@ public class OrderedTourActivity extends AppCompatActivity {
 
     //Audio
     public static MediaPlayer mMediaPlayer;
+    MediaMetadataRetriever mMetaRetriever;
+    int mDuration;
+    private static final int mSkipTime = 1000;
+    private static final int mBarUpdateInterval = 1000;
 
     //Dao Database
 //    private static AppDatabase db;
@@ -90,18 +88,14 @@ public class OrderedTourActivity extends AppCompatActivity {
     RecyclerView.SmoothScroller smoothScroller;
     RecyclerView.OnDragListener disabler;
 
-    //Ordering POIs
-    private int poiOrder = 0;
-
+    //Media Player
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
         //This works, amazing
 //        Log.d(TAG, "angle should be 180 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
 //        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
-
 
         Log.d(TAG, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
                 "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
@@ -139,36 +133,23 @@ public class OrderedTourActivity extends AppCompatActivity {
         mPOIHashMap = new HashMap<>();
 
         //Set smooth scroller
-
         smoothScroller = new LinearSmoothScroller(mContext) {
             @Override protected int getVerticalSnapPreference() {
                 return LinearSmoothScroller.SNAP_TO_START;
             }
         };
 
-
         //Initialize Adapter
         mPOIAdapter =  new POIAdapter(this, new ArrayList<>(mPOIHashMap.values()));
         layoutManager = new LinearLayoutManager(this) {
-//            @Override
-//            public boolean canScrollVertically() {
-//                return false;
-////                return super.canScrollHorizontally();
-//            }
         };
-//        CustomLinearLayoutManager customLayoutManager = new CustomLinearLayoutManager(mContext,LinearLayoutManager.VERTICAL,false);
+
         binding.rvPois.setLayoutManager(layoutManager);
         binding.rvPois.setAdapter(mPOIAdapter);
-
-        disabler = new RecyclerViewDisabler();
-
-        binding.rvPois.setOnDragListener(disabler);        // disables scolling
-// do stuff while scrolling is disabled
 
         //Get bus route
         Intent intent = getIntent();
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
-        Log.d(TAG, "busRoute = "+busRoute);
 
         mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
 
@@ -181,6 +162,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         }
         Log.d(TAG, "size of database is " + MainActivity.poiDatabase.poiDao().getAll(busRoute).size());
 
+        //First, populate mPOIHashMap with local data
         if (MainActivity.poiDatabase.poiDao().getAll(busRoute).size() > 0) {
             Log.d(TAG, "Setting mPOIHashMap from local database!");
             for (POI databasePoi : MainActivity.poiDatabase.poiDao().getAll(busRoute)) {
@@ -189,26 +171,24 @@ public class OrderedTourActivity extends AppCompatActivity {
             }
             mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
             mPOIAdapter.notifyDataSetChanged();
-//            Log.d(TAG, "");
         }
-
-        Log.d(TAG, "Creating and setting listener");
 
         //Listens to firebase database for changes in route content pointers
         mImagesListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                // Ignore empty points
                 if (dataSnapshot.hasChildren()) {
                     firstChildSnapshot = dataSnapshot.getChildren().iterator().next();
-
                     if (firstChildSnapshot.hasChildren()) {
+                        //Should put for loop to download side images
                         secondChildSnapshot = firstChildSnapshot.getChildren().iterator().next();
-
-
+                        //Ignore it if it's already in the HashMap (was stored locally)
                         if (mPOIHashMap.containsKey(secondChildSnapshot.getKey())) {
                             Log.d(TAG, "key " + secondChildSnapshot.getKey() + " is already in mPOIHashMap");
                             return;
                         }
+                        //Set POI
                         Log.d(TAG, "secondChildSnapshot.getKey() = " + secondChildSnapshot.getKey());
                         POI addedPoi = new POI(
                                 secondChildSnapshot.getKey(),
@@ -218,36 +198,20 @@ public class OrderedTourActivity extends AppCompatActivity {
                                 busRoute
                         );
                         Log.d(TAG, "addedPOI.busRoute = " + addedPoi.busRoute);
-
                         MainActivity.poiDatabase.poiDao().insertAll(addedPoi);
                         mPOIHashMap.put(secondChildSnapshot.getKey(), addedPoi);
-//                    mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
                         mPOIAdapter = new POIAdapter(mContext, new ArrayList<>(mPOIHashMap.values()));
-//                    mPOIAdapter.notifyDataSetChanged();
-
-//                        Log.d(TAG, (String) secondChildSnapshot.child("imageName").getValue());
                         try {
-                            addImageToTempFile(secondChildSnapshot.getKey()
-//                                    , (String) secondChildSnapshot.child("imageName").getValue()
-                            );
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                            addImageToTempFile(secondChildSnapshot.getKey());
+                        } catch (IOException e) { e.printStackTrace(); }
 
                         //Store audio location
                         try {
                             addAudioToTempFile(secondChildSnapshot.getKey());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                        } catch (IOException e) { e.printStackTrace();}
 
-                    }
-                    else {
-//                        Log.d(TAG, "onChildAdded-- this snapshot has no children");
                     }
                 }
-
-
             }
 
             @Override
@@ -256,6 +220,7 @@ public class OrderedTourActivity extends AppCompatActivity {
 
             @Override
             public void onChildRemoved(DataSnapshot dataSnapshot) {
+                //Should remove from local database
                 mPOIHashMap.remove(dataSnapshot.getKey());
                 mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
                 mPOIAdapter.notifyDataSetChanged();
@@ -263,14 +228,13 @@ public class OrderedTourActivity extends AppCompatActivity {
 
             @Override
             public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
-
             }
         };
+
         mImagesDatabaseRef = MainActivity.routesRef.child(busRoute);
         mImagesDatabaseRef.addChildEventListener(mImagesListener);
 
@@ -280,7 +244,7 @@ public class OrderedTourActivity extends AppCompatActivity {
             @Override
             public void onLocationChanged(Location location) {
                 //Commented out while using button to debug
-                Log.d(TAG, "onLocationChanged");
+//                Log.d(TAG, "onLocationChanged");
                 makeUseOfNewLocation(location);
             }
 
@@ -299,11 +263,15 @@ public class OrderedTourActivity extends AppCompatActivity {
 
             }
         };
-
-
         //TODO toggle this to enable location
-
         checkPermission();
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        setPlayPauseButton();
+        hideMediaButtons();
     }
 
     @Override
@@ -341,12 +309,6 @@ public class OrderedTourActivity extends AppCompatActivity {
     }
 
     private void addAudio(String key) {
-//        try {
-        Log.d(TAG, "key = " + key);
-        Log.d(TAG, "readable key = " + readableKey(key));
-        Log.d(TAG, "audio key = " + audioKey(readableKey(key)));
-        //Get local file
-
         String fileName;
 
         fileName = mPOIHashMap.get(key).audioLocalStorageLocation;
@@ -360,7 +322,19 @@ public class OrderedTourActivity extends AppCompatActivity {
 
         if (fileName != null) {
             mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
+            try {
+                setMediaPlayer(Uri.parse(fileName));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             mMediaPlayer.start();
+            setPlayPauseButton();
+
+            Location lastKnownLocation = getLastKnownLocation();
+
+            Log.d(TAG, "lastKnownLocation = " + lastKnownLocation);
+            makeUseOfNewLocation(lastKnownLocation);
+
         }
     }
 
@@ -459,8 +433,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         return key.replace(".jpg", ".mp3");
     }
 
-    //Location
-
+    //Checks whether you have permission, then get's the last known location.
     public void getLastLocation() {
         Log.d(TAG, "getLastLocation");
 
@@ -529,6 +502,7 @@ public class OrderedTourActivity extends AppCompatActivity {
     public void makeUseOfNewLocation(Location location) {
         Log.d(TAG, "makeUseOfNewLocation");
         if (location == null) {
+            Log.d(TAG, "location == null");
             return;
         }
         String latitude = String.valueOf(location.getLatitude());
@@ -573,16 +547,19 @@ public class OrderedTourActivity extends AppCompatActivity {
 
 
             //Uncomment if you want it to always scroll to current position.
-//            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
+            binding.rvPois.smoothScrollToPosition(mPOIAdapter.poiArrayList.indexOf(closestPOI));
         }
 
         binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
         binding.directionToolbar.setText((int) minDistance+"m");
 
+
+        smoothScroller.setTargetPosition(mPOIAdapter.poiArrayList.indexOf(finalPoi));
+        binding.rvPois.getLayoutManager().startSmoothScroll(smoothScroller);
     }
 
+    // Checks if user has enabled permission. If they have, get the last location.
     private void checkPermission() {
-
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -598,7 +575,6 @@ public class OrderedTourActivity extends AppCompatActivity {
             }
         } else {
             Log.d(TAG, "onCreate-- getLastLocation(), then locationmanager.requestLocationupdates()");
-            binding.location.setText("");
             getLastLocation();
 
             //TODO Choose between GPS and network provider
@@ -641,5 +617,149 @@ public class OrderedTourActivity extends AppCompatActivity {
         brng = 360 - brng; // count degrees counter-clockwise - remove to make clockwise
 
         return brng;
+    }
+
+    public void setPlayPauseButton() {
+        if (mMediaPlayer==null) {
+            return;
+        }
+        if (mMediaPlayer.isPlaying()) {
+            binding.ibStart.setImageResource(R.drawable.pause);
+            binding.ibStart.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    pauseMusic(view);
+                    setPlayPauseButton();
+                }
+            });
+        } else {
+            binding.ibStart.setImageResource(R.drawable.play);
+            binding.ibStart.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    startMusic(view);
+                    setPlayPauseButton();
+                }
+            });
+        }
+    }
+
+
+    public void startMusic(View v) {
+        if (mMediaPlayer!=null&&!mMediaPlayer.isPlaying()){
+            mMediaPlayer.start();
+        }
+    }
+
+    public void pauseMusic(View v) {
+        if (mMediaPlayer!=null&&mMediaPlayer.isPlaying()){
+            mMediaPlayer.pause();
+        }
+    }
+
+
+    public void rewindMusic(View v) {
+        if (mMediaPlayer!=null) {
+            int position = mMediaPlayer.getCurrentPosition();
+            mMediaPlayer.seekTo(position - mSkipTime);
+        }
+    }
+
+    public void forwardMusic(View v) {
+        if (mMediaPlayer!=null) {
+            int position = mMediaPlayer.getCurrentPosition();
+            mMediaPlayer.seekTo(position + mSkipTime);
+        }
+    }
+
+
+    public void updateBar() {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                try { while (!isInterrupted()) {
+                    Thread.sleep(mBarUpdateInterval);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() { binding.sbSong.setProgress(mMediaPlayer.getCurrentPosition());}
+                    }); }
+                } catch (InterruptedException e) { } }
+        };
+        t.start();
+    }
+
+    public void setMediaPlayer(Object object) throws IOException {
+        mMediaPlayer = new MediaPlayer();
+        mMetaRetriever = new MediaMetadataRetriever();
+
+        if (object instanceof Uri) {
+            Log.d(TAG, "Uri");
+            mMetaRetriever.setDataSource(this, (Uri) object);
+            mMediaPlayer.setDataSource(this, (Uri) object);
+            mMetaRetriever.setDataSource(this, (Uri) object);
+        }
+        else {
+            Log.d(TAG, "What's the instanceof");
+        }
+
+        mMediaPlayer.prepare();
+
+        mDuration = Integer.parseInt(mMetaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
+//            mStartStopButton.setVisibility(View.VISIBLE);
+//            mStopButton.setVisibility(View.VISIBLE);
+//        binding.sbSong.setVisibility(View.VISIBLE);
+        binding.sbSong.setMax(mDuration);
+        binding.tvDuration.setText(convertToMinutesAndSeconds(mDuration));
+
+        binding.sbSong.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                binding.tvTime.setText(convertToMinutesAndSeconds(i));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                pauseMusic(null);
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                mMediaPlayer.seekTo(seekBar.getProgress());
+                startMusic(null);
+            }
+        });
+
+        updateBar();
+        startMusic(null);
+    }
+
+    public static String convertToMinutesAndSeconds(int milliseconds) {
+        int seconds = milliseconds/1000;
+        int minutes = seconds/60;
+        int leftOverSeconds = seconds - minutes*60;
+        String colon = ":";
+        if (leftOverSeconds<10) {
+            colon = ":0";
+        }
+        String returnString = (minutes+colon+leftOverSeconds);
+        return returnString;
+
+    }
+
+    public void showMediaButtons() {
+        binding.tvTime.setVisibility(View.VISIBLE);
+        binding.ibStart.setVisibility(View.VISIBLE);
+        binding.ibForward.setVisibility(View.VISIBLE);
+        binding.ibRewind.setVisibility(View.VISIBLE);
+        binding.tvDuration.setVisibility(View.VISIBLE);
+        binding.sbSong.setVisibility(View.VISIBLE);
+    }
+    public void hideMediaButtons() {
+        binding.tvTime.setVisibility(View.GONE);
+        binding.ibStart.setVisibility(View.GONE);
+        binding.ibForward.setVisibility(View.GONE);
+        binding.ibRewind.setVisibility(View.GONE);
+        binding.tvDuration.setVisibility(View.GONE);
+        binding.sbSong.setVisibility(View.GONE);
     }
 }

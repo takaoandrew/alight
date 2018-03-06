@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -34,6 +35,8 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
     private final String TAG = POIAdapter.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
     LayoutInflater inflater;
+    Handler handler;
+    Runnable runnable;
 
     public POIAdapter(Context context, ArrayList<POI> poiArrayList) {
         this.context = context;
@@ -89,16 +92,34 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
                 Log.d(TAG, "You clicked on poi.imageStorageLocation " + poi.imageLocalStorageLocation);
                 Log.d(TAG, "You clicked on holder.imageNameView " + holder.imageNameView);
                 Log.d(TAG, "You clicked on holder.locationView " + holder.locationView);
-                if (OrderedTourActivity.mMediaPlayer!=null && OrderedTourActivity.mMediaPlayer.isPlaying()) {
-                    OrderedTourActivity.mMediaPlayer.stop();
-                } else {
-                    String fileName;
-                    fileName = poi.audioLocalStorageLocation;
-                    if (fileName != null) {
-                        OrderedTourActivity.mMediaPlayer = MediaPlayer.create(OrderedTourActivity.mContext, Uri.parse(fileName));
-                        OrderedTourActivity.mMediaPlayer.start();
-                    }
+
+                ((OrderedTourActivity)context).showMediaButtons();
+                //Make unclickable
+//                holder.backgroundImage.setClickable(false);
+                if (handler != null && runnable != null) {
+                    handler.removeCallbacks(runnable);
                 }
+                runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        ((OrderedTourActivity)context).hideMediaButtons();
+                        holder.backgroundImage.setClickable(true);
+                    }
+                };
+                handler = new Handler();
+                handler.postDelayed(runnable, 3000);
+
+//                if (OrderedTourActivity.mMediaPlayer!=null && OrderedTourActivity.mMediaPlayer.isPlaying()) {
+//                    OrderedTourActivity.mMediaPlayer.stop();
+//                } else {
+//                    String fileName;
+//                    fileName = poi.audioLocalStorageLocation;
+//                    if (fileName != null) {
+//                        OrderedTourActivity.mMediaPlayer = MediaPlayer.create(OrderedTourActivity.mContext, Uri.parse(fileName));
+//                        OrderedTourActivity.mMediaPlayer.start();
+//                    }
+//                }
+
             }
         });
     }

@@ -78,6 +78,81 @@
         </android.support.v7.widget.RecyclerView>
 
         <TextView
+            android:id="@+id/tv_time"
+            tools:text="0:01"
+            android:gravity="center"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginBottom="10dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/sb_song"
+            app:layout_constraintBottom_toTopOf="@id/ib_forward"/>
+
+        <SeekBar
+            android:id="@+id/sb_song"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toTopOf="@+id/tv_time"
+            app:layout_constraintTop_toBottomOf="@id/tv_time"
+            app:layout_constraintEnd_toStartOf="@id/tv_duration"
+            app:layout_constraintStart_toEndOf="@id/tv_time"/>
+
+        <TextView
+            android:id="@+id/tv_duration"
+            tools:text="3:31"
+            android:gravity="center"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="10dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/sb_song"
+            app:layout_constraintBottom_toBottomOf="@id/tv_time"/>
+
+        <ImageButton
+            android:id="@+id/ib_rewind"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:onClick="rewindMusic"
+            android:src="@drawable/back"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toStartOf="@id/ib_start"
+            app:layout_constraintStart_toStartOf="parent" />
+
+        <ImageButton
+            android:id="@+id/ib_start"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginStart="32dp"
+            android:onClick="startAudio"
+            android:src="@drawable/play"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintStart_toEndOf="@+id/ib_rewind"
+            app:layout_constraintEnd_toStartOf="@id/ib_forward"
+            app:layout_constraintTop_toTopOf="@+id/ib_rewind"
+            app:layout_constraintBottom_toBottomOf="@id/ib_rewind" />
+
+        <ImageButton
+            android:id="@+id/ib_forward"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="32dp"
+            android:layout_marginStart="32dp"
+            android:onClick="forwardMusic"
+            android:src="@drawable/forward"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintStart_toEndOf="@+id/ib_start"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/ib_rewind"
+            app:layout_constraintBottom_toBottomOf="@id/ib_rewind" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/black"

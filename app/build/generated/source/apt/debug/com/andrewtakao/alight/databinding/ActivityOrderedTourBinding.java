@@ -19,8 +19,14 @@ public class ActivityOrderedTourBinding extends android.databinding.ViewDataBind
         sViewsWithIds.put(R.id.closest_poi_toolbar, 3);
         sViewsWithIds.put(R.id.direction_toolbar, 4);
         sViewsWithIds.put(R.id.rv_pois, 5);
-        sViewsWithIds.put(R.id.location, 6);
-        sViewsWithIds.put(R.id.closest_poi, 7);
+        sViewsWithIds.put(R.id.tv_time, 6);
+        sViewsWithIds.put(R.id.sb_song, 7);
+        sViewsWithIds.put(R.id.tv_duration, 8);
+        sViewsWithIds.put(R.id.ib_rewind, 9);
+        sViewsWithIds.put(R.id.ib_start, 10);
+        sViewsWithIds.put(R.id.ib_forward, 11);
+        sViewsWithIds.put(R.id.location, 12);
+        sViewsWithIds.put(R.id.closest_poi, 13);
     }
     // views
     @NonNull
@@ -30,15 +36,27 @@ public class ActivityOrderedTourBinding extends android.databinding.ViewDataBind
     @NonNull
     public final android.widget.TextView directionToolbar;
     @NonNull
+    public final android.widget.ImageButton ibForward;
+    @NonNull
+    public final android.widget.ImageButton ibRewind;
+    @NonNull
+    public final android.widget.ImageButton ibStart;
+    @NonNull
     public final android.widget.TextView location;
     @NonNull
     private final android.widget.LinearLayout mboundView0;
     @NonNull
     public final android.support.v7.widget.RecyclerView rvPois;
     @NonNull
+    public final android.widget.SeekBar sbSong;
+    @NonNull
     public final android.support.v7.widget.Toolbar toolbar;
     @NonNull
     public final android.widget.TextView toolbarTitle;
+    @NonNull
+    public final android.widget.TextView tvDuration;
+    @NonNull
+    public final android.widget.TextView tvTime;
     // variables
     // values
     // listeners
@@ -46,16 +64,22 @@ public class ActivityOrderedTourBinding extends android.databinding.ViewDataBind
 
     public ActivityOrderedTourBinding(@NonNull android.databinding.DataBindingComponent bindingComponent, @NonNull View root) {
         super(bindingComponent, root, 0);
-        final Object[] bindings = mapBindings(bindingComponent, root, 8, sIncludes, sViewsWithIds);
-        this.closestPoi = (android.widget.TextView) bindings[7];
+        final Object[] bindings = mapBindings(bindingComponent, root, 14, sIncludes, sViewsWithIds);
+        this.closestPoi = (android.widget.TextView) bindings[13];
         this.closestPoiToolbar = (android.widget.TextView) bindings[3];
         this.directionToolbar = (android.widget.TextView) bindings[4];
-        this.location = (android.widget.TextView) bindings[6];
+        this.ibForward = (android.widget.ImageButton) bindings[11];
+        this.ibRewind = (android.widget.ImageButton) bindings[9];
+        this.ibStart = (android.widget.ImageButton) bindings[10];
+        this.location = (android.widget.TextView) bindings[12];
         this.mboundView0 = (android.widget.LinearLayout) bindings[0];
         this.mboundView0.setTag(null);
         this.rvPois = (android.support.v7.widget.RecyclerView) bindings[5];
+        this.sbSong = (android.widget.SeekBar) bindings[7];
         this.toolbar = (android.support.v7.widget.Toolbar) bindings[1];
         this.toolbarTitle = (android.widget.TextView) bindings[2];
+        this.tvDuration = (android.widget.TextView) bindings[8];
+        this.tvTime = (android.widget.TextView) bindings[6];
         setRootTag(root);
         // listeners
         invalidateAll();

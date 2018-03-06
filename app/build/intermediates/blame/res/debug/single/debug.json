@@ -428,6 +428,10 @@
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/appcompat-v7-26.1.0.aar/772a55b82f41dd22fe35d4562c93bb5f/res/drawable-xhdpi-v4/abc_list_pressed_holo_dark.9.png"
     },
     {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_ic_file_download_black_24dp.png.flat",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/drawable/ic_file_download_black_24dp.png"
+    },
+    {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable-mdpi-v4_googleg_standard_color_18.png.flat",
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/play-services-base-11.8.0.aar/38f9fbc4e42c2d42251fd2b8051698fd/res/drawable-mdpi-v4/googleg_standard_color_18.png"
     },
@@ -1184,6 +1188,10 @@
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/appcompat-v7-26.1.0.aar/772a55b82f41dd22fe35d4562c93bb5f/res/drawable-xxxhdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png"
     },
     {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_pause.png.flat",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/drawable/pause.png"
+    },
+    {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable-hdpi-v4_abc_list_divider_mtrl_alpha.9.png.flat",
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/appcompat-v7-26.1.0.aar/772a55b82f41dd22fe35d4562c93bb5f/res/drawable-hdpi-v4/abc_list_divider_mtrl_alpha.9.png"
     },
@@ -1212,12 +1220,20 @@
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/appcompat-v7-26.1.0.aar/772a55b82f41dd22fe35d4562c93bb5f/res/color/abc_btn_colored_borderless_text_material.xml"
     },
     {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_ic_file_download_white_24dp.png.flat",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/drawable/ic_file_download_white_24dp.png"
+    },
+    {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable-xxhdpi-v4_abc_scrubber_control_to_pressed_mtrl_005.png.flat",
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/appcompat-v7-26.1.0.aar/772a55b82f41dd22fe35d4562c93bb5f/res/drawable-xxhdpi-v4/abc_scrubber_control_to_pressed_mtrl_005.png"
     },
     {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable-xxhdpi-v4_abc_list_selector_disabled_holo_light.9.png.flat",
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/appcompat-v7-26.1.0.aar/772a55b82f41dd22fe35d4562c93bb5f/res/drawable-xxhdpi-v4/abc_list_selector_disabled_holo_light.9.png"
+    },
+    {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_forward.png.flat",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/drawable/forward.png"
     },
     {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable-v21_abc_action_bar_item_background_material.xml.flat",
@@ -1352,6 +1368,10 @@
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/design-26.1.0.aar/8a4b8055a3274d98bb704c9f1498963a/res/layout/design_navigation_item_subheader.xml"
     },
     {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_play.png.flat",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/drawable/play.png"
+    },
+    {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/layout_activity_ordered_tour.xml.flat",
         "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/layout/activity_ordered_tour.xml"
     },
@@ -1430,6 +1450,10 @@
     {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable-xhdpi-v4_googleg_standard_color_18.png.flat",
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/play-services-base-11.8.0.aar/38f9fbc4e42c2d42251fd2b8051698fd/res/drawable-xhdpi-v4/googleg_standard_color_18.png"
+    },
+    {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_ic_get_app_white_24dp.png.flat",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/drawable/ic_get_app_white_24dp.png"
     },
     {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_abc_btn_check_material.xml.flat",
@@ -1526,6 +1550,10 @@
     {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable-xxhdpi-v4_common_google_signin_btn_icon_dark_normal_background.9.png.flat",
         "source": "/Users/andrewtakao/.gradle/caches/transforms-1/files-1.1/play-services-base-11.8.0.aar/38f9fbc4e42c2d42251fd2b8051698fd/res/drawable-xxhdpi-v4/common_google_signin_btn_icon_dark_normal_background.9.png"
+    },
+    {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_back.png.flat",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/drawable/back.png"
     },
     {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/res/merged/debug/drawable_abc_switch_thumb_material.xml.flat",
