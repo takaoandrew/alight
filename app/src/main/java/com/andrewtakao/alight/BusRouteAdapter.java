@@ -17,12 +17,12 @@ import java.util.ArrayList;
 
 public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRouteViewHolder> {
     private Context context;
-    private ArrayList<String> busRoutes;
+    private ArrayList<Route> busRoutes;
     private final String TAG = BusRouteAdapter.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
     LayoutInflater inflater;
 
-    public BusRouteAdapter(Context context, ArrayList<String> busRoutes) {
+    public BusRouteAdapter(Context context, ArrayList<Route> busRoutes) {
         this.context = context;
         this.busRoutes = busRoutes;
         this.inflater = LayoutInflater.from(context);
@@ -38,7 +38,10 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
     public void onBindViewHolder(BusRouteViewHolder holder, final int position) {
         Log.d(TAG, "onBindViewHolder-- position, MainActivity.busRoutes.get(position) = " + position + ", "
         + busRoutes.get(position));
-        holder.busRoute.setText(busRoutes.get(position));
+        final Route currentRoute = busRoutes.get(position);
+        holder.busRoute.setText(currentRoute.route);
+        holder.firebaseCount.setText(""+currentRoute.firebaseCount);
+        holder.downloadedCount.setText(""+currentRoute.downloadedCount);
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -49,7 +52,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
                 Intent intent = new Intent(context, OrderedTourActivity.class);
 //                Intent intent = new Intent(context, FortySevenTourActivity.class);
 
-                intent.putExtra(BUS_ROUTE_EXTRA, busRoutes.get(position));
+                intent.putExtra(BUS_ROUTE_EXTRA, currentRoute.route);
                 context.startActivity(intent);
             }
         });
@@ -63,11 +66,14 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
 
     class BusRouteViewHolder extends RecyclerView.ViewHolder {
 
-        TextView busRoute;
+        TextView busRoute, downloadedCount, firebaseCount;
 
         public BusRouteViewHolder(View itemView) {
             super(itemView);
             busRoute = itemView.findViewById(R.id.bus_route);
+            downloadedCount = itemView.findViewById(R.id.downloaded_count);
+            firebaseCount = itemView.findViewById(R.id.firebase_count);
+
         }
     }
 }

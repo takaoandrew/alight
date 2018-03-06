@@ -23,10 +23,16 @@ public class MainActivity extends AppCompatActivity {
     public static FirebaseDatabase database;
     public static DatabaseReference routesRef;
     private ChildEventListener routesRefListener;
-    public static ArrayList<String> busRoutes;
+    public static ArrayList<Route> busRoutes;
     private BusRouteAdapter busRouteAdapter;
 
+    //Route database
     private static RouteDatabase routeDatabase;
+    //POI Database
+    public static AppDatabase poiDatabase;
+
+    int childCount = 0;
+
 
 
     @Override
@@ -52,14 +58,24 @@ public class MainActivity extends AppCompatActivity {
                     RouteDatabase.class, "route-database").allowMainThreadQueries().build();
 
         }
-        Log.d(TAG, "size of database is " + routeDatabase.routeDao().getAll().size());
+        if (poiDatabase == null) {
+            Log.d(TAG, "Creating database");
+            poiDatabase = Room.databaseBuilder(getApplicationContext(),
+                    AppDatabase.class, "poi-database").allowMainThreadQueries().build();
+
+        }
+
+
+
+        Log.d(TAG, "size of route database is " + routeDatabase.routeDao().getAll().size());
+        Log.d(TAG, "size of poi database is " + poiDatabase.poiDao().getAll().size());
 
         if (routeDatabase.routeDao().getAll().size() > 0) {
             Log.d(TAG, "Setting mPOIHashMap from local database!");
             for (Route routeNumber : routeDatabase.routeDao().getAll()) {
                 Log.d(TAG, "routenumber is " + routeNumber);
                 Log.d(TAG, "routenumber.route is " + routeNumber.route);
-                busRoutes.add(routeNumber.route);
+                busRoutes.add(new Route(routeNumber.route, routeNumber.firebaseCount, routeNumber.downloadedCount));
             }
             busRouteAdapter.notifyDataSetChanged();
         }
@@ -67,17 +83,77 @@ public class MainActivity extends AppCompatActivity {
         routesRefListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                childCount = 0;
                 Log.d(TAG, "onChildAdded-- dataSnapshot.getKey() = " + dataSnapshot.getKey());
-                if (busRoutes.contains(dataSnapshot.getKey())) {
-                    Log.d(TAG, "key " + dataSnapshot.getKey() + " is already in busRoutes");
-                    return;
-                }
-                Route addedRoute = new Route(
-                        dataSnapshot.getKey()
-                );
 
+                int downloadedCount = poiDatabase.poiDao().getAll(dataSnapshot.getKey()).size();
+                Log.d(TAG, "downloadedCount = " + downloadedCount);
+
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+//                    Log.d(TAG, "snapshot.getKey() = " + snapshot.getKey());
+                    for (DataSnapshot coordinateSnapshot: snapshot.getChildren()) {
+                        if (("empty").equals(""+coordinateSnapshot.getValue())) {
+//                            Log.d(TAG, "Coordinate Snapshot = " + coordinateSnapshot.getValue());
+                        }
+                        else if (coordinateSnapshot.hasChildren()) {
+                            for (DataSnapshot individualSnapshot: coordinateSnapshot.getChildren()) {
+                                Log.d(TAG, "Downloading");
+                                childCount += 1;
+                                Log.d(TAG, "Child count = " + childCount);
+                            }
+                        }
+
+                        else {
+                            Log.d(TAG, "Downloading");
+                            childCount += 1;
+                            Log.d(TAG, "Child count = " + childCount);
+                        }
+                    }
+                }
+
+                Route routeToRemove = null;
+                for (Route route : busRoutes) {
+                    if (route.route.equals(dataSnapshot.getKey())) {
+                        Log.d(TAG, "key " + dataSnapshot.getKey() + " is already in busRoutes");
+                        if (route.downloadedCount == childCount) {
+                            Log.d(TAG, "route.downloadedCount = " + route.downloadedCount + " and " +
+                                    "childCount = " + childCount);
+                            Log.d(TAG, "already up to date");
+                            busRouteAdapter.notifyDataSetChanged();
+                            return;
+                        }
+                        else {
+                            Log.d(TAG, "route.downloadedCount = " + route.downloadedCount + " and " +
+                                    "childCount = " + childCount);
+                            Log.d(TAG, "should replace old route");
+                            routeToRemove = route;
+                        }
+                    }
+                    // else should be added anyways
+                }
+//                if (busRoutes.contains(dataSnapshot.getKey())) {
+//                    Log.d(TAG, "key " + dataSnapshot.getKey() + " is already in busRoutes");
+//                    return;
+//                }
+
+
+                Route addedRoute;
+                //Need to replace manually here
+                if (null != routeToRemove) {
+                    busRoutes.remove(routeToRemove);
+                    //Will show how many there used to be
+                    addedRoute = new Route(dataSnapshot.getKey(), childCount, downloadedCount);
+                    Log.d(TAG, "added route " + addedRoute.route + " with firebase children " + addedRoute.firebaseCount);
+                } else {
+                    //Never added before
+                    addedRoute = new Route(dataSnapshot.getKey(), childCount, downloadedCount);
+                    Log.d(TAG, "added route " + addedRoute.route + " with firebase children " + addedRoute.firebaseCount);
+                }
+
+                //This should replace old
                 routeDatabase.routeDao().insertAll(addedRoute);
-                busRoutes.add(dataSnapshot.getKey());
+
+                busRoutes.add(addedRoute);
                 busRouteAdapter.notifyDataSetChanged();
             }
 
@@ -104,9 +180,13 @@ public class MainActivity extends AppCompatActivity {
         };
         routesRef.addChildEventListener(routesRefListener);
 
+    }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
 
-
-
+//        int downloadedCount = poiDatabase.poiDao().getAll("1").size();
+//        Log.d(TAG, "downloadedCount = " + downloadedCount);
     }
 }

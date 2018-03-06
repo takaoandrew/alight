@@ -105,6 +105,7 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 
     public void updateAdapter(ArrayList<POI> poiArrayList) {
         Log.d(TAG, "updateAdapter");
+        //Remove order and hope for the best
         Collections.sort(poiArrayList, new Comparator<POI>() {
             @Override
             public int compare(POI poi, POI poi2) {

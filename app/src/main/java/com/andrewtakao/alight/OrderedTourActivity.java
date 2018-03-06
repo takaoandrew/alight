@@ -50,7 +50,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class OrderedTourActivity extends AppCompatActivity implements SensorEventListener {
+public class OrderedTourActivity extends AppCompatActivity {
 
     public static StorageReference mStorageRef;
     public static StorageReference mAudioRef;
@@ -59,6 +59,7 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
     private ChildEventListener mImagesListener;
     public static DatabaseReference mImagesDatabaseRef;
     DataSnapshot firstChildSnapshot;
+    DataSnapshot secondChildSnapshot;
 
     private ActivityOrderedTourBinding binding;
     private String busRoute;
@@ -82,146 +83,24 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
     public static MediaPlayer mMediaPlayer;
 
     //Dao Database
-    private static AppDatabase db;
+//    private static AppDatabase db;
 
     //Smooth Scroller
     LinearLayoutManager layoutManager;
     RecyclerView.SmoothScroller smoothScroller;
     RecyclerView.OnDragListener disabler;
 
-    //Sensors
-    private SensorManager mSensorManager;
-    private final float[] mAccelerometerReading = new float[3];
-    private final float[] mMagnetometerReading = new float[3];
-
-    private final float[] mRotationMatrix = new float[9];
-    private final float[] mOrientationAngles = new float[3];
-    SensorEventListener sensorEventListener;
-
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // Do something here if sensor accuracy changes.
-        // You must implement this callback in your code.
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        // Get updates from the accelerometer and magnetometer at a constant rate.
-        // To make batch operations more efficient and reduce power consumption,
-        // provide support for delaying updates to the application.
-        //
-        // In this example, the sensor reporting delay is small enough such that
-        // the application receives an update before the system checks the sensor
-        // readings again.
-//        mSensorManager.registerListener(sensorEventListener , Sensor.TYPE_ACCELEROMETER,
-//                SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI);
-//        mSensorManager.registerListener(this, Sensor.TYPE_MAGNETIC_FIELD,
-//                SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI);
-    }
-
-    // Get readings from accelerometer and magnetometer. To simplify calculations,
-    // consider storing these readings as unit vectors.
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (Integer.valueOf((event.sensor).toString()) == Sensor.TYPE_ACCELEROMETER) {
-            System.arraycopy(event.values, 0, mAccelerometerReading,
-                    0, mAccelerometerReading.length);
-        }
-        else if (Integer.valueOf((event.sensor).toString()) == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, mMagnetometerReading,
-                    0, mMagnetometerReading.length);
-        }
-    }
-
-    // Compute the three orientation angles based on the most recent readings from
-    // the device's accelerometer and magnetometer.
-    public void updateOrientationAngles() {
-        // Update rotation matrix, which is needed to update orientation angles.
-        mSensorManager.getRotationMatrix(mRotationMatrix, null,
-                mAccelerometerReading, mMagnetometerReading);
-
-        // "mRotationMatrix" now has up-to-date information.
-
-        mSensorManager.getOrientation(mRotationMatrix, mOrientationAngles);
-
-        // "mOrientationAngles" now has up-to-date information.
-    }
-
-    //Direction
-//    float[] mGravity;
-//    float[] mGeomagnetic;
-//    float azimut;
-//
-//    private SensorManager mSensorManager;
-//    private Sensor mAccelerometer;
-//
-//    protected void onResume() {
-//        super.onResume();
-//        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-//    }
-//
-//    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-//    }
-//
-//    @Override
-//    public void onSensorChanged(SensorEvent event) {
-//
-//        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-//            Log.d(TAG, "Accelerometer");
-//            mGravity = event.values;
-//        }
-//
-//        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {
-//            Log.d(TAG, "Magnetic fields");
-//            mGeomagnetic = event.values;
-//        }
-//
-//        if (mGravity != null && mGeomagnetic != null) {
-//            Log.d(TAG, "nonnull values");
-//            float R[] = new float[9];
-//            float I[] = new float[9];
-//
-//            if (SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic)) {
-//
-//                // orientation contains azimut, pitch and roll
-//                float orientation[] = new float[3];
-//                SensorManager.getOrientation(R, orientation);
-//
-//                azimut = orientation[0];
-//                Log.d(TAG, "azimut = " + azimut);
-//            }
-//        }
-//    }
-//
-
+    //Ordering POIs
+    private int poiOrder = 0;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-//        mSensorManager.registerListener(this, mLight, SensorManager.SENSOR_DELAY_NORMAL);
-//        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-//        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
-        SensorEventListener _SensorEventListener=   new SensorEventListener() {
-            @Override
-            public void onSensorChanged(SensorEvent event) {
-
-            }
-
-            @Override
-            public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
-            }
-        };
-//        mSensorManager.registerListener(_SensorEventListener , mAccelerometer, SensorManager.SENSOR_DELAY_UI);
 
         //This works, amazing
-        Log.d(TAG, "angle should be 180 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
-        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
+//        Log.d(TAG, "angle should be 180 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
+//        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
 
 
         Log.d(TAG, "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" +
@@ -294,17 +173,17 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
         mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
 
         //run first time only
-        if (db == null) {
+        if (MainActivity.poiDatabase == null) {
             Log.d(TAG, "Creating database");
-            db = Room.databaseBuilder(getApplicationContext(),
-                    AppDatabase.class, "database-name").allowMainThreadQueries().build();
+            MainActivity.poiDatabase = Room.databaseBuilder(getApplicationContext(),
+                    AppDatabase.class, "poi-database").allowMainThreadQueries().build();
 
         }
-        Log.d(TAG, "size of database is " + db.poiDao().getAll(busRoute).size());
+        Log.d(TAG, "size of database is " + MainActivity.poiDatabase.poiDao().getAll(busRoute).size());
 
-        if (db.poiDao().getAll(busRoute).size() > 0) {
+        if (MainActivity.poiDatabase.poiDao().getAll(busRoute).size() > 0) {
             Log.d(TAG, "Setting mPOIHashMap from local database!");
-            for (POI databasePoi : db.poiDao().getAll(busRoute)) {
+            for (POI databasePoi : MainActivity.poiDatabase.poiDao().getAll(busRoute)) {
                 Log.d(TAG, "databasePoi image name is " + databasePoi.imageName);
                 mPOIHashMap.put(databasePoi.imageName, databasePoi);
             }
@@ -321,44 +200,51 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 if (dataSnapshot.hasChildren()) {
                     firstChildSnapshot = dataSnapshot.getChildren().iterator().next();
-                    if (mPOIHashMap.containsKey(firstChildSnapshot.getKey())) {
-                        Log.d(TAG, "key " + firstChildSnapshot.getKey() + " is already in mPOIHashMap");
-                        return;
-                    }
-                    Log.d(TAG, "firstChildSnapshot.getKey() = " + firstChildSnapshot.getKey());
-                    POI addedPoi = new POI(
-                        firstChildSnapshot.getKey(),
-                        Double.valueOf((String) firstChildSnapshot.child("latitude").getValue()),
-                        Double.valueOf((String) firstChildSnapshot.child("longitude").getValue()),
-                        Integer.valueOf(dataSnapshot.getKey()),
-                        busRoute
-                    );
 
-                    db.poiDao().insertAll(addedPoi);
-                    mPOIHashMap.put(firstChildSnapshot.getKey(), addedPoi);
+                    if (firstChildSnapshot.hasChildren()) {
+                        secondChildSnapshot = firstChildSnapshot.getChildren().iterator().next();
+
+
+                        if (mPOIHashMap.containsKey(secondChildSnapshot.getKey())) {
+                            Log.d(TAG, "key " + secondChildSnapshot.getKey() + " is already in mPOIHashMap");
+                            return;
+                        }
+                        Log.d(TAG, "secondChildSnapshot.getKey() = " + secondChildSnapshot.getKey());
+                        POI addedPoi = new POI(
+                                secondChildSnapshot.getKey(),
+                                Double.valueOf((String) secondChildSnapshot.child("lat").getValue()),
+                                Double.valueOf((String) secondChildSnapshot.child("long").getValue()),
+                                Integer.valueOf(dataSnapshot.getKey()),
+                                busRoute
+                        );
+                        Log.d(TAG, "addedPOI.busRoute = " + addedPoi.busRoute);
+
+                        MainActivity.poiDatabase.poiDao().insertAll(addedPoi);
+                        mPOIHashMap.put(secondChildSnapshot.getKey(), addedPoi);
 //                    mPOIAdapter.updateAdapter(new ArrayList<>(mPOIHashMap.values()));
-                    mPOIAdapter = new POIAdapter(mContext, new ArrayList<>(mPOIHashMap.values()));
+                        mPOIAdapter = new POIAdapter(mContext, new ArrayList<>(mPOIHashMap.values()));
 //                    mPOIAdapter.notifyDataSetChanged();
 
-//                        Log.d(TAG, (String) firstChildSnapshot.child("imageName").getValue());
-                    try {
-                        addImageToTempFile(firstChildSnapshot.getKey()
-//                                    , (String) firstChildSnapshot.child("imageName").getValue()
-                        );
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+//                        Log.d(TAG, (String) secondChildSnapshot.child("imageName").getValue());
+                        try {
+                            addImageToTempFile(secondChildSnapshot.getKey()
+//                                    , (String) secondChildSnapshot.child("imageName").getValue()
+                            );
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
-                    //Store audio location
-                    try {
-                        addAudioToTempFile(firstChildSnapshot.getKey());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                        //Store audio location
+                        try {
+                            addAudioToTempFile(secondChildSnapshot.getKey());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
-                }
-                else {
+                    }
+                    else {
 //                        Log.d(TAG, "onChildAdded-- this snapshot has no children");
+                    }
                 }
 
 
@@ -429,8 +315,7 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
         if (mMediaPlayer!=null && mMediaPlayer.isPlaying())
         mMediaPlayer.stop();
         mImagesDatabaseRef.removeEventListener(mImagesListener);
-        // Don't receive any more updates from either sensor.
-        mSensorManager.unregisterListener(this);
+
         super.onPause();
     }
 
@@ -497,12 +382,12 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
-                if (db == null) {
-                    Log.d(TAG, "The db was null!");
+                if (MainActivity.poiDatabase == null) {
+                    Log.d(TAG, "The MainActivity.poiDatabase was null!");
                     return;
                 }
                 mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-                db.poiDao().insertAll(mPOIHashMap.get(key));
+                MainActivity.poiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
                 mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
                 mPOIAdapter.notifyDataSetChanged();
 
@@ -541,13 +426,13 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addImageToTempFile-- onSuccess");
 
-                if (db == null) {
-                    Log.d(TAG, "The db was null!");
+                if (MainActivity.poiDatabase == null) {
+                    Log.d(TAG, "The MainActivity.poiDatabase was null!");
                     return;
                 }
                 Log.d(TAG, "Setting imageLocalStorageLocation");
                 mPOIHashMap.get(key).setImageLocalStorageLocation(localFile.toString());
-                db.poiDao().insertAll(mPOIHashMap.get(key));
+                MainActivity.poiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
                 mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
                 mPOIAdapter.notifyDataSetChanged();
 //                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
@@ -641,40 +526,6 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
         return bestLocation;
     }
 
-//    public void playAudio(View view) {
-//        Log.d(TAG, "playAudio pressed");
-//
-//        String fileName;
-//
-//        if (mPOIHashMap.get(currentKey) != null) {
-//            fileName = mPOIHashMap.get(currentKey).audioLocalStorageLocation;
-//            Log.d(TAG, "playAudio-- fileName = " + fileName);
-//        } else {
-//            fileName = null;
-//        }
-//
-////        if (mMediaPlayer!=null) {
-////            if (mMediaPlayer.isPlaying()) {
-////                mMediaPlayer.stop();
-////            }
-////
-////        }
-//        if (mMediaPlayer != null ) {
-//            if (fileName != null) {
-//                if (mMediaPlayer.isPlaying()) {
-//                    mMediaPlayer.stop();
-//                }
-//                else {
-//                    mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
-//                    mMediaPlayer.start();
-//                }
-//
-//            }
-//        } else {
-//            mMediaPlayer = new MediaPlayer();
-//        }
-//    }
-
     public void makeUseOfNewLocation(Location location) {
         Log.d(TAG, "makeUseOfNewLocation");
         if (location == null) {
@@ -704,6 +555,7 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
                 //Do nothing
             } else {
                 Log.d(TAG,"minDistance = "+ minDistance);
+                Log.d(TAG, "closestPOI.imageName = " + closestPOI.imageName);
                 currentKey = closestPOI.imageName;
 
                 //DEBUG ONLY
@@ -715,13 +567,6 @@ public class OrderedTourActivity extends AppCompatActivity implements SensorEven
                 //TODO don't need finalPoi anymore since not in a method and doesn't need to be final
                 smoothScroller.setTargetPosition(mPOIAdapter.poiArrayList.indexOf(finalPoi));
                 binding.rvPois.getLayoutManager().startSmoothScroll(smoothScroller);
-//                Log.d(TAG, "position is " + binding.rvPois.position)
-//                new Handler().postDelayed(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        binding.rvPois.scrollToPosition(mPOIAdapter.poiArrayList.indexOf(finalPoi));
-//                    }
-//                }, 300);
             }
             //DEBUG ONLY
 //            binding.location.setText(currentLocation);

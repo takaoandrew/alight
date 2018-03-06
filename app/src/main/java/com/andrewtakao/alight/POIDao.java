@@ -31,4 +31,5 @@ public interface POIDao {
 
     @Delete
     void delete(POI poi);
+
 }
