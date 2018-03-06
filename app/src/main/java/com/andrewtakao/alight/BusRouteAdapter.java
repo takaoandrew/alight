@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -42,6 +43,17 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
         holder.busRoute.setText(currentRoute.route);
         holder.firebaseCount.setText(""+currentRoute.firebaseCount);
         holder.downloadedCount.setText(""+currentRoute.downloadedCount);
+        if (currentRoute.firebaseCount != currentRoute.downloadedCount) {
+            holder.downloadButton.setVisibility(View.VISIBLE);
+        } else {
+            holder.downloadButton.setVisibility(View.GONE);
+        }
+        holder.downloadButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                downloadPOIs();
+            }
+        });
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -58,6 +70,10 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
         });
     }
 
+    public void downloadPOIs() {
+        Log.d(TAG, "downloadPOIs");
+    }
+
     @Override
     public int getItemCount() {
 //        Log.d(TAG, "getItemCount-- count = " + busRoutes.size());
@@ -67,13 +83,14 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
     class BusRouteViewHolder extends RecyclerView.ViewHolder {
 
         TextView busRoute, downloadedCount, firebaseCount;
+        ImageButton downloadButton;
 
         public BusRouteViewHolder(View itemView) {
             super(itemView);
             busRoute = itemView.findViewById(R.id.bus_route);
             downloadedCount = itemView.findViewById(R.id.downloaded_count);
             firebaseCount = itemView.findViewById(R.id.firebase_count);
-
+            downloadButton = itemView.findViewById(R.id.download_button);
         }
     }
 }

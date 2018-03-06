@@ -12,4 +12,31 @@
         android:layout_height="wrap_content"
         style="@style/busRouteTextStyle"
         android:id="@+id/bus_route"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:id="@+id/downloaded_count"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:text="/"
+        android:id="@+id/slashie"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:id="@+id/firebase_count"/>
+
+    <ImageButton
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:visibility="gone"
+        android:layout_gravity="end"
+        android:src="@drawable/ic_file_download_black_24dp"
+        android:id="@+id/download_button"/>
 </LinearLayout>

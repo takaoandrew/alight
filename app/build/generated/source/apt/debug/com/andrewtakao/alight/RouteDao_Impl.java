@@ -23,7 +23,7 @@ public class RouteDao_Impl implements RouteDao {
     this.__insertionAdapterOfRoute = new EntityInsertionAdapter<Route>(__db) {
       @Override
       public String createQuery() {
-        return "INSERT OR REPLACE INTO `Route`(`route`) VALUES (?)";
+        return "INSERT OR REPLACE INTO `Route`(`route`,`firebaseCount`,`downloadedCount`) VALUES (?,?,?)";
       }
 
       @Override
@@ -33,6 +33,8 @@ public class RouteDao_Impl implements RouteDao {
         } else {
           stmt.bindString(1, value.route);
         }
+        stmt.bindLong(2, value.firebaseCount);
+        stmt.bindLong(3, value.downloadedCount);
       }
     };
     this.__deletionAdapterOfRoute = new EntityDeletionOrUpdateAdapter<Route>(__db) {
@@ -81,11 +83,15 @@ public class RouteDao_Impl implements RouteDao {
     final Cursor _cursor = __db.query(_statement);
     try {
       final int _cursorIndexOfRoute = _cursor.getColumnIndexOrThrow("route");
+      final int _cursorIndexOfFirebaseCount = _cursor.getColumnIndexOrThrow("firebaseCount");
+      final int _cursorIndexOfDownloadedCount = _cursor.getColumnIndexOrThrow("downloadedCount");
       final List<Route> _result = new ArrayList<Route>(_cursor.getCount());
       while(_cursor.moveToNext()) {
         final Route _item;
         _item = new Route();
         _item.route = _cursor.getString(_cursorIndexOfRoute);
+        _item.firebaseCount = _cursor.getInt(_cursorIndexOfFirebaseCount);
+        _item.downloadedCount = _cursor.getInt(_cursorIndexOfDownloadedCount);
         _result.add(_item);
       }
       return _result;

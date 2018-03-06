@@ -97,14 +97,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                         else if (coordinateSnapshot.hasChildren()) {
                             for (DataSnapshot individualSnapshot: coordinateSnapshot.getChildren()) {
-                                Log.d(TAG, "Downloading");
                                 childCount += 1;
                                 Log.d(TAG, "Child count = " + childCount);
                             }
                         }
 
                         else {
-                            Log.d(TAG, "Downloading");
                             childCount += 1;
                             Log.d(TAG, "Child count = " + childCount);
                         }

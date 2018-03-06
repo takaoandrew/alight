@@ -24,9 +24,9 @@ public class RouteDatabase_Impl extends RouteDatabase {
   protected SupportSQLiteOpenHelper createOpenHelper(DatabaseConfiguration configuration) {
     final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(configuration, new RoomOpenHelper.Delegate(1) {
       public void createAllTables(SupportSQLiteDatabase _db) {
-        _db.execSQL("CREATE TABLE IF NOT EXISTS `Route` (`route` TEXT NOT NULL, PRIMARY KEY(`route`))");
+        _db.execSQL("CREATE TABLE IF NOT EXISTS `Route` (`route` TEXT NOT NULL, `firebaseCount` INTEGER NOT NULL, `downloadedCount` INTEGER NOT NULL, PRIMARY KEY(`route`))");
         _db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        _db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"5cfa88cfc48e26a4a2378a36b71894c9\")");
+        _db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"bffe5cf3c116aa6c4202d59dcafc0299\")");
       }
 
       public void dropAllTables(SupportSQLiteDatabase _db) {
@@ -52,8 +52,10 @@ public class RouteDatabase_Impl extends RouteDatabase {
       }
 
       protected void validateMigration(SupportSQLiteDatabase _db) {
-        final HashMap<String, TableInfo.Column> _columnsRoute = new HashMap<String, TableInfo.Column>(1);
+        final HashMap<String, TableInfo.Column> _columnsRoute = new HashMap<String, TableInfo.Column>(3);
         _columnsRoute.put("route", new TableInfo.Column("route", "TEXT", true, 1));
+        _columnsRoute.put("firebaseCount", new TableInfo.Column("firebaseCount", "INTEGER", true, 0));
+        _columnsRoute.put("downloadedCount", new TableInfo.Column("downloadedCount", "INTEGER", true, 0));
         final HashSet<TableInfo.ForeignKey> _foreignKeysRoute = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesRoute = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoRoute = new TableInfo("Route", _columnsRoute, _foreignKeysRoute, _indicesRoute);
@@ -64,7 +66,7 @@ public class RouteDatabase_Impl extends RouteDatabase {
                   + " Found:\n" + _existingRoute);
         }
       }
-    }, "5cfa88cfc48e26a4a2378a36b71894c9");
+    }, "bffe5cf3c116aa6c4202d59dcafc0299");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(configuration.context)
         .name(configuration.name)
         .callback(_openCallback)
