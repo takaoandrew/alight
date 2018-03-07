@@ -2,6 +2,7 @@ package com.andrewtakao.alight;
 
 import android.content.Context;
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,6 +11,18 @@ import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -51,7 +64,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
         holder.downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                downloadPOIs();
+                ((MainActivity)context).downloadPOIs(currentRoute.route);
             }
         });
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -61,8 +74,9 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
                         + position + ", " + busRoutes.get(position));
                 //Toggle between TourActivity and OrderedTourActivity and FortySevenTourActivity
 //                Intent intent = new Intent(context, TourActivity.class);
-                Intent intent = new Intent(context, OrderedTourActivity.class);
+//                Intent intent = new Intent(context, OrderedTourActivity.class);
 //                Intent intent = new Intent(context, FortySevenTourActivity.class);
+                Intent intent = new Intent(context, ChangingTourActivity.class);
 
                 intent.putExtra(BUS_ROUTE_EXTRA, currentRoute.route);
                 context.startActivity(intent);
@@ -70,9 +84,10 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
         });
     }
 
-    public void downloadPOIs() {
-        Log.d(TAG, "downloadPOIs");
-    }
+
+
+
+
 
     @Override
     public int getItemCount() {
@@ -93,4 +108,8 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
             downloadButton = itemView.findViewById(R.id.download_button);
         }
     }
+
+
+
+
 }

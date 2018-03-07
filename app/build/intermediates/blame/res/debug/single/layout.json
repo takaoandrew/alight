@@ -8,6 +8,10 @@
         "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/layout/activity_tour.xml"
     },
     {
+        "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/incremental/mergeDebugResources/stripped.dir/layout/activity_changing_tour.xml",
+        "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/layout/activity_changing_tour.xml"
+    },
+    {
         "merged": "/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/incremental/mergeDebugResources/stripped.dir/layout/activity_main.xml",
         "source": "/Users/andrewtakao/Desktop/Coding/alight/app/src/main/res/layout/activity_main.xml"
     },

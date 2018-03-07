@@ -248,4 +248,49 @@ public class POIDao_Impl implements POIDao {
       _statement.release();
     }
   }
+
+  @Override
+  public POI findByNameAndRoute(String name, String route) {
+    final String _sql = "SELECT * FROM poi WHERE imageName LIKE ? AND busRoute LIKE ? LIMIT 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 2);
+    int _argIndex = 1;
+    if (name == null) {
+      _statement.bindNull(_argIndex);
+    } else {
+      _statement.bindString(_argIndex, name);
+    }
+    _argIndex = 2;
+    if (route == null) {
+      _statement.bindNull(_argIndex);
+    } else {
+      _statement.bindString(_argIndex, route);
+    }
+    final Cursor _cursor = __db.query(_statement);
+    try {
+      final int _cursorIndexOfImageName = _cursor.getColumnIndexOrThrow("imageName");
+      final int _cursorIndexOfLatitude = _cursor.getColumnIndexOrThrow("latitude");
+      final int _cursorIndexOfLongitude = _cursor.getColumnIndexOrThrow("longitude");
+      final int _cursorIndexOfImageLocalStorageLocation = _cursor.getColumnIndexOrThrow("imageLocalStorageLocation");
+      final int _cursorIndexOfAudioLocalStorageLocation = _cursor.getColumnIndexOrThrow("audioLocalStorageLocation");
+      final int _cursorIndexOfOrder = _cursor.getColumnIndexOrThrow("order");
+      final int _cursorIndexOfBusRoute = _cursor.getColumnIndexOrThrow("busRoute");
+      final POI _result;
+      if(_cursor.moveToFirst()) {
+        _result = new POI();
+        _result.imageName = _cursor.getString(_cursorIndexOfImageName);
+        _result.latitude = _cursor.getDouble(_cursorIndexOfLatitude);
+        _result.longitude = _cursor.getDouble(_cursorIndexOfLongitude);
+        _result.imageLocalStorageLocation = _cursor.getString(_cursorIndexOfImageLocalStorageLocation);
+        _result.audioLocalStorageLocation = _cursor.getString(_cursorIndexOfAudioLocalStorageLocation);
+        _result.order = _cursor.getInt(_cursorIndexOfOrder);
+        _result.busRoute = _cursor.getString(_cursorIndexOfBusRoute);
+      } else {
+        _result = null;
+      }
+      return _result;
+    } finally {
+      _cursor.close();
+      _statement.release();
+    }
+  }
 }

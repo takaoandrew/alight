@@ -21,6 +21,8 @@
         </activity>
         <activity android:name=".OrderedTourActivity"
             android:theme="@style/TourTheme"></activity>
+        <activity android:name=".ChangingTourActivity"
+            android:theme="@style/TourTheme"></activity>
     </application>
 
 </manifest>

@@ -1,4 +1,4 @@
-#Tue Mar 06 14:58:13 EST 2018
+#Wed Mar 07 09:18:12 EST 2018
 base.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dexMerger/debug/79
 renamed.0=classes.dex
 file.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dexMerger/debug/79/classes.dex

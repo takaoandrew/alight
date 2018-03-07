@@ -9,6 +9,8 @@ class DataBinderMapper  {
         switch(layoutId) {
                 case com.andrewtakao.alight.R.layout.activity_main:
                     return com.andrewtakao.alight.databinding.ActivityMainBinding.bind(view, bindingComponent);
+                case com.andrewtakao.alight.R.layout.activity_changing_tour:
+                    return com.andrewtakao.alight.databinding.ActivityChangingTourBinding.bind(view, bindingComponent);
                 case com.andrewtakao.alight.R.layout.activity_ordered_tour:
                     return com.andrewtakao.alight.databinding.ActivityOrderedTourBinding.bind(view, bindingComponent);
         }
@@ -28,6 +30,12 @@ class DataBinderMapper  {
             case 423753077: {
                 if(tag.equals("layout/activity_main_0")) {
                     return com.andrewtakao.alight.R.layout.activity_main;
+                }
+                break;
+            }
+            case -548517328: {
+                if(tag.equals("layout/activity_changing_tour_0")) {
+                    return com.andrewtakao.alight.R.layout.activity_changing_tour;
                 }
                 break;
             }

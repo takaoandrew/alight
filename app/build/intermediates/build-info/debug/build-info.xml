@@ -5,24 +5,24 @@
     build-mode="COLD"
     density="xxhdpi"
     format="10"
-    ir-eligibility="METHOD_DELETED"
+    ir-eligibility="METHOD_ADDED"
     plugin-version="3.0.0"
-    timestamp="1520369091820"
+    timestamp="1520444299377"
     token="6267636523446088505"
     verifier="COLD_SWAP_REQUESTED" >
 
     <task
         name="javac"
-        duration="2453" />
+        duration="3996" />
     <task
         name="instant-run-dex"
         duration="0" />
     <task
         name="instant-run-transform"
-        duration="38" />
+        duration="45" />
     <task
         name="verifier"
-        duration="15" />
+        duration="28" />
 
     <artifact
         location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_0.apk"
@@ -30,7 +30,7 @@
 
     <build
         build-mode="FULL"
-        timestamp="1520361312126"
+        timestamp="1520443654955"
         verifier="FULL_BUILD_REQUESTED" >
         <artifact
             location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_0.apk"
@@ -71,41 +71,8 @@
     </build>
     <build
         build-mode="COLD"
-        ir-eligibility="CLASS_ADDED"
-        timestamp="1520366283545"
-        verifier="COLD_SWAP_REQUESTED" >
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_2.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_1.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_3.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_5.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_4.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_6.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_7.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_9.apk"
-            type="SPLIT" />
-        <artifact
-            location="/Users/andrewtakao/Desktop/Coding/alight/app/build/outputs/apk/debug/app-debug.apk"
-            type="SPLIT_MAIN" />
-    </build>
-    <build
-        build-mode="COLD"
-        ir-eligibility="METHOD_DELETED"
-        timestamp="1520369091820"
+        ir-eligibility="METHOD_ADDED"
+        timestamp="1520444299377"
         verifier="COLD_SWAP_REQUESTED" >
         <artifact
             location="/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/split-apk/debug/slices/slice_0.apk"

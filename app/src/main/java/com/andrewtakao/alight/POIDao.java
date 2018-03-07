@@ -26,6 +26,9 @@ public interface POIDao {
     @Query("SELECT * FROM poi WHERE imageName LIKE :name LIMIT 1")
     POI findByName(String name);
 
+    @Query("SELECT * FROM poi WHERE imageName LIKE :name AND busRoute LIKE :route LIMIT 1")
+    POI findByNameAndRoute(String name, String route);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertAll(POI... pois);
 

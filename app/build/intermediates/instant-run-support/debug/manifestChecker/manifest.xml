@@ -43,6 +43,9 @@
         <activity
             android:name="com.andrewtakao.alight.OrderedTourActivity"
             android:theme="@style/TourTheme" />
+        <activity
+            android:name="com.andrewtakao.alight.ChangingTourActivity"
+            android:theme="@style/TourTheme" />
 
         <meta-data
             android:name="android.support.VERSION"
