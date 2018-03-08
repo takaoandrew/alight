@@ -1,4 +1,0 @@
-#Wed Feb 21 18:37:27 EST 2018
-base.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dex/release/0
-renamed.0=classes.dex
-file.0=/Users/andrewtakao/Desktop/Coding/alight/app/build/intermediates/transforms/dex/release/0/classes.dex

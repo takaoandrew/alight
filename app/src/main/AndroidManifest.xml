@@ -3,6 +3,7 @@
     package="com.andrewtakao.alight">
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
     <uses-feature android:name="android.hardware.location.gps" />
 
     <application
@@ -13,16 +14,19 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity">
+        </activity>
+        <activity
+            android:name=".OrderedTourActivity"
+            android:theme="@style/TourTheme" />
+        <activity
+            android:name=".ChangingTourActivity"
+            android:theme="@style/TourTheme" />
+        <activity android:name=".LanguageActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-        <activity android:name=".OrderedTourActivity"
-            android:theme="@style/TourTheme"></activity>
-        <activity android:name=".ChangingTourActivity"
-            android:theme="@style/TourTheme"></activity>
+            </intent-filter></activity>
     </application>
 
 </manifest>

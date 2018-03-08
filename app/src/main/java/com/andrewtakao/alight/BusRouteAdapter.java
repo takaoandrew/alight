@@ -34,6 +34,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
     private ArrayList<Route> busRoutes;
     private final String TAG = BusRouteAdapter.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
+    private final String LANGUAGE_EXTRA = "language_extra";
     LayoutInflater inflater;
 
     public BusRouteAdapter(Context context, ArrayList<Route> busRoutes) {
@@ -79,6 +80,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
                 Intent intent = new Intent(context, ChangingTourActivity.class);
 
                 intent.putExtra(BUS_ROUTE_EXTRA, currentRoute.route);
+                intent.putExtra(LANGUAGE_EXTRA, MainActivity.language);
                 context.startActivity(intent);
             }
         });

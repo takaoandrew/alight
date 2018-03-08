@@ -154,18 +154,18 @@ public class OrderedTourActivity extends AppCompatActivity {
         mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
 
         //run first time only
-        if (MainActivity.poiDatabase == null) {
+        if (MainActivity.englishPoiDatabase == null) {
             Log.d(TAG, "Creating database");
-            MainActivity.poiDatabase = Room.databaseBuilder(getApplicationContext(),
+            MainActivity.englishPoiDatabase = Room.databaseBuilder(getApplicationContext(),
                     AppDatabase.class, "poi-database").allowMainThreadQueries().build();
 
         }
-        Log.d(TAG, "size of database is " + MainActivity.poiDatabase.poiDao().getAll(busRoute).size());
+        Log.d(TAG, "size of database is " + MainActivity.englishPoiDatabase.poiDao().getAll(busRoute).size());
 
         //First, populate mPOIHashMap with local data
-        if (MainActivity.poiDatabase.poiDao().getAll(busRoute).size() > 0) {
+        if (MainActivity.englishPoiDatabase.poiDao().getAll(busRoute).size() > 0) {
             Log.d(TAG, "Setting mPOIHashMap from local database!");
-            for (POI databasePoi : MainActivity.poiDatabase.poiDao().getAll(busRoute)) {
+            for (POI databasePoi : MainActivity.englishPoiDatabase.poiDao().getAll(busRoute)) {
                 Log.d(TAG, "databasePoi image name is " + databasePoi.imageName);
                 mPOIHashMap.put(databasePoi.imageName, databasePoi);
             }
@@ -198,7 +198,7 @@ public class OrderedTourActivity extends AppCompatActivity {
                                 busRoute
                         );
                         Log.d(TAG, "addedPOI.busRoute = " + addedPoi.busRoute);
-                        MainActivity.poiDatabase.poiDao().insertAll(addedPoi);
+                        MainActivity.englishPoiDatabase.poiDao().insertAll(addedPoi);
                         mPOIHashMap.put(secondChildSnapshot.getKey(), addedPoi);
                         mPOIAdapter = new POIAdapter(mContext, new ArrayList<>(mPOIHashMap.values()));
                         try {
@@ -356,12 +356,12 @@ public class OrderedTourActivity extends AppCompatActivity {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
-                if (MainActivity.poiDatabase == null) {
-                    Log.d(TAG, "The MainActivity.poiDatabase was null!");
+                if (MainActivity.englishPoiDatabase == null) {
+                    Log.d(TAG, "The MainActivity.englishPoiDatabase was null!");
                     return;
                 }
                 mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-                MainActivity.poiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
+                MainActivity.englishPoiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
                 mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
                 mPOIAdapter.notifyDataSetChanged();
 
@@ -400,13 +400,13 @@ public class OrderedTourActivity extends AppCompatActivity {
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addImageToTempFile-- onSuccess");
 
-                if (MainActivity.poiDatabase == null) {
-                    Log.d(TAG, "The MainActivity.poiDatabase was null!");
+                if (MainActivity.englishPoiDatabase == null) {
+                    Log.d(TAG, "The MainActivity.englishPoiDatabase was null!");
                     return;
                 }
                 Log.d(TAG, "Setting imageLocalStorageLocation");
                 mPOIHashMap.get(key).setImageLocalStorageLocation(localFile.toString());
-                MainActivity.poiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
+                MainActivity.englishPoiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
                 mPOIAdapter.updateAdapter(new ArrayList<POI>(mPOIHashMap.values()));
                 mPOIAdapter.notifyDataSetChanged();
 //                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());

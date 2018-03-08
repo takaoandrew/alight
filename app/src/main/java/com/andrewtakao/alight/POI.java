@@ -23,6 +23,10 @@ public class POI {
     public String imageLocalStorageLocation;
     @ColumnInfo(name = "audioLocalStorageLocation")
     public String audioLocalStorageLocation;
+//    @ColumnInfo(name = "englishAudioLocalStorageLocation")
+//    public String englishAudioLocalStorageLocation;
+//    @ColumnInfo(name = "chineseAudioLocalStorageLocation")
+//    public String chineseAudioLocalStorageLocation;
     @ColumnInfo(name = "order")
     public int order;
     @ColumnInfo(name = "busRoute")
@@ -62,4 +66,7 @@ public class POI {
     public void setAudioLocalStorageLocation(String audioLocalStorageLocation) {
         this.audioLocalStorageLocation = audioLocalStorageLocation;
     }
+//    public void setEnglishAudioLocalStorageLocation(String audioLocalStorageLocation) {
+//        this.englishAudioLocalStorageLocation = audioLocalStorageLocation;
+//    }
 }

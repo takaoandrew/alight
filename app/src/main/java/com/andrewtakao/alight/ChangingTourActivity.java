@@ -15,7 +15,6 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -25,15 +24,6 @@ import android.view.View;
 import android.widget.SeekBar;
 
 import com.andrewtakao.alight.databinding.ActivityChangingTourBinding;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.database.ChildEventListener;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.storage.FileDownloadTask;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -56,6 +46,7 @@ public class ChangingTourActivity extends AppCompatActivity {
     private String busRoute;
     private final String TAG = ChangingTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
+    private final String LANGUAGE_EXTRA = "language_extra";
     public static String currentKey;
 
     //GPS
@@ -119,18 +110,18 @@ public class ChangingTourActivity extends AppCompatActivity {
 //        mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
 
         //run first time only
-        if (MainActivity.poiDatabase == null) {
+        if (MainActivity.currentPoiDatabase == null) {
             Log.d(TAG, "Creating database");
-            MainActivity.poiDatabase = Room.databaseBuilder(getApplicationContext(),
+            MainActivity.currentPoiDatabase = Room.databaseBuilder(getApplicationContext(),
                     AppDatabase.class, "poi-database").allowMainThreadQueries().build();
 
         }
-        Log.d(TAG, "size of database is " + MainActivity.poiDatabase.poiDao().getAll(busRoute).size());
+        Log.d(TAG, "size of database is " + MainActivity.currentPoiDatabase.poiDao().getAll(busRoute).size());
 
         //First, populate mPOIHashMap with local data
-        if (MainActivity.poiDatabase.poiDao().getAll(busRoute).size() > 0) {
+        if (MainActivity.currentPoiDatabase.poiDao().getAll(busRoute).size() > 0) {
             Log.d(TAG, "Setting mPOIHashMap from local database!");
-            for (POI databasePoi : MainActivity.poiDatabase.poiDao().getAll(busRoute)) {
+            for (POI databasePoi : MainActivity.currentPoiDatabase.poiDao().getAll(busRoute)) {
                 Log.d(TAG, "databasePoi image name is " + databasePoi.imageName);
                 mPOIHashMap.put(databasePoi.imageName, databasePoi);
             }
@@ -163,7 +154,7 @@ public class ChangingTourActivity extends AppCompatActivity {
 //                                        busRoute
 //                                );
 //                                Log.d(TAG, "addedPOI.busRoute = " + addedPoi.busRoute);
-//                                MainActivity.poiDatabase.poiDao().insertAll(addedPoi);
+//                                MainActivity.englishPoiDatabase.poiDao().insertAll(addedPoi);
 //                                mPOIHashMap.put(secondChildSnapshot.getKey(), addedPoi);
 //                                try {
 //                                    addImageToTempFile(secondChildSnapshot.getKey());
@@ -254,6 +245,11 @@ public class ChangingTourActivity extends AppCompatActivity {
     
     private void addImage(String key) {
         final POI poi = mPOIHashMap.get(key);
+        if (poi == null || poi.imageLocalStorageLocation == null) {
+            Log.d(TAG, "addImage-- poi.imageLocalStorageLocation == null");
+            Log.d(TAG, "addImage-- failed for key = " + key);
+            return;
+        }
         final String fileName = poi.imageLocalStorageLocation;
         Log.d(TAG, "addImage-- filename = " + fileName);
 
@@ -313,9 +309,31 @@ public class ChangingTourActivity extends AppCompatActivity {
 
     private void addAudio(String key) {
         String fileName;
+        final POI poi = mPOIHashMap.get(key);
+        if (poi == null) {
+            Log.d(TAG, "addAudio-- poi == null");
+            Log.d(TAG, "addAudio-- failed for key = " + key);
+            return;
+        }
+        fileName = poi.audioLocalStorageLocation;
 
-        fileName = mPOIHashMap.get(key).audioLocalStorageLocation;
-        Log.d(TAG, "addAudio-- fileName = " + fileName);
+//        if (language.equals("English")) {
+//            if (poi.englishAudioLocalStorageLocation == null) {
+//                Log.d(TAG, "No English audio available");
+//                return;
+//            }
+//
+//            fileName = poi.englishAudioLocalStorageLocation;
+//
+//        } else if (language.equals("Chinese")) {
+//            if (poi.chineseAudioLocalStorageLocation == null) {
+//                Log.d(TAG, "No Chinese audio available");
+//                return;
+//            }
+//            fileName = poi.chineseAudioLocalStorageLocation;
+//        }
+//        else return;
+//        Log.d(TAG, "addAudio-- fileName = " + fileName);
 
         if (mMediaPlayer!=null) {
             if (mMediaPlayer.isPlaying()) {
@@ -359,12 +377,12 @@ public class ChangingTourActivity extends AppCompatActivity {
 ////            @Override
 ////            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
 ////                Log.d(TAG,"addAudioToTempFile-- onSuccess");
-////                if (MainActivity.poiDatabase == null) {
-////                    Log.d(TAG, "The MainActivity.poiDatabase was null!");
+////                if (MainActivity.englishPoiDatabase == null) {
+////                    Log.d(TAG, "The MainActivity.englishPoiDatabase was null!");
 ////                    return;
 ////                }
 ////                mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-////                MainActivity.poiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
+////                MainActivity.englishPoiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
 ////
 //////                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
 ////            }
@@ -401,13 +419,13 @@ public class ChangingTourActivity extends AppCompatActivity {
 //            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
 //                Log.d(TAG,"addImageToTempFile-- onSuccess");
 //
-//                if (MainActivity.poiDatabase == null) {
-//                    Log.d(TAG, "The MainActivity.poiDatabase was null!");
+//                if (MainActivity.englishPoiDatabase == null) {
+//                    Log.d(TAG, "The MainActivity.englishPoiDatabase was null!");
 //                    return;
 //                }
 //                Log.d(TAG, "Setting imageLocalStorageLocation");
 //                mPOIHashMap.get(key).setImageLocalStorageLocation(localFile.toString());
-//                MainActivity.poiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
+//                MainActivity.englishPoiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
 ////                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
 //                // Local temp file has been created
 //            }
@@ -512,6 +530,7 @@ public class ChangingTourActivity extends AppCompatActivity {
         double minDistance = 100000;
         POI closestPOI = new POI();
         for (POI POI : mPOIHashMap.values()) {
+
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
                 minDistance = POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude));
                 closestPOI = POI;
@@ -519,7 +538,8 @@ public class ChangingTourActivity extends AppCompatActivity {
         }
 
         if (currentKey.equals(closestPOI.imageName)) {
-            if (currentKey.equals("")) {
+            if (currentKey==null || currentKey.equals("")) {
+                Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
                 return;
             }
             //For debugging purposes. Otherwise, comment this out.
