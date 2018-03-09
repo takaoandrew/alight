@@ -39,5 +39,7 @@
         android:visibility="gone"
         android:layout_gravity="end"
         android:src="@drawable/ic_file_download_white_24dp"
-        android:id="@+id/download_button"/>
+        android:id="@+id/download_button"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"/>
 </LinearLayout>

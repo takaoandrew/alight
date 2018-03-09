@@ -378,6 +378,7 @@ public class MainActivity extends AppCompatActivity {
             //Try wav?
             @Override
             public void onFailure(@NonNull Exception exception) {
+                Log.d(TAG, "Exception " + exception);
                 Log.d(TAG,"addImageToTempFile-- onFailure");
             }
         });
