@@ -103,6 +103,13 @@ public class ChangingTourActivity extends AppCompatActivity {
         currentKey = "";
         mPOIHashMap = new HashMap<>();
 
+        binding.nextPoi.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nextPOI();
+            }
+        });
+
         //Get bus route
         Intent intent = getIntent();
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
@@ -126,72 +133,6 @@ public class ChangingTourActivity extends AppCompatActivity {
                 mPOIHashMap.put(databasePoi.imageName, databasePoi);
             }
         }
-
-        //Listens to firebase database for changes in route content pointers
-//        mImagesListener = new ChildEventListener() {
-//            @Override
-//            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-//                // Ignore empty points
-//                if (dataSnapshot.hasChildren()) {
-//                    firstChildSnapshot = dataSnapshot.getChildren().iterator().next();
-//                    if (firstChildSnapshot.hasChildren()) {
-//                        //Should put for loop to download side images
-//                        for (DataSnapshot secondChildSnapshot : firstChildSnapshot.getChildren()) {
-//
-////                        secondChildSnapshot = firstChildSnapshot.getChildren().iterator().next();
-//                            //Ignore it if it's already in the HashMap (was stored locally)
-//                            if (mPOIHashMap.containsKey(secondChildSnapshot.getKey())) {
-//                                Log.d(TAG, "key " + secondChildSnapshot.getKey() + " is already in mPOIHashMap");
-//                            } else {
-//
-//                                //Set POI
-//                                Log.d(TAG, "secondChildSnapshot.getKey() = " + secondChildSnapshot.getKey());
-//                                POI addedPoi = new POI(
-//                                        secondChildSnapshot.getKey(),
-//                                        Double.valueOf((String) secondChildSnapshot.child("lat").getValue()),
-//                                        Double.valueOf((String) secondChildSnapshot.child("long").getValue()),
-//                                        Integer.valueOf(dataSnapshot.getKey()),
-//                                        busRoute
-//                                );
-//                                Log.d(TAG, "addedPOI.busRoute = " + addedPoi.busRoute);
-//                                MainActivity.englishPoiDatabase.poiDao().insertAll(addedPoi);
-//                                mPOIHashMap.put(secondChildSnapshot.getKey(), addedPoi);
-//                                try {
-//                                    addImageToTempFile(secondChildSnapshot.getKey());
-//                                } catch (IOException e) { e.printStackTrace(); }
-//
-//                                //Store audio location
-//                                try {
-//                                    addAudioToTempFile(secondChildSnapshot.getKey());
-//                                } catch (IOException e) { e.printStackTrace();}
-//                            }
-//                        }
-//
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
-//            }
-//
-//            @Override
-//            public void onChildRemoved(DataSnapshot dataSnapshot) {
-//                //Should remove from local database
-//                mPOIHashMap.remove(dataSnapshot.getKey());
-//            }
-//
-//            @Override
-//            public void onChildMoved(DataSnapshot dataSnapshot, String s) {
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//            }
-//        };
-
-//        mImagesDatabaseRef = MainActivity.routesRef.child(busRoute);
-//        mImagesDatabaseRef.addChildEventListener(mImagesListener);
 
         //Location
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -292,17 +233,6 @@ public class ChangingTourActivity extends AppCompatActivity {
                 handler = new Handler();
                 handler.postDelayed(runnable, 3000);
 
-//                if (OrderedTourActivity.mMediaPlayer!=null && OrderedTourActivity.mMediaPlayer.isPlaying()) {
-//                    OrderedTourActivity.mMediaPlayer.stop();
-//                } else {
-//                    String fileName;
-//                    fileName = poi.audioLocalStorageLocation;
-//                    if (fileName != null) {
-//                        OrderedTourActivity.mMediaPlayer = MediaPlayer.create(OrderedTourActivity.mContext, Uri.parse(fileName));
-//                        OrderedTourActivity.mMediaPlayer.start();
-//                    }
-//                }
-
             }
         });
     }
@@ -316,24 +246,6 @@ public class ChangingTourActivity extends AppCompatActivity {
             return;
         }
         fileName = poi.audioLocalStorageLocation;
-
-//        if (language.equals("English")) {
-//            if (poi.englishAudioLocalStorageLocation == null) {
-//                Log.d(TAG, "No English audio available");
-//                return;
-//            }
-//
-//            fileName = poi.englishAudioLocalStorageLocation;
-//
-//        } else if (language.equals("Chinese")) {
-//            if (poi.chineseAudioLocalStorageLocation == null) {
-//                Log.d(TAG, "No Chinese audio available");
-//                return;
-//            }
-//            fileName = poi.chineseAudioLocalStorageLocation;
-//        }
-//        else return;
-//        Log.d(TAG, "addAudio-- fileName = " + fileName);
 
         if (mMediaPlayer!=null) {
             if (mMediaPlayer.isPlaying()) {
@@ -357,97 +269,6 @@ public class ChangingTourActivity extends AppCompatActivity {
             makeUseOfNewLocation(lastKnownLocation);
 
         }
-    }
-
-//    private void addAudioToTempFile(final String key) throws IOException {
-//
-//        Log.d(TAG, "addAudioToTempFile-- key = " + key);
-//        Log.d(TAG, "addAudioToTempFile-- readable key = " + readableKey(key));
-//        Log.d(TAG, "addAudioToTempFile-- audio key = " + audioKey(readableKey(key)));
-//        //Get local file
-//
-////        mAudioRef = mStorageRef.child(audioKey(readableKey(key)));
-//
-////        Log.d(TAG, "addAudioToTempFile-- mAudioRef.getPath() = " + mAudioRef.getPath());
-//
-//        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
-//        Log.d(TAG, "addAudioToTempFile-- localFile = " + localFile);
-//
-////        mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-////            @Override
-////            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-////                Log.d(TAG,"addAudioToTempFile-- onSuccess");
-////                if (MainActivity.englishPoiDatabase == null) {
-////                    Log.d(TAG, "The MainActivity.englishPoiDatabase was null!");
-////                    return;
-////                }
-////                mPOIHashMap.get(key).setAudioLocalStorageLocation(localFile.toString());
-////                MainActivity.englishPoiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
-////
-//////                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
-////            }
-////        }).addOnFailureListener(new OnFailureListener() {
-////            //Try wav?
-////            @Override
-////            public void onFailure(@NonNull Exception exception) {
-////                Log.d(TAG,"addAudioToTempFile-- onFailure");
-////            }
-////        });
-//    }
-
-//    private void addImageToTempFile(final String key) throws IOException {
-//
-//        Log.d(TAG, "addImageToTempFile-- key = " + key);
-//        Log.d(TAG, "addImageToTempFile-- readable key = " + readableKey(key));
-//        //Get local file
-//
-//        mImageRef = mStorageRef.child(readableKey(key));
-//
-//        Log.d(TAG, "addImageToTempFile-- mImageRef.getPath() = " + mImageRef.getPath());
-//
-//        //TODO there is a / here before the imageName child. It may not be there in the future and cause errors.
-//        //For now we get rid of it
-//
-//        String slashlessKey = key.replace("/", "");
-//        slashlessKey = slashlessKey.replace("*", ".");
-//
-//        final File localFile = File.createTempFile(slashlessKey, "");
-//        Log.d(TAG, "addImageToTempFile-- localFile = " + localFile);
-//
-//        mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-//            @Override
-//            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-//                Log.d(TAG,"addImageToTempFile-- onSuccess");
-//
-//                if (MainActivity.englishPoiDatabase == null) {
-//                    Log.d(TAG, "The MainActivity.englishPoiDatabase was null!");
-//                    return;
-//                }
-//                Log.d(TAG, "Setting imageLocalStorageLocation");
-//                mPOIHashMap.get(key).setImageLocalStorageLocation(localFile.toString());
-//                MainActivity.englishPoiDatabase.poiDao().insertAll(mPOIHashMap.get(key));
-////                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
-//                // Local temp file has been created
-//            }
-//        }).addOnFailureListener(new OnFailureListener() {
-//            //Try wav?
-//            @Override
-//            public void onFailure(@NonNull Exception exception) {
-//                Log.d(TAG,"addImageToTempFile-- onFailure");
-//            }
-//        });
-//    }
-
-    private String readableKey(String key) {
-        return key.replace("*", ".");
-    }
-
-    private String audioKey(String key) {
-        key = key.replace(".jpeg", ".mp3");
-        key = key.replace(".png", ".mp3");
-        key = key.replace(".JPG", ".mp3");
-        key = key.replace(".PNG", ".mp3");
-        return key.replace(".jpg", ".mp3");
     }
 
     //Checks whether you have permission, then get's the last known location.
@@ -546,21 +367,45 @@ public class ChangingTourActivity extends AppCompatActivity {
 //            addImage(currentKey);
             //Do nothing
         } else {
+            if (currentKey==null || currentKey.equals("")) {
+                Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
+                return;
+            }
             Log.d(TAG,"minDistance = "+ minDistance);
             Log.d(TAG, "closestPOI.imageName = " + closestPOI.imageName);
             currentKey = closestPOI.imageName;
 
+            if (binding.nextPoi.getVisibility()==View.GONE) {
+                binding.nextPoi.setText("Next: " + userFriendlyName(closestPOI.imageName));
+                binding.nextPoi.setVisibility(View.VISIBLE);
+            }
+
+            if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+                Log.d(TAG, "makeUseOfNewLocation-- waiting for mediaplayer to stop");
+                return;
+            }
+            else {
+                nextPOI();
+            }
+
+            binding.directionToolbar.setText((int)minDistance+"m");
+
             //DEBUG ONLY
 //                binding.closestPoi.setText(closestPOI.imageName);
-            addImage(currentKey);
-            addAudio(currentKey);
+
         }
         //DEBUG ONLY
 //            binding.location.setText(currentLocation);
 
 
+
+    }
+
+    private void nextPOI() {
+        binding.nextPoi.setVisibility(View.GONE);
+        addImage(currentKey);
+        addAudio(currentKey);
         binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
-        binding.directionToolbar.setText((int) minDistance+"m");
     }
 
     // Checks if user has enabled permission. If they have, get the last location.
