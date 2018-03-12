@@ -65,7 +65,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
         holder.downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ((MainActivity)context).downloadPOIs(currentRoute.route);
+                ((MainActivity)context).downloadPOIs(currentRoute.route, MainActivity.language);
             }
         });
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -85,11 +85,6 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
             }
         });
     }
-
-
-
-
-
 
     @Override
     public int getItemCount() {

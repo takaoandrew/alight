@@ -81,7 +81,7 @@ public class OrderedTourActivity extends AppCompatActivity {
     private static final int mBarUpdateInterval = 1000;
 
     //Dao Database
-//    private static AppDatabase db;
+//    private static PoiDatabase db;
 
     //Smooth Scroller
     LinearLayoutManager layoutManager;
@@ -157,7 +157,7 @@ public class OrderedTourActivity extends AppCompatActivity {
         if (MainActivity.englishPoiDatabase == null) {
             Log.d(TAG, "Creating database");
             MainActivity.englishPoiDatabase = Room.databaseBuilder(getApplicationContext(),
-                    AppDatabase.class, "poi-database").allowMainThreadQueries().build();
+                    PoiDatabase.class, "poi-database").allowMainThreadQueries().build();
 
         }
         Log.d(TAG, "size of database is " + MainActivity.englishPoiDatabase.poiDao().getAll(busRoute).size());

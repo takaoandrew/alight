@@ -68,7 +68,7 @@ public class ChangingTourActivity extends AppCompatActivity {
     Runnable runnable;
 
     //Dao Database
-//    private static AppDatabase db;
+//    private static PoiDatabase db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -120,7 +120,7 @@ public class ChangingTourActivity extends AppCompatActivity {
         if (MainActivity.currentPoiDatabase == null) {
             Log.d(TAG, "Creating database");
             MainActivity.currentPoiDatabase = Room.databaseBuilder(getApplicationContext(),
-                    AppDatabase.class, "poi-database").allowMainThreadQueries().build();
+                    PoiDatabase.class, "poi-database").allowMainThreadQueries().build();
 
         }
         Log.d(TAG, "size of database is " + MainActivity.currentPoiDatabase.poiDao().getAll(busRoute).size());
@@ -357,6 +357,10 @@ public class ChangingTourActivity extends AppCompatActivity {
                 closestPOI = POI;
             }
         }
+        if (closestPOI.imageName == null) {
+            Log.d(TAG, "closestPOI.imagename is null");
+            return;
+        }
 
         if (currentKey.equals(closestPOI.imageName)) {
             if (currentKey==null || currentKey.equals("")) {
@@ -367,13 +371,13 @@ public class ChangingTourActivity extends AppCompatActivity {
 //            addImage(currentKey);
             //Do nothing
         } else {
+            Log.d(TAG,"minDistance = "+ minDistance);
+            Log.d(TAG, "closestPOI.imageName = " + closestPOI.imageName);
+            currentKey = closestPOI.imageName;
             if (currentKey==null || currentKey.equals("")) {
                 Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
                 return;
             }
-            Log.d(TAG,"minDistance = "+ minDistance);
-            Log.d(TAG, "closestPOI.imageName = " + closestPOI.imageName);
-            currentKey = closestPOI.imageName;
 
             if (binding.nextPoi.getVisibility()==View.GONE) {
                 binding.nextPoi.setText("Next: " + userFriendlyName(closestPOI.imageName));

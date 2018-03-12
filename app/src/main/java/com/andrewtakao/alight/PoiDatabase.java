@@ -8,6 +8,6 @@ import android.arch.persistence.room.RoomDatabase;
  */
 
 @Database(entities = {POI.class}, version = 1, exportSchema = false)
-public abstract class AppDatabase extends RoomDatabase {
+public abstract class PoiDatabase extends RoomDatabase {
     public abstract POIDao poiDao();
 }
