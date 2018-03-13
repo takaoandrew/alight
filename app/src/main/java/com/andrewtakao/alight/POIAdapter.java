@@ -93,7 +93,7 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
                 Log.d(TAG, "You clicked on holder.imageNameView " + holder.imageNameView);
                 Log.d(TAG, "You clicked on holder.locationView " + holder.locationView);
 
-                ((OrderedTourActivity)context).showMediaButtons();
+                ((ChangingTourActivity)context).showMediaButtons();
                 //Make unclickable
 //                holder.backgroundImage.setClickable(false);
                 if (handler != null && runnable != null) {
@@ -102,7 +102,7 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
                 runnable = new Runnable() {
                     @Override
                     public void run() {
-                        ((OrderedTourActivity)context).hideMediaButtons();
+                        ((ChangingTourActivity)context).hideMediaButtons();
                         holder.backgroundImage.setClickable(true);
                     }
                 };
@@ -126,18 +126,19 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 
     public void updateAdapter(ArrayList<POI> poiArrayList) {
         Log.d(TAG, "updateAdapter");
+        ///TODO Order commented may ruin everything
         //Remove order and hope for the best
-        Collections.sort(poiArrayList, new Comparator<POI>() {
-            @Override
-            public int compare(POI poi, POI poi2) {
-                if (poi.order>poi2.order) {
-                    return 1;
-                } else if (poi.order == poi2.order) {
-                    return 0;
-                }
-                return -1;
-            }
-        });
+//        Collections.sort(poiArrayList, new Comparator<POI>() {
+//            @Override
+//            public int compare(POI poi, POI poi2) {
+//                if (poi.order>poi2.order) {
+//                    return 1;
+//                } else if (poi.order == poi2.order) {
+//                    return 0;
+//                }
+//                return -1;
+//            }
+//        });
         this.poiArrayList = poiArrayList;
     }
 
@@ -177,41 +178,6 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
                 " "
         );
 
-    }
-
-    public void playAudio() {
-        Log.d(TAG, "playAudio pressed");
-
-        String fileName;
-
-        if (OrderedTourActivity.mPOIHashMap.get(OrderedTourActivity.currentKey) != null) {
-            fileName = OrderedTourActivity.mPOIHashMap.get(OrderedTourActivity.currentKey).audioLocalStorageLocation;
-            Log.d(TAG, "playAudio-- fileName = " + fileName);
-        } else {
-            Log.d(TAG, "mPOIHashMap doesn't have the key " + OrderedTourActivity.currentKey);
-            fileName = null;
-        }
-
-//        if (mMediaPlayer!=null) {
-//            if (mMediaPlayer.isPlaying()) {
-//                mMediaPlayer.stop();
-//            }
-//
-//        }
-        if (OrderedTourActivity.mMediaPlayer != null ) {
-            if (fileName != null) {
-                if (OrderedTourActivity.mMediaPlayer.isPlaying()) {
-                    OrderedTourActivity.mMediaPlayer.stop();
-                }
-                else {
-                    OrderedTourActivity.mMediaPlayer = MediaPlayer.create(OrderedTourActivity.mContext, Uri.parse(fileName));
-                    OrderedTourActivity.mMediaPlayer.start();
-                }
-
-            }
-        } else {
-            OrderedTourActivity.mMediaPlayer = new MediaPlayer();
-        }
     }
 
 }

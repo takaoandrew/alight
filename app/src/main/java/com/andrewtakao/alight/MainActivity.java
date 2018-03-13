@@ -42,15 +42,16 @@ public class MainActivity extends AppCompatActivity {
     private BusRouteAdapter busRouteAdapter;
     public static String language = "English";
 
-    //Route database
-    private static RouteDatabase currentRouteDatabase;
-    private static RouteDatabase englishRouteDatabase;
-    private static RouteDatabase chineseRouteDatabase;
-    //POI Database
-    public static PoiDatabase currentPoiDatabase;
-    public static PoiDatabase chinesePoiDatabase;
-    public static PoiDatabase englishPoiDatabase;
+//    //Route database
+//    private static RouteDatabase currentRouteDatabase;
+//    private static RouteDatabase englishRouteDatabase;
+//    private static RouteDatabase chineseRouteDatabase;
+//    //POI Database
+//    public static PoiDatabase currentPoiDatabase;
+//    public static PoiDatabase chinesePoiDatabase;
+//    public static PoiDatabase englishPoiDatabase;
     int childCount = 0;
+    int downloadedCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +63,8 @@ public class MainActivity extends AppCompatActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
         //Firebase download data
-        database = FirebaseDatabase.getInstance();
+//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        database = Utils.getDatabase();
 //        database.setPersistenceEnabled(true);
         routesRef = database.getReference(language+"/routes");
         busRoutes = new ArrayList<>();
@@ -73,69 +75,60 @@ public class MainActivity extends AppCompatActivity {
         binding.rvBusRoutes.setAdapter(busRouteAdapter);
 
         //to prevent uploading to wrong database temporarily
-        currentPoiDatabase = null;
-        currentRouteDatabase = null;
+//        currentPoiDatabase = null;
+//        currentRouteDatabase = null;
 
-        if (language.equals("English")) {
-            if (englishRouteDatabase == null) {
-                Log.d(TAG, "Creating englishRouteDatabase");
-                englishRouteDatabase = Room.databaseBuilder(getApplicationContext(),
-                        RouteDatabase.class, "english-route-database").allowMainThreadQueries().build();
-            }
-            if (englishPoiDatabase == null) {
-                Log.d(TAG, "Creating englishPoiDatabase");
-                englishPoiDatabase = Room.databaseBuilder(getApplicationContext(),
-                        PoiDatabase.class, "english-poi-database").allowMainThreadQueries().build();
+//        if (language.equals("English")) {
+//            if (englishRouteDatabase == null) {
+//                Log.d(TAG, "Creating englishRouteDatabase");
+//                englishRouteDatabase = Room.databaseBuilder(getApplicationContext(),
+//                        RouteDatabase.class, "english-route-database").allowMainThreadQueries().build();
+//            }
+//            if (englishPoiDatabase == null) {
+//                Log.d(TAG, "Creating englishPoiDatabase");
+//                englishPoiDatabase = Room.databaseBuilder(getApplicationContext(),
+//                        PoiDatabase.class, "english-poi-database").allowMainThreadQueries().build();
+//
+//            }
+//            Log.d(TAG,"language is english");
+//            currentRouteDatabase = englishRouteDatabase;
+//            currentPoiDatabase = englishPoiDatabase;
+//        } else {
+//            if (chineseRouteDatabase == null) {
+//                Log.d(TAG, "Creating chineseRouteDatabase");
+//                chineseRouteDatabase = Room.databaseBuilder(getApplicationContext(),
+//                        RouteDatabase.class, "chinese-route-database").allowMainThreadQueries().build();
+//
+//            }
+//            if (chinesePoiDatabase == null) {
+//                Log.d(TAG, "Creating chinesePoiDatabase");
+//                chinesePoiDatabase = Room.databaseBuilder(getApplicationContext(),
+//                        PoiDatabase.class, "chinese-poi-database").allowMainThreadQueries().build();
+//            }
+//            Log.d(TAG,"language is chinese");
+//            currentRouteDatabase = chineseRouteDatabase;
+//            currentPoiDatabase = chinesePoiDatabase;
+//        }
 
-            }
-            Log.d(TAG,"language is english");
-            currentRouteDatabase = englishRouteDatabase;
-            currentPoiDatabase = englishPoiDatabase;
-        } else {
-            if (chineseRouteDatabase == null) {
-                Log.d(TAG, "Creating chineseRouteDatabase");
-                chineseRouteDatabase = Room.databaseBuilder(getApplicationContext(),
-                        RouteDatabase.class, "chinese-route-database").allowMainThreadQueries().build();
+//        Log.d(TAG, "size of current route database is " + currentRouteDatabase.routeDao().getAll().size());
+//        Log.d(TAG, "size of current poi database is " + currentPoiDatabase.poiDao().getAll().size());
 
-            }
-            if (chinesePoiDatabase == null) {
-                Log.d(TAG, "Creating chinesePoiDatabase");
-                chinesePoiDatabase = Room.databaseBuilder(getApplicationContext(),
-                        PoiDatabase.class, "chinese-poi-database").allowMainThreadQueries().build();
-            }
-            Log.d(TAG,"language is chinese");
-            currentRouteDatabase = chineseRouteDatabase;
-            currentPoiDatabase = chinesePoiDatabase;
-        }
-
-        Log.d(TAG, "size of current route database is " + currentRouteDatabase.routeDao().getAll().size());
-        Log.d(TAG, "size of current poi database is " + currentPoiDatabase.poiDao().getAll().size());
-
-        if (currentRouteDatabase.routeDao().getAll().size() > 0) {
-            Log.d(TAG, "Setting mPOIHashMap from local currentRouteDatabase!");
-            for (Route routeNumber : currentRouteDatabase.routeDao().getAll()) {
-                Log.d(TAG, "routenumber is " + routeNumber);
-                Log.d(TAG, "routenumber.route is " + routeNumber.route);
-                busRoutes.add(new Route(routeNumber.route, routeNumber.firebaseCount, routeNumber.downloadedCount));
-            }
-            busRouteAdapter.notifyDataSetChanged();
-        }
+//        if (currentRouteDatabase.routeDao().getAll().size() > 0) {
+//            Log.d(TAG, "Setting mPOIHashMap from local currentRouteDatabase!");
+//            for (Route routeNumber : currentRouteDatabase.routeDao().getAll()) {
+//                Log.d(TAG, "routenumber is " + routeNumber);
+//                Log.d(TAG, "routenumber.route is " + routeNumber.route);
+//                busRoutes.add(new Route(routeNumber.route, routeNumber.firebaseCount, routeNumber.downloadedCount));
+//            }
+//            busRouteAdapter.notifyDataSetChanged();
+//        }
 
         routesRefListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                Log.d(TAG, "routesRefListener onChildAdded--");
                 childCount = 0;
-                Log.d(TAG, "List of pois in currentPoiDatabase = " + currentPoiDatabase);
-//                Log.d(TAG, "onChildAdded-- dataSnapshot.getKey() = " + dataSnapshot.getKey());
-                for (POI downloadedPoi : currentPoiDatabase.poiDao().getAll(dataSnapshot.getKey())){
-                    Log.d(TAG, ""+downloadedPoi.imageName);
-                }
-
-                int downloadedCount = currentPoiDatabase.poiDao().getAll(dataSnapshot.getKey()).size();
-                Log.d(TAG, "onChildAdded-- downloadedCount = " + downloadedCount);
-                Log.d(TAG, "onChildAdded-- currentPoiDatabase = " + currentPoiDatabase);
-                Log.d(TAG, "onChildAdded-- language = " + language);
-//                Log.d(TAG, "downloadedCount = " + downloadedCount);
+                downloadedCount = 0;
 
                 //Count how many pois there should be
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
@@ -145,11 +138,17 @@ public class MainActivity extends AppCompatActivity {
                         }
                         else if (coordinateSnapshot.hasChildren()) {
                             for (DataSnapshot individualSnapshot: coordinateSnapshot.getChildren()) {
+                                Log.d(TAG, "individualSnapshot.getKey() = " + individualSnapshot.getKey());
+                                if (null!=individualSnapshot.child("imageLocalStorageLocation").getValue() &&
+                                        fileExist((String) individualSnapshot.child("imageLocalStorageLocation").getValue())) {
+                                    downloadedCount+=1;
+                                }
                                 childCount += 1;
                             }
                         }
                         else {
-                            childCount += 1;
+                            //This probably never happens, coordinatesnapshot will always have children if not empty
+                            Log.d(TAG, "coordinateSnapshot.getKey() = " + coordinateSnapshot.getKey());
                         }
                     }
                 }
@@ -159,37 +158,31 @@ public class MainActivity extends AppCompatActivity {
                 for (Route route : busRoutes) {
                     if (route.route.equals(dataSnapshot.getKey())) {
                         Log.d(TAG, "key " + dataSnapshot.getKey() + " is already in busRoutes");
-                        if (route.downloadedCount == childCount) {
-                            Log.d(TAG, "route.downloadedCount = " + route.downloadedCount + " and " +
-                                    "childCount = " + childCount);
-                            Log.d(TAG, "already up to date");
-                            return;
-                        }
-                        else {
-                            Log.d(TAG, "route.downloadedCount = " + route.downloadedCount + " and " +
-                                    "childCount = " + childCount);
-                            Log.d(TAG, "should replace old route");
-                            routeToRemove = route;
-                        }
+                        Log.d(TAG, "route.downloadedCount = " + route.downloadedCount + " and " +
+                                "childCount = " + childCount);
+                        Log.d(TAG, "should replace old route");
+                        //Shouldn't remove while iterating through busRoutes
+                        routeToRemove = route;
                     }
                     // else should be added anyways
                 }
 
-
-                Route addedRoute;
                 //Need to replace manually here
                 if (null != routeToRemove) {
+                    //We do this here because earlier we were iterating through busRoutes
                     busRoutes.remove(routeToRemove);
                     //Will show how many there used to be
                 }
 
-                addedRoute = new Route(dataSnapshot.getKey(), childCount, downloadedCount);
-                Log.d(TAG, "added route " + addedRoute.route + " with firebase children " + addedRoute.firebaseCount);
+                busRoutes.add(new Route(dataSnapshot.getKey(), childCount, downloadedCount));
+
+//                addedRoute = new Route(dataSnapshot.getKey(), childCount, downloadedCount);
+//                Log.d(TAG, "added route " + addedRoute.route + " with firebase children " + addedRoute.firebaseCount);
 
                 //This should replace old, so no need to remove old as was done for busroutes
-                currentRouteDatabase.routeDao().insertAll(addedRoute);
+//                currentRouteDatabase.routeDao().insertAll(addedRoute);
 
-                busRoutes.add(addedRoute);
+//                busRoutes.add(addedRoute);
                 busRouteAdapter.notifyDataSetChanged();
             }
 
@@ -213,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 if (null!=routeToRemove) {
-                    currentRouteDatabase.routeDao().delete(routeToRemove);
+//                    currentRouteDatabase.routeDao().delete(routeToRemove);
                     busRoutes.remove(routeToRemove);
                     busRouteAdapter.notifyDataSetChanged();
                 }
@@ -261,16 +254,8 @@ public class MainActivity extends AppCompatActivity {
     public void downloadPOIs(final String route, String language) {
         Log.d(TAG, "downloadPOIs");
 
-        final PoiDatabase databaseToDownloadTo;
-        if (language.equals("English")) {
-            databaseToDownloadTo = englishPoiDatabase;
-        } else {
-            databaseToDownloadTo = chinesePoiDatabase;
-        }
-
         mStorageRef = FirebaseStorage.getInstance().getReference(language+"/routes").child(route);
         mDatabaseRef = routesRef.child(route);
-
         mDatabaseRef.addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
@@ -278,35 +263,44 @@ public class MainActivity extends AppCompatActivity {
                         for (DataSnapshot indexChildSnapshot : dataSnapshot.getChildren()) {
                             for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
                                 for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
+                                    DatabaseReference databaseToChange = mDatabaseRef.child(
+                                            indexChildSnapshot.getKey()).child(coordinateChildSnapshot.getKey());
                                     //Ignore it if it's already in the HashMap (was stored locally)
 //                                if (mPOIHashMap.containsKey(poiChildSnapshot.getKey())) {
 //                                    Log.d(TAG, "key " + poiChildSnapshot.getKey() + " is already in mPOIHashMap");
 //                                } else {
-                                    if (databaseToDownloadTo.poiDao().findByNameAndRoute(poiChildSnapshot.getKey(),route)!=null) {
-                                        Log.d(TAG, "onDataChange- poi " + poiChildSnapshot.getKey() + " is already downloaded" +
-                                                "in route " + route);
-                                        break;
-                                    }
+//                                    if (databaseToDownloadTo.poiDao().findByNameAndRoute(poiChildSnapshot.getKey(),route)!=null) {
+//                                        Log.d(TAG, "onDataChange- poi " + poiChildSnapshot.getKey() + " is already downloaded" +
+//                                                "in route " + route);
+//                                        break;
+//                                    }
                                     //Set POI
                                     Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
                                     Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
                                     POI addedPoi = new POI(
-                                            poiChildSnapshot.getKey(),
-                                            Double.valueOf((String) poiChildSnapshot.child("lat").getValue()),
-                                            Double.valueOf((String) poiChildSnapshot.child("long").getValue()),
-                                            Integer.valueOf(indexChildSnapshot.getKey()),
-                                            route
+                                            (String) poiChildSnapshot.getKey(),
+                                            (String) poiChildSnapshot.child("audio").getValue(),
+                                            (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("image").getValue(),
+                                            (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("language").getValue(),
+                                            (String) poiChildSnapshot.child("latitude").getValue(),
+                                            (String) poiChildSnapshot.child("longitude").getValue(),
+                                            (String) poiChildSnapshot.child("purpose").getValue(),
+                                            (String) poiChildSnapshot.child("route").getValue(),
+                                            (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
+                                            (String) poiChildSnapshot.child("transcript").getValue()
                                     );
-                                    Log.d(TAG, "addedPOI.busRoute = " + addedPoi.busRoute);
-                                    databaseToDownloadTo.poiDao().insertAll(addedPoi);
+                                    Log.d(TAG, "addedPOI.busRoute = " + addedPoi.route);
+//                                    databaseToDownloadTo.poiDao().insertAll(addedPoi);
 //                                    mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
                                     try {
-                                        addImageToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToDownloadTo);
+                                        addImageToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToChange);
                                     } catch (IOException e) { e.printStackTrace(); }
 
                                     //Store audio location
                                     try {
-                                        addAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToDownloadTo);
+                                        addAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToChange);
                                     } catch (IOException e) { e.printStackTrace();}
 //                                }
                                 }
@@ -325,7 +319,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void addAudioToTempFile(final String key, final POI addedPoi, final PoiDatabase databaseToAddTo) throws IOException {
+    private void addAudioToTempFile(final String key, final POI addedPoi, final DatabaseReference databaseToChange) throws IOException {
 
 //        Log.d(TAG, "addAudioToTempFile-- key = " + key);
 //        Log.d(TAG, "addAudioToTempFile-- readable key = " + readableKey(key));
@@ -343,15 +337,25 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
-                Log.d(TAG,"addAudioToTempFile-- databaseToAddTo = " + databaseToAddTo);
+//                Log.d(TAG,"addAudioToTempFile-- databaseToAddTo = " + databaseToAddTo);
                 Log.d(TAG,"addAudioToTempFile-- localFile = " + localFile);
-                if (databaseToAddTo == null) {
-                    Log.d(TAG, "The databaseToAddTo was null!");
-                    return;
-                }
+//                if (databaseToAddTo == null) {
+//                    Log.d(TAG, "The databaseToAddTo was null!");
+//                    return;
+//                }
                 //TODO commented this out, might change things
                 addedPoi.setAudioLocalStorageLocation(localFile.toString());
-                databaseToAddTo.poiDao().insertAll(addedPoi);
+                databaseToChange.child(key).setValue(addedPoi);
+                listenToDatabase();
+
+//                databaseToAddTo.poiDao().insertAll(addedPoi);
+
+//                firebase.database().ref('users/' + userId).set({
+//                        username: name,
+//                        email: email,
+//                        profile_picture : imageUrl
+//  });
+
 
             }
         }).addOnFailureListener(new OnFailureListener() {
@@ -363,7 +367,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void addImageToTempFile(final String key, final POI addedPOI, final PoiDatabase databaseToAddTo) throws IOException {
+    private void addImageToTempFile(final String key, final POI addedPOI, final DatabaseReference databaseToChange) throws IOException {
 
 //        Log.d(TAG, "addImageToTempFile-- key = " + key);
 //        Log.d(TAG, "addImageToTempFile-- readable key = " + readableKey(key));
@@ -386,16 +390,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 Log.d(TAG,"addImageToTempFile-- onSuccess");
-                Log.d(TAG,"addImageToTempFile-- databaseToAddTo = " + databaseToAddTo);
+//                Log.d(TAG,"addImageToTempFile-- databaseToAddTo = " + databaseToAddTo);
                 Log.d(TAG,"addImageToTempFile-- localFile = " + localFile);
 
-                if (databaseToAddTo == null) {
-                    Log.d(TAG, "The databaseToAddTo was null!");
-                    return;
-                }
+//                if (databaseToAddTo == null) {
+//                    Log.d(TAG, "The databaseToAddTo was null!");
+//                    return;
+//                }
                 Log.d(TAG, "Setting imageLocalStorageLocation");
                 addedPOI.setImageLocalStorageLocation(localFile.toString());
-                databaseToAddTo.poiDao().insertAll(addedPOI);
+                databaseToChange.child(key).setValue(addedPOI);
+                listenToDatabase();
+//                databaseToAddTo.poiDao().insertAll(addedPOI);
 //                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
                 // Local temp file has been created
             }
@@ -419,5 +425,10 @@ public class MainActivity extends AppCompatActivity {
         key = key.replace(".JPG", ".mp3");
         key = key.replace(".PNG", ".mp3");
         return key.replace(".jpg", ".mp3");
+    }
+
+    public boolean fileExist(String fname){
+        File file = new File(fname);
+        return file.exists();
     }
 }

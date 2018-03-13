@@ -16,9 +16,6 @@
         <activity android:name=".MainActivity">
         </activity>
         <activity
-            android:name=".OrderedTourActivity"
-            android:theme="@style/TourTheme" />
-        <activity
             android:name=".ChangingTourActivity"
             android:theme="@style/TourTheme" />
         <activity android:name=".LanguageActivity">

@@ -1,12 +1,20 @@
 package com.andrewtakao.alight;
 
 import android.Manifest;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
 import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -21,24 +29,32 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.view.animation.RotateAnimation;
 import android.widget.SeekBar;
 
 import com.andrewtakao.alight.databinding.ActivityChangingTourBinding;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.ValueEventListener;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class ChangingTourActivity extends AppCompatActivity {
+public class ChangingTourActivity extends AppCompatActivity implements SensorEventListener{
 
 //    public static StorageReference mStorageRef;
 //    public static StorageReference mAudioRef;
 //    public static StorageReference mImageRef;
     public static HashMap<String, POI> mPOIHashMap;
 //    private ChildEventListener mImagesListener;
-//    public static DatabaseReference mImagesDatabaseRef;
+    public static DatabaseReference mDatabaseRef;
 //    DataSnapshot firstChildSnapshot;
 //    DataSnapshot secondChildSnapshot;
 
@@ -69,6 +85,17 @@ public class ChangingTourActivity extends AppCompatActivity {
 
     //Dao Database
 //    private static PoiDatabase db;
+
+    //Animation
+    ObjectAnimator scaleDown;
+
+    //Compass
+    private SensorManager mSensorManager;
+    private Sensor accelerometer;
+    private Sensor magnetometer;
+    float[] mGravity;
+    float[] mGeomagnetic;
+    Float azimuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,25 +141,52 @@ public class ChangingTourActivity extends AppCompatActivity {
         Intent intent = getIntent();
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
 
-//        mStorageRef = FirebaseStorage.getInstance().getReference("routes").child(busRoute);
+        //Compass
+        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        //run first time only
-        if (MainActivity.currentPoiDatabase == null) {
-            Log.d(TAG, "Creating database");
-            MainActivity.currentPoiDatabase = Room.databaseBuilder(getApplicationContext(),
-                    PoiDatabase.class, "poi-database").allowMainThreadQueries().build();
+        mDatabaseRef = MainActivity.routesRef.child(busRoute);
+        mDatabaseRef.addListenerForSingleValueEvent(
+                new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot indexChildSnapshot : dataSnapshot.getChildren()) {
+                            for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
+                                for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
 
-        }
-        Log.d(TAG, "size of database is " + MainActivity.currentPoiDatabase.poiDao().getAll(busRoute).size());
+                                    //Set POI
+                                    Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
+                                    Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
+                                    POI addedPoi = new POI(
+                                            (String) poiChildSnapshot.getKey(),
+                                            (String) poiChildSnapshot.child("audio").getValue(),
+                                            (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("image").getValue(),
+                                            (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("language").getValue(),
+                                            (String) poiChildSnapshot.child("latitude").getValue(),
+                                            (String) poiChildSnapshot.child("longitude").getValue(),
+                                            (String) poiChildSnapshot.child("purpose").getValue(),
+                                            (String) poiChildSnapshot.child("route").getValue(),
+                                            (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
+                                            (String) poiChildSnapshot.child("transcript").getValue()
+                                    );
+                                    Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
+                                    mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
 
-        //First, populate mPOIHashMap with local data
-        if (MainActivity.currentPoiDatabase.poiDao().getAll(busRoute).size() > 0) {
-            Log.d(TAG, "Setting mPOIHashMap from local database!");
-            for (POI databasePoi : MainActivity.currentPoiDatabase.poiDao().getAll(busRoute)) {
-                Log.d(TAG, "databasePoi image name is " + databasePoi.imageName);
-                mPOIHashMap.put(databasePoi.imageName, databasePoi);
-            }
-        }
+//                                }
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        //handle databaseError
+                    }
+                });
+
 
         //Location
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
@@ -141,7 +195,7 @@ public class ChangingTourActivity extends AppCompatActivity {
             @Override
             public void onLocationChanged(Location location) {
                 //Commented out while using button to debug
-//                Log.d(TAG, "onLocationChanged");
+                Log.d(TAG, "onLocationChanged");
                 makeUseOfNewLocation(location);
             }
 
@@ -160,19 +214,39 @@ public class ChangingTourActivity extends AppCompatActivity {
 
             }
         };
+
         //TODO toggle this to enable location
         checkPermission();
+//
+//        startGlowing();
+//        stopGlowing();
+
+//Compass
+//        mCustomDrawableView = new CustomDrawableView(this);
+//        setContentView(mCustomDrawableView);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        //Compass
+        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        Log.d(TAG, "onStart");
+        checkPermission();
         setPlayPauseButton();
         hideMediaButtons();
     }
 
     @Override
     protected void onPause() {
+        super.onPause();
         Log.d(TAG, "onPause");
         if (locationManager != null) {
             locationManager.removeUpdates(locationListener);
@@ -181,7 +255,86 @@ public class ChangingTourActivity extends AppCompatActivity {
         mMediaPlayer.stop();
 //        mImagesDatabaseRef.removeEventListener(mImagesListener);
 
-        super.onPause();
+        //Compass
+        mSensorManager.unregisterListener(this);
+    }
+
+    public class CustomDrawableView extends View {
+        Paint paint = new Paint();
+        public CustomDrawableView(Context context) {
+            super(context);
+            paint.setColor(0xff00ff00);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(2);
+            paint.setAntiAlias(true);
+        };
+
+        protected void onDraw(Canvas canvas) {
+            int width = getWidth();
+            int height = getHeight();
+            int centerx = width/2;
+            int centery = height/2;
+            canvas.drawLine(centerx, 0, centerx, height, paint);
+            canvas.drawLine(0, centery, width, centery, paint);
+            // Rotate the canvas with the azimut
+            if (azimuth != null)
+                canvas.rotate(-azimuth*360/(2*3.14159f), centerx, centery);
+            paint.setColor(0xff0000ff);
+            canvas.drawLine(centerx, -1000, centerx, +1000, paint);
+            canvas.drawLine(-1000, centery, 1000, centery, paint);
+            canvas.drawText("N", centerx+5, centery-10, paint);
+            canvas.drawText("S", centerx-10, centery+15, paint);
+            paint.setColor(0xff00ff00);
+        }
+    }
+
+    CustomDrawableView mCustomDrawableView;
+
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
+            mGravity = event.values;
+        if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD)
+            mGeomagnetic = event.values;
+        if (mGravity != null && mGeomagnetic != null) {
+            float R[] = new float[9];
+            float I[] = new float[9];
+            boolean success = SensorManager.getRotationMatrix(R, I, mGravity, mGeomagnetic);
+            if (success) {
+                float orientation[] = new float[3];
+                SensorManager.getOrientation(R, orientation);
+//                azimuth = 180/(float)Math.PI*orientation[0]; // orientation contains: azimut, pitch and roll
+                azimuth = orientation[0]; // orientation contains: azimut, pitch and roll
+//                Log.d(TAG, "Azimuth = " + azimuth);
+            }
+        }
+//        mCustomDrawableView.invalidate();
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    private void startGlowing() {
+        binding.glowView.setVisibility(View.VISIBLE);
+        if (scaleDown == null) {
+            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
+                    binding.glowView,
+                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
+                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
+            scaleDown.setDuration(700);
+
+            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
+            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
+        }
+
+        scaleDown.start();
+    }
+
+    private void stopGlowing() {
+        binding.glowView.setVisibility(View.INVISIBLE);
+        if (scaleDown != null) {
+            scaleDown.end();
+        }
     }
     
     private void addImage(String key) {
@@ -294,6 +447,7 @@ public class ChangingTourActivity extends AppCompatActivity {
         makeUseOfNewLocation(lastKnownLocation);
     }
 
+    @SuppressLint("MissingPermission")
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            String permissions[], int[] grantResults) {
@@ -303,6 +457,7 @@ public class ChangingTourActivity extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     Log.d(TAG, "permission granted");
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
                     return;
 
                 } else {
@@ -345,27 +500,42 @@ public class ChangingTourActivity extends AppCompatActivity {
         }
         String latitude = String.valueOf(location.getLatitude());
         String longitude = String.valueOf(location.getLongitude());
+//        Log.d(TAG, "reached here");
 
 //        double minDistance = 1000;
 //        Choosing this as minDistance will show closest POI, as opposed to the closest POI within 1000m
         double minDistance = 100000;
         POI closestPOI = new POI();
         for (POI POI : mPOIHashMap.values()) {
-
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
                 minDistance = POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude));
                 closestPOI = POI;
             }
         }
+        binding.directionToolbar.setText((int)minDistance+"m");
+//        Log.d(TAG, "and here");
         if (closestPOI.imageName == null) {
             Log.d(TAG, "closestPOI.imagename is null");
             return;
         }
+//        Log.d(TAG, "finally here");
 
         if (currentKey.equals(closestPOI.imageName)) {
+            Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
+            Log.d(TAG, "makeUseOfNewLocation-- closestPoi.imageName = " + closestPOI .imageName);
             if (currentKey==null || currentKey.equals("")) {
                 Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
                 return;
+            }
+
+            //TODO check if button is glowing
+
+            else if (binding.glowView.getVisibility()==View.VISIBLE) {
+                if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+                    Log.d(TAG, "makeUseOfNewLocation-- waiting for mediaplayer to stop");
+                    return;
+                }
+                nextPOI();
             }
             //For debugging purposes. Otherwise, comment this out.
 //            addImage(currentKey);
@@ -379,9 +549,13 @@ public class ChangingTourActivity extends AppCompatActivity {
                 return;
             }
 
-            if (binding.nextPoi.getVisibility()==View.GONE) {
-                binding.nextPoi.setText("Next: " + userFriendlyName(closestPOI.imageName));
-                binding.nextPoi.setVisibility(View.VISIBLE);
+            //Will always be visible
+            //TODO check if button is not glowing, then make it glow
+            if (binding.glowView.getVisibility()==View.INVISIBLE) {
+                //Don't need this if it's an image
+//                binding.nextPoi.setText("Next: " + userFriendlyName(closestPOI.imageName));
+//                binding.nextPoi.setVisibility(View.VISIBLE);
+                startGlowing();
             }
 
             if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
@@ -392,7 +566,6 @@ public class ChangingTourActivity extends AppCompatActivity {
                 nextPOI();
             }
 
-            binding.directionToolbar.setText((int)minDistance+"m");
 
             //DEBUG ONLY
 //                binding.closestPoi.setText(closestPOI.imageName);
@@ -401,12 +574,12 @@ public class ChangingTourActivity extends AppCompatActivity {
         //DEBUG ONLY
 //            binding.location.setText(currentLocation);
 
-
-
     }
 
     private void nextPOI() {
-        binding.nextPoi.setVisibility(View.GONE);
+        Log.d(TAG, "nextPOI");
+        stopGlowing();
+//        binding.nextPoi.setVisibility(View.GONE);
         addImage(currentKey);
         addAudio(currentKey);
         binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
@@ -414,10 +587,12 @@ public class ChangingTourActivity extends AppCompatActivity {
 
     // Checks if user has enabled permission. If they have, get the last location.
     private void checkPermission() {
+        Log.d(TAG, "checkPermission--");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, "checkPermission-- permission not granted");
 
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
@@ -428,11 +603,12 @@ public class ChangingTourActivity extends AppCompatActivity {
                         MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
             }
         } else {
-            Log.d(TAG, "onCreate-- getLastLocation(), then locationmanager.requestLocationupdates()");
-            getLastLocation();
+            Log.d(TAG, "checkPermission-- getLastLocation(), then locationmanager.requestLocationupdates()");
+//            getLastLocation();
 
             //TODO Choose between GPS and network provider
             //TODO listen to both GPS AND Network, then use timestamps to find most recent
+
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 //            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         }
@@ -497,7 +673,6 @@ public class ChangingTourActivity extends AppCompatActivity {
             });
         }
     }
-
 
     public void startMusic(View v) {
         if (mMediaPlayer!=null&&!mMediaPlayer.isPlaying()){

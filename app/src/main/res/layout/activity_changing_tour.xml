@@ -66,15 +66,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            android:id="@+id/next_poi"
-            android:visibility="gone"
-            android:text=""/>
-
         <ImageButton
             android:layout_height="match_parent"
             android:layout_width="match_parent"
@@ -192,6 +183,29 @@
             <!--android:onClick="playAudio"-->
             <!--android:layout_margin="12dp"-->
             <!--android:visibility="gone"/>-->
+
+        <View
+            android:layout_width="55dp"
+            android:layout_height="55dp"
+            android:id="@+id/glow_view"
+            android:visibility="invisible"
+            app:layout_constraintStart_toEndOf="@id/next_poi"
+            app:layout_constraintEnd_toStartOf="@id/next_poi"
+            app:layout_constraintBottom_toTopOf="@id/next_poi"
+            app:layout_constraintTop_toBottomOf="@id/next_poi"
+            android:background="@color/colorAccent"/>
+
+        <ImageButton
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:layout_margin="20dp"
+            android:id="@+id/next_poi"
+            android:src="@drawable/ic_launcher_alight"/>
+
 
 
     </android.support.constraint.ConstraintLayout>
