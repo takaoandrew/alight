@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class ChangingTourActivity extends AppCompatActivity implements SensorEventListener{
 
@@ -53,6 +54,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //    public static StorageReference mAudioRef;
 //    public static StorageReference mImageRef;
     public static HashMap<String, POI> mPOIHashMap;
+    public static HashMap<String, POI> mFillerPOIHashMap;
 //    private ChildEventListener mImagesListener;
     public static DatabaseReference mDatabaseRef;
 //    DataSnapshot firstChildSnapshot;
@@ -129,6 +131,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         mContext = this;
         currentKey = "";
         mPOIHashMap = new HashMap<>();
+        mFillerPOIHashMap = new HashMap<>();
 
         binding.nextPoi.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -152,9 +155,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot indexChildSnapshot : dataSnapshot.getChildren()) {
-                            for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
-                                for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
-
+                            if (indexChildSnapshot.getKey().equals("filler")) {
+                                for (DataSnapshot poiChildSnapshot : indexChildSnapshot.getChildren()) {
                                     //Set POI
                                     Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
                                     Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
@@ -173,9 +175,32 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                             (String) poiChildSnapshot.child("transcript").getValue()
                                     );
                                     Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
-                                    mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
+                                    mFillerPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
+                                }
+                            } else {
+                                for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
+                                    for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
 
-//                                }
+                                        //Set POI
+                                        Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
+                                        Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
+                                        POI addedPoi = new POI(
+                                                (String) poiChildSnapshot.getKey(),
+                                                (String) poiChildSnapshot.child("audio").getValue(),
+                                                (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
+                                                (String) poiChildSnapshot.child("image").getValue(),
+                                                (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
+                                                (String) poiChildSnapshot.child("language").getValue(),
+                                                (String) poiChildSnapshot.child("latitude").getValue(),
+                                                (String) poiChildSnapshot.child("longitude").getValue(),
+                                                (String) poiChildSnapshot.child("purpose").getValue(),
+                                                (String) poiChildSnapshot.child("route").getValue(),
+                                                (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
+                                                (String) poiChildSnapshot.child("transcript").getValue()
+                                        );
+                                        Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
+                                        mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
+                                    }
                                 }
                             }
                         }
@@ -259,6 +284,20 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         mSensorManager.unregisterListener(this);
     }
 
+    public void playFiller(View view) {
+        Random rand = new Random();
+        int n = rand.nextInt(mFillerPOIHashMap.size());
+        int count = 0;
+        for (POI poi : mFillerPOIHashMap.values()) {
+            if (count == n) {
+                currentKey = poi.imageName;
+                nextPOI();
+                break;
+            }
+            count += 1;
+        }
+    }
+
     public class CustomDrawableView extends View {
         Paint paint = new Paint();
         public CustomDrawableView(Context context) {
@@ -338,7 +377,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
     
     private void addImage(String key) {
-        final POI poi = mPOIHashMap.get(key);
+        POI poi = mPOIHashMap.get(key);
+        if (poi == null || poi.imageLocalStorageLocation == null) {
+            poi = mFillerPOIHashMap.get(key);
+        }
         if (poi == null || poi.imageLocalStorageLocation == null) {
             Log.d(TAG, "addImage-- poi.imageLocalStorageLocation == null");
             Log.d(TAG, "addImage-- failed for key = " + key);
@@ -367,8 +409,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         binding.changingTourBackgroundImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Log.d(TAG, "You clicked on poi.imageName " + poi.imageName);
-                Log.d(TAG, "You clicked on poi.imageStorageLocation " + poi.imageLocalStorageLocation);
 
                 showMediaButtons();
                 //Make unclickable
@@ -385,14 +425,17 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 };
                 handler = new Handler();
                 handler.postDelayed(runnable, 3000);
-
             }
         });
     }
 
     private void addAudio(String key) {
+        Log.d(TAG, "addAudio");
         String fileName;
-        final POI poi = mPOIHashMap.get(key);
+        POI poi = mPOIHashMap.get(key);
+        if (poi == null) {
+            poi = mFillerPOIHashMap.get(key);
+        }
         if (poi == null) {
             Log.d(TAG, "addAudio-- poi == null");
             Log.d(TAG, "addAudio-- failed for key = " + key);
@@ -416,11 +459,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             mMediaPlayer.start();
             setPlayPauseButton();
 
-            Location lastKnownLocation = getLastKnownLocation();
-
-            Log.d(TAG, "lastKnownLocation = " + lastKnownLocation);
-            makeUseOfNewLocation(lastKnownLocation);
-
+            //TODO commenting these lines might break something
+//            Location lastKnownLocation = getLastKnownLocation();
+//
+//            Log.d(TAG, "lastKnownLocation = " + lastKnownLocation);
+//            makeUseOfNewLocation(lastKnownLocation);
         }
     }
 
@@ -582,6 +625,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        binding.nextPoi.setVisibility(View.GONE);
         addImage(currentKey);
         addAudio(currentKey);
+        Log.d(TAG, "nextPOI- currentKey = " + currentKey);
         binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
     }
 
@@ -722,7 +766,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         mMetaRetriever = new MediaMetadataRetriever();
 
         if (object instanceof Uri) {
-            Log.d(TAG, "Uri");
+//            Log.d(TAG, "Uri");
             mMetaRetriever.setDataSource(this, (Uri) object);
             mMediaPlayer.setDataSource(this, (Uri) object);
             mMetaRetriever.setDataSource(this, (Uri) object);

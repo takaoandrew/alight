@@ -206,6 +206,16 @@
             android:id="@+id/next_poi"
             android:src="@drawable/ic_launcher_alight"/>
 
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_margin="20dp"
+            android:id="@+id/play_filler"
+            android:onClick="playFiller"
+            android:text="Tell me something"/>
+
 
 
     </android.support.constraint.ConstraintLayout>
