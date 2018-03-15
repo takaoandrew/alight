@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -60,7 +61,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
         if (currentRoute.firebaseCount != currentRoute.downloadedCount) {
             holder.downloadButton.setVisibility(View.VISIBLE);
         } else {
-            holder.downloadButton.setVisibility(View.GONE);
+            holder.downloadButton.setVisibility(View.INVISIBLE);
         }
         holder.downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -95,7 +96,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
     class BusRouteViewHolder extends RecyclerView.ViewHolder {
 
         TextView busRoute, downloadedCount, firebaseCount;
-        ImageButton downloadButton;
+        ImageView downloadButton;
 
         public BusRouteViewHolder(View itemView) {
             super(itemView);

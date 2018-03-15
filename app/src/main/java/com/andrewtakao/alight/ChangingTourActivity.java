@@ -5,6 +5,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
 import android.arch.persistence.room.Room;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -61,7 +62,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //    DataSnapshot secondChildSnapshot;
 
     private ActivityChangingTourBinding binding;
-    private String busRoute;
+    private static String busRoute;
     private final String TAG = ChangingTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
     private final String LANGUAGE_EXTRA = "language_extra";
@@ -99,6 +100,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     float[] mGeomagnetic;
     Float azimuth;
 
+    //Context
+    private Context context;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -107,15 +111,23 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
 
         Log.d(TAG, "onCreate");
+
+        //Get bus route
+        Intent intent = getIntent();
+        busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
+        Log.d(TAG, "onCreate-- Bus route = " + busRoute);
+
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_changing_tour);
+        context = getApplicationContext();
+
 
         Toolbar tb = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(tb);
         tb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getLocation(view);
+//                getLastLocation();
             }
         });
 
@@ -136,13 +148,13 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         binding.nextPoi.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                nextPOI();
+                if (binding.glowView.getVisibility()==View.INVISIBLE) {
+                    return;
+                }
+                pauseMusic(null);
+                getLastLocation();
             }
         });
-
-        //Get bus route
-        Intent intent = getIntent();
-        busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
 
         //Compass
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
@@ -230,8 +242,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
             @Override
             public void onProviderEnabled(String s) {
-                getLastLocation();
                 Log.d(TAG, "onProviderEnabled");
+                getLastLocation();
             }
 
             @Override
@@ -241,7 +253,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         };
 
         //TODO toggle this to enable location
-        checkPermission();
+//        checkPermission();
 //
 //        startGlowing();
 //        stopGlowing();
@@ -249,6 +261,30 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //Compass
 //        mCustomDrawableView = new CustomDrawableView(this);
 //        setContentView(mCustomDrawableView);
+
+
+        //Only have to do this once
+        binding.changingTourBackgroundImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                showMediaButtons();
+                //Make unclickable
+                binding.changingTourBackgroundImage.setClickable(false);
+                if (handler != null && runnable != null) {
+                    handler.removeCallbacks(runnable);
+                }
+                runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        hideMediaButtons();
+                        binding.changingTourBackgroundImage.setClickable(true);
+                    }
+                };
+                handler = new Handler();
+                handler.postDelayed(runnable, 3000);
+            }
+        });
     }
 
     @Override
@@ -256,8 +292,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         super.onResume();
 
         //Compass
-        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
-        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
+//        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+//        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
@@ -270,12 +306,21 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(TAG, "onPause");
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop");
         if (locationManager != null) {
             locationManager.removeUpdates(locationListener);
         }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "onPause");
+//        if (locationManager != null) {
+//            locationManager.removeUpdates(locationListener);
+//        }
         if (mMediaPlayer!=null && mMediaPlayer.isPlaying())
         mMediaPlayer.stop();
 //        mImagesDatabaseRef.removeEventListener(mImagesListener);
@@ -291,7 +336,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         for (POI poi : mFillerPOIHashMap.values()) {
             if (count == n) {
                 currentKey = poi.imageName;
-                nextPOI();
+                nextFillerPOI();
                 break;
             }
             count += 1;
@@ -375,73 +420,61 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             scaleDown.end();
         }
     }
-    
-    private void addImage(String key) {
-        POI poi = mPOIHashMap.get(key);
-        if (poi == null || poi.imageLocalStorageLocation == null) {
-            poi = mFillerPOIHashMap.get(key);
-        }
-        if (poi == null || poi.imageLocalStorageLocation == null) {
-            Log.d(TAG, "addImage-- poi.imageLocalStorageLocation == null");
-            Log.d(TAG, "addImage-- failed for key = " + key);
+
+    private void addFillerImage(String key) {
+        POI poi = mFillerPOIHashMap.get(key);
+        Log.d(TAG, "addFillerImage-- Bus route = " + busRoute);
+        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language+"/"+busRoute+"/filler/"+
+                readableKey(key);
+//        Log.d(TAG, "addFillerImage-- filename = " + fileName);
+//        Log.d(TAG, "addFillerImage-- check fileexists for " + fileName);
+        if (poi == null || !fileExist((String) fileName)) {
+            Log.d(TAG, "addFillerImage-- failed for key = " + readableKey(key));
             return;
         }
-        final String fileName = poi.imageLocalStorageLocation;
-        Log.d(TAG, "addImage-- filename = " + fileName);
 
         binding.changingTourBackgroundImage.setImageDrawable(null);
-        if (fileName != null) {
-            Log.d(TAG, "addImage-- Uri.parse(fileName) = " + Uri.parse(fileName));
-
+//            Log.d(TAG, "addImage-- Uri.parse(fileName) = " + Uri.parse(fileName));
             Picasso.with(mContext).load(new File(fileName))
-//                    .placeholder(R.drawable.profile_wall_picture)
-//                    .resize(binding.changingTourBackgroundImage.getWidth(), binding.changingTourBackgroundImage.getHeight())
                     .fit()
                     .centerCrop()
                     .into(binding.changingTourBackgroundImage);
-        } else {
-            Log.d(TAG, "addImage-- fileName is null, downloading image");
-        }
-
-
-        String location = poi.latitude + ", " + poi.longitude;
-
-        binding.changingTourBackgroundImage.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                showMediaButtons();
-                //Make unclickable
-                binding.changingTourBackgroundImage.setClickable(false);
-                if (handler != null && runnable != null) {
-                    handler.removeCallbacks(runnable);
-                }
-                runnable = new Runnable() {
-                    @Override
-                    public void run() {
-                        hideMediaButtons();
-                        binding.changingTourBackgroundImage.setClickable(true);
-                    }
-                };
-                handler = new Handler();
-                handler.postDelayed(runnable, 3000);
-            }
-        });
     }
+    
+    private void addImage(String key, String route) {
 
-    private void addAudio(String key) {
-        Log.d(TAG, "addAudio");
-        String fileName;
+        Log.d(TAG, "addImage-- Bus route = " + route);
+
         POI poi = mPOIHashMap.get(key);
-        if (poi == null) {
-            poi = mFillerPOIHashMap.get(key);
-        }
-        if (poi == null) {
-            Log.d(TAG, "addAudio-- poi == null");
-            Log.d(TAG, "addAudio-- failed for key = " + key);
+        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language+"/"+route+"/"+readableKey(key);
+        Log.d(TAG, "addImage-- check fileexists for " + fileName);
+        if (poi == null || !fileExist(fileName)) {
+            Log.d(TAG, "addImage-- failed for key = " + key);
             return;
         }
-        fileName = poi.audioLocalStorageLocation;
+
+        binding.changingTourBackgroundImage.setImageDrawable(null);
+        Log.d(TAG, "addImage-- Uri.parse(fileName) = " + Uri.parse(fileName));
+        Picasso.with(mContext).load(new File(fileName))
+//                    .placeholder(R.drawable.profile_wall_picture)
+//                    .resize(binding.changingTourBackgroundImage.getWidth(), binding.changingTourBackgroundImage.getHeight())
+                .fit()
+                .centerCrop()
+                .into(binding.changingTourBackgroundImage);
+    }
+
+    private void addFillerAudio(String key) {
+        Log.d(TAG, "addFillerAudio");
+        Log.d(TAG, "addFillerAudio-- Bus route = " + busRoute);
+        POI poi = mFillerPOIHashMap.get(key);
+        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language
+                +"/"+busRoute+"/filler/"+audioKey(readableKey(key));
+
+        if (poi == null) {
+            Log.d(TAG, "addFillerAudio-- poi == null");
+            Log.d(TAG, "addFillerAudio-- failed for key = " + key);
+            return;
+        }
 
         if (mMediaPlayer!=null) {
             if (mMediaPlayer.isPlaying()) {
@@ -449,40 +482,58 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             }
         }
 
-        if (fileName != null) {
-            mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
-            try {
-                setMediaPlayer(Uri.parse(fileName));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            mMediaPlayer.start();
-            setPlayPauseButton();
-
-            //TODO commenting these lines might break something
-//            Location lastKnownLocation = getLastKnownLocation();
-//
-//            Log.d(TAG, "lastKnownLocation = " + lastKnownLocation);
-//            makeUseOfNewLocation(lastKnownLocation);
+        mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
+        try {
+            setMediaPlayer(Uri.parse(fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+        startMusic(null);
+
+    }
+
+    private void addAudio(String key, String route) {
+        Log.d(TAG, "addAudio");
+        Log.d(TAG, "addAudio-- Bus route = " + route);
+        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language
+                +"/"+route+"/"+audioKey(readableKey(key));
+        POI poi = mPOIHashMap.get(key);
+        if (poi == null) {
+            Log.d(TAG, "addAudio-- poi == null");
+            Log.d(TAG, "addAudio-- failed for key = " + key);
+            return;
+        }
+        if (mMediaPlayer!=null) {
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.stop();
+            }
+        }
+        mMediaPlayer = MediaPlayer.create(mContext, Uri.parse(fileName));
+        try {
+            setMediaPlayer(Uri.parse(fileName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        startMusic(null);
     }
 
     //Checks whether you have permission, then get's the last known location.
     public void getLastLocation() {
         Log.d(TAG, "getLastLocation");
+//        currentKey = "";
 
         //TODO Choose between GPS and network provider
-        String locationProvider = LocationManager.GPS_PROVIDER;
+//        String locationProvider = LocationManager.GPS_PROVIDER;
 //        String locationProvider = LocationManager.NETWORK_PROVIDER;
 
 // Or use LocationManager.GPS_PROVIDER
-        if (ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(mContext,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(mContext,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Log.d(TAG, "getLastLocation-- you don't have permission to access gps");
             return;
         }
-
-//        Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
-
         // Test 2
         Location lastKnownLocation = getLastKnownLocation();
 
@@ -508,13 +559,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 }
             }
         }
-    }
-
-    public void getLocation(View view) {
-        Log.d(TAG, "getLocation pressed");
-        //reset currentKey so it will snap to correct location
-        currentKey = "";
-        getLastLocation();
     }
 
     //GPS test 2
@@ -622,16 +666,26 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     private void nextPOI() {
         Log.d(TAG, "nextPOI");
         stopGlowing();
-//        binding.nextPoi.setVisibility(View.GONE);
-        addImage(currentKey);
-        addAudio(currentKey);
-        Log.d(TAG, "nextPOI- currentKey = " + currentKey);
+        Log.d(TAG, "nextPOI-- bus route = " + busRoute);
+        addImage(currentKey, busRoute);
+        addAudio(currentKey, busRoute);
+        Log.d(TAG, "nextPOI-- currentKey = " + currentKey);
+        binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
+    }
+
+    private void nextFillerPOI() {
+        Log.d(TAG, "nextFillerPOI");
+        stopGlowing();
+        addFillerImage(currentKey);
+        addFillerAudio(currentKey);
+        Log.d(TAG, "nextFillerPOI- currentKey = " + currentKey);
         binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
     }
 
     // Checks if user has enabled permission. If they have, get the last location.
     private void checkPermission() {
         Log.d(TAG, "checkPermission--");
+        //No permission has been previously granted
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -646,9 +700,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
             }
-        } else {
-            Log.d(TAG, "checkPermission-- getLastLocation(), then locationmanager.requestLocationupdates()");
-//            getLastLocation();
+        }
+        //Permission has been granted before
+        else {
+            Log.d(TAG, "checkPermission-- Locationmanager.requestLocationupdates()");
 
             //TODO Choose between GPS and network provider
             //TODO listen to both GPS AND Network, then use timestamps to find most recent
@@ -703,7 +758,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 @Override
                 public void onClick(View view) {
                     pauseMusic(view);
-                    setPlayPauseButton();
                 }
             });
         } else {
@@ -712,7 +766,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 @Override
                 public void onClick(View view) {
                     startMusic(view);
-                    setPlayPauseButton();
                 }
             });
         }
@@ -722,12 +775,14 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         if (mMediaPlayer!=null&&!mMediaPlayer.isPlaying()){
             mMediaPlayer.start();
         }
+        setPlayPauseButton();
     }
 
     public void pauseMusic(View v) {
         if (mMediaPlayer!=null&&mMediaPlayer.isPlaying()){
             mMediaPlayer.pause();
         }
+        setPlayPauseButton();
     }
 
 
@@ -766,7 +821,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         mMetaRetriever = new MediaMetadataRetriever();
 
         if (object instanceof Uri) {
-//            Log.d(TAG, "Uri");
+            Log.d(TAG, "Uri object = " + object);
             mMetaRetriever.setDataSource(this, (Uri) object);
             mMediaPlayer.setDataSource(this, (Uri) object);
             mMetaRetriever.setDataSource(this, (Uri) object);
@@ -798,7 +853,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 mMediaPlayer.seekTo(seekBar.getProgress());
-                startMusic(null);
+//                startMusic(null);
             }
         });
 
@@ -835,5 +890,23 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         binding.ibRewind.setVisibility(View.GONE);
         binding.tvDuration.setVisibility(View.GONE);
         binding.sbSong.setVisibility(View.GONE);
+    }
+
+
+    public boolean fileExist(String fname){
+        File file = new File(fname);
+        return file.exists();
+    }
+
+
+    private String readableKey(String key) {
+        return key.replace("*", ".");
+    }
+    private String audioKey(String key) {
+        key = key.replace(".jpeg", ".mp3");
+        key = key.replace(".png", ".mp3");
+        key = key.replace(".JPG", ".mp3");
+        key = key.replace(".PNG", ".mp3");
+        return key.replace(".jpg", ".mp3");
     }
 }

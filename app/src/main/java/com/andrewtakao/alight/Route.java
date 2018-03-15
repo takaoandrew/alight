@@ -11,14 +11,11 @@ import android.support.annotation.NonNull;
 
 @Entity
 public class Route {
-    @PrimaryKey
-    @NonNull
+
     public String route;
 
-    @ColumnInfo(name = "firebaseCount")
     public int firebaseCount;
 
-    @ColumnInfo(name = "downloadedCount")
     public int downloadedCount;
 
     public Route() {

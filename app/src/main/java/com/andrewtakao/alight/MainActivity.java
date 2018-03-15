@@ -1,6 +1,7 @@
 package com.andrewtakao.alight;
 
 import android.arch.persistence.room.Room;
+import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     private final String LANGUAGE_EXTRA = "language_extra";
 
 
+    private Context context;
     private final String TAG = MainActivity.class.getSimpleName();
     private ActivityMainBinding binding;
     public static FirebaseDatabase database;
@@ -57,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        context = getApplicationContext();
+
         Intent receivingIntent = getIntent();
         language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
 
@@ -76,18 +80,20 @@ public class MainActivity extends AppCompatActivity {
 
         routesRefListener = new ChildEventListener() {
             @Override
-            public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+            public void onChildAdded(DataSnapshot routeSnapshot, String s) {
                 Log.d(TAG, "routesRefListener onChildAdded--");
                 childCount = 0;
                 downloadedCount = 0;
 
                 //Count how many pois there should be
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    if (snapshot.getKey().equals("filler")) {
-                        for (DataSnapshot individualSnapshot: snapshot.getChildren()) {
+                for (DataSnapshot indexSnapshot : routeSnapshot.getChildren()) {
+                    if (indexSnapshot.getKey().equals("filler")) {
+                        for (DataSnapshot individualSnapshot: indexSnapshot.getChildren()) {
                             Log.d(TAG, "individualSnapshot.getKey() = " + individualSnapshot.getKey());
-                            if (null!=individualSnapshot.child("imageLocalStorageLocation").getValue() &&
-                                    fileExist((String) individualSnapshot.child("imageLocalStorageLocation").getValue())) {
+                            Log.d(TAG, "fileExist() is checking " + (String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/filler"+
+                                    readableKey(individualSnapshot.getKey()));
+                            if (fileExist((String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/filler/"+
+                                    readableKey(individualSnapshot.getKey()))) {
                                 downloadedCount+=1;
                             }
                             childCount += 1;
@@ -95,14 +101,14 @@ public class MainActivity extends AppCompatActivity {
                     } else {
 
 //                    Log.d(TAG, "snapshot.getKey() = " + snapshot.getKey());
-                        for (DataSnapshot coordinateSnapshot: snapshot.getChildren()) {
+                        for (DataSnapshot coordinateSnapshot: indexSnapshot.getChildren()) {
                             if (("empty").equals(""+coordinateSnapshot.getValue())) {
                             }
                             else if (coordinateSnapshot.hasChildren()) {
                                 for (DataSnapshot individualSnapshot: coordinateSnapshot.getChildren()) {
                                     Log.d(TAG, "individualSnapshot.getKey() = " + individualSnapshot.getKey());
-                                    if (null!=individualSnapshot.child("imageLocalStorageLocation").getValue() &&
-                                            fileExist((String) individualSnapshot.child("imageLocalStorageLocation").getValue())) {
+                                    if (fileExist((String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/"+
+                                            readableKey(individualSnapshot.getKey()))) {
                                         downloadedCount+=1;
                                     }
                                     childCount += 1;
@@ -119,8 +125,8 @@ public class MainActivity extends AppCompatActivity {
                 Route routeToRemove = null;
                 //Search through all routes and sees if the same number have been downloaded
                 for (Route route : busRoutes) {
-                    if (route.route.equals(dataSnapshot.getKey())) {
-                        Log.d(TAG, "key " + dataSnapshot.getKey() + " is already in busRoutes");
+                    if (route.route.equals(routeSnapshot.getKey())) {
+                        Log.d(TAG, "key " + routeSnapshot.getKey() + " is already in busRoutes");
                         Log.d(TAG, "route.downloadedCount = " + route.downloadedCount + " and " +
                                 "childCount = " + childCount);
                         Log.d(TAG, "should replace old route");
@@ -137,9 +143,9 @@ public class MainActivity extends AppCompatActivity {
                     //Will show how many there used to be
                 }
 
-                busRoutes.add(new Route(dataSnapshot.getKey(), childCount, downloadedCount));
+                busRoutes.add(new Route(routeSnapshot.getKey(), childCount, downloadedCount));
 
-//                addedRoute = new Route(dataSnapshot.getKey(), childCount, downloadedCount);
+//                addedRoute = new Route(routeSnapshot.getKey(), childCount, downloadedCount);
 //                Log.d(TAG, "added route " + addedRoute.route + " with firebase children " + addedRoute.firebaseCount);
 
                 //This should replace old, so no need to remove old as was done for busroutes
@@ -150,21 +156,21 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+            public void onChildChanged(DataSnapshot routeSnapshot, String s) {
                 Log.d(TAG, "routesRefListener onChildChanged--");
-                Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
+                Log.d(TAG, "dataSnapshot.getKey() = " + routeSnapshot.getKey());
                 Log.d(TAG, "String s = " + s);
-//                onChildRemoved(dataSnapshot);
-//                onChildAdded(dataSnapshot, "");
+//                onChildRemoved(routeSnapshot);
+//                onChildAdded(routeSnapshot, "");
             }
 
             @Override
-            public void onChildRemoved(DataSnapshot dataSnapshot) {
+            public void onChildRemoved(DataSnapshot routeSnapshot) {
                 Log.d(TAG, "routesRefListener onChildRemoved--");
-                Log.d(TAG, "dataSnapshot.getKey() = " + dataSnapshot.getKey());
+                Log.d(TAG, "dataSnapshot.getKey() = " + routeSnapshot.getKey());
                 Route routeToRemove = null;
                 for (Route route: busRoutes) {
-                    if (route.route.equals(dataSnapshot.getKey())) {
+                    if (route.route.equals(routeSnapshot.getKey())) {
                         routeToRemove = route;
                     }
                 }
@@ -250,12 +256,12 @@ public class MainActivity extends AppCompatActivity {
 //                                    databaseToDownloadTo.poiDao().insertAll(addedPoi);
 //                                    mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
                                     try {
-                                        addFillerImageToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToChange);
+                                        addFillerImageToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
                                     } catch (IOException e) { e.printStackTrace(); }
 
                                     //Store audio location
                                     try {
-                                        addFillerAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToChange);
+                                        addFillerAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
                                     } catch (IOException e) { e.printStackTrace();}
                                 }
                             } else {
@@ -296,12 +302,12 @@ public class MainActivity extends AppCompatActivity {
 //                                    databaseToDownloadTo.poiDao().insertAll(addedPoi);
 //                                    mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
                                         try {
-                                            addImageToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToChange);
+                                            addImageToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
                                         } catch (IOException e) { e.printStackTrace(); }
 
                                         //Store audio location
                                         try {
-                                            addAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, databaseToChange);
+                                            addAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
                                         } catch (IOException e) { e.printStackTrace();}
 //                                }
 
@@ -322,10 +328,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void addAudioToTempFile(final String key, final POI addedPoi, final DatabaseReference databaseToChange) throws IOException {
+    private void addAudioToTempFile(final String key, final POI addedPoi, final String route) throws IOException {
 
-//        Log.d(TAG, "addAudioToTempFile-- key = " + key);
-//        Log.d(TAG, "addAudioToTempFile-- readable key = " + readableKey(key));
         Log.d(TAG, "addAudioToTempFile-- audio key = " + audioKey(readableKey(key)));
         //Get local file
 
@@ -333,8 +337,13 @@ public class MainActivity extends AppCompatActivity {
 
 //        Log.d(TAG, "addAudioToTempFile-- mAudioRef.getPath() = " + mAudioRef.getPath());
 
-        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
-//        Log.d(TAG, "addAudioToTempFile-- localFile = " + localFile);
+//        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
+        File directory = context.getFilesDir();
+        final File localDirectory = new File(directory, language+"/"+route);
+        localDirectory.mkdirs();
+        final File localFile = new File(localDirectory, audioKey(readableKey(key)));
+//        final File localFile = new File(directory, language+"/"+route+"/"+audioKey(readableKey(key)));
+        Log.d(TAG, "addAudioToTempFile-- localFile = " + localFile);
 
         mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
@@ -342,13 +351,9 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG,"addAudioToTempFile-- onSuccess");
 //                Log.d(TAG,"addAudioToTempFile-- databaseToAddTo = " + databaseToAddTo);
                 Log.d(TAG,"addAudioToTempFile-- localFile = " + localFile);
-//                if (databaseToAddTo == null) {
-//                    Log.d(TAG, "The databaseToAddTo was null!");
-//                    return;
-//                }
                 //TODO commented this out, might change things
-                addedPoi.setAudioLocalStorageLocation(localFile.toString());
-                databaseToChange.child(key).setValue(addedPoi);
+//                addedPoi.setAudioLocalStorageLocation(localFile.toString());
+//                databaseToChange.child(key).setValue(addedPoi);
                 listenToDatabase();
 
 
@@ -358,15 +363,17 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG,"addAudioToTempFile-- onFailure");
+                Log.d(TAG, "attempted to add " + audioKey(readableKey(key)) + " into local file " + localFile);
             }
         });
     }
 
-    private void addImageToTempFile(final String key, final POI addedPOI, final DatabaseReference databaseToChange) throws IOException {
+    private void addImageToTempFile(final String key, final POI addedPOI, final String route) throws IOException {
 
-//        Log.d(TAG, "addImageToTempFile-- key = " + key);
-//        Log.d(TAG, "addImageToTempFile-- readable key = " + readableKey(key));
-        //Get local file
+        File directory = context.getFilesDir();
+        final File localDirectory = new File(directory, language+"/"+route);
+        localDirectory.mkdirs();
+        final File localFile = new File(localDirectory, readableKey(key));
 
         StorageReference mImageRef = mStorageRef.child(readableKey(key));
 
@@ -374,31 +381,18 @@ public class MainActivity extends AppCompatActivity {
 
         //TODO there is a / here before the imageName child. It may not be there in the future and cause errors.
         //For now we get rid of it
-
-        String slashlessKey = key.replace("/", "");
-        slashlessKey = slashlessKey.replace("*", ".");
-
-        final File localFile = File.createTempFile(slashlessKey, "");
-//        Log.d(TAG, "addImageToTempFile-- localFile = " + localFile);
+//
+//        String slashlessKey = key.replace("/", "");
+//        slashlessKey = slashlessKey.replace("*", ".");
+//
+////        final File localFile = File.createTempFile(slashlessKey, "");
+        Log.d(TAG, "addImageToTempFile-- localFile = " + localFile);
 
         mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG,"addImageToTempFile-- onSuccess");
-//                Log.d(TAG,"addImageToTempFile-- databaseToAddTo = " + databaseToAddTo);
-                Log.d(TAG,"addImageToTempFile-- localFile = " + localFile);
-
-//                if (databaseToAddTo == null) {
-//                    Log.d(TAG, "The databaseToAddTo was null!");
-//                    return;
-//                }
-                Log.d(TAG, "Setting imageLocalStorageLocation");
-                addedPOI.setImageLocalStorageLocation(localFile.toString());
-                databaseToChange.child(key).setValue(addedPOI);
+                Log.d(TAG, "addImageToTempFile-- onSuccess");
                 listenToDatabase();
-//                databaseToAddTo.poiDao().insertAll(addedPOI);
-//                mPOIList.get(mPOIList.indexOf(key)).setImageLocalStorageLocation(localFile.toString());
-                // Local temp file has been created
             }
         }).addOnFailureListener(new OnFailureListener() {
             //Try wav?
@@ -406,48 +400,62 @@ public class MainActivity extends AppCompatActivity {
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG, "Exception " + exception);
                 Log.d(TAG,"addImageToTempFile-- onFailure");
+                Log.d(TAG, "attempted to add key " + readableKey(key) + " into local file " + localFile);
             }
         });
     }
-private void addFillerAudioToTempFile(final String key, final POI addedPoi, final DatabaseReference databaseToChange) throws IOException {
+private void addFillerAudioToTempFile(final String key, final POI addedPoi, final String route) throws IOException {
 
         StorageReference mAudioRef = mStorageRef.child("filler").child(audioKey(readableKey(key)));
-        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
+
+        File directory = context.getFilesDir();
+        final File localDirectory = new File(directory, language+"/"+route+"/filler");
+        localDirectory.mkdirs();
+        final File localFile = new File(localDirectory, audioKey(readableKey(key)));
+
+        Log.d(TAG, "addFillerAudioToTempFile-- localFile = " + localFile);
+//        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
         mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG,"addAudioToTempFile-- onSuccess");
-                addedPoi.setAudioLocalStorageLocation(localFile.toString());
-                databaseToChange.child(key).setValue(addedPoi);
+                Log.d(TAG,"addFillerAudioToTempFile-- onSuccess");
                 listenToDatabase();
       }
         }).addOnFailureListener(new OnFailureListener() {
             //Try wav?
             @Override
             public void onFailure(@NonNull Exception exception) {
-                Log.d(TAG,"addAudioToTempFile-- onFailure");
+                Log.d(TAG,"addFillerAudioToTempFile-- onFailure");
             }
         });
     }
 
-    private void addFillerImageToTempFile(final String key, final POI addedPOI, final DatabaseReference databaseToChange) throws IOException {
+    private void addFillerImageToTempFile(final String key, final POI addedPOI, final String route) throws IOException {
         StorageReference mImageRef = mStorageRef.child("filler").child(readableKey(key));
-        String slashlessKey = key.replace("/", "");
-        slashlessKey = slashlessKey.replace("*", ".");
-        final File localFile = File.createTempFile(slashlessKey, "");
+//        String slashlessKey = key.replace("/", "");
+//        slashlessKey = slashlessKey.replace("*", ".");
+
+
+        File directory = context.getFilesDir();
+        final File localDirectory = new File(directory, language+"/"+route+"/filler");
+        localDirectory.mkdirs();
+        final File localFile = new File(localDirectory, readableKey(key));
+
+//        File directory = context.getFilesDir();
+//        final File localFile = new File(directory, language+"/"+route+"/"+readableKey(key));
+        Log.d(TAG, "addFillerImageToTempFile-- localFile = " + localFile);
+//        final File localFile = File.createTempFile(slashlessKey, "");
         mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG,"addImageToTempFile-- onSuccess");
-                addedPOI.setImageLocalStorageLocation(localFile.toString());
-                databaseToChange.child(key).setValue(addedPOI);
+                Log.d(TAG,"addFillerImageToTempFile-- onSuccess");
                 listenToDatabase();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG, "Exception " + exception);
-                Log.d(TAG,"addImageToTempFile-- onFailure");
+                Log.d(TAG,"addFillerImageToTempFile-- onFailure");
             }
         });
     }
