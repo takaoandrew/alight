@@ -141,6 +141,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             }
         });
 
+        startGlowing();
+
 //        // Get the ActionBar here to configure the way it behaves.
         final ActionBar ab = getSupportActionBar();
 //        ab.setHomeAsUpIndicator(R.drawable.ic_menu); // set a custom icon for the default home button
@@ -427,7 +429,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         binding.glowView.setVisibility(View.VISIBLE);
         if (scaleDown == null) {
             scaleDown = ObjectAnimator.ofPropertyValuesHolder(
-                    binding.glowView,
+                    binding.nextPoi,
                     PropertyValuesHolder.ofFloat("scaleX", 1.1f),
                     PropertyValuesHolder.ofFloat("scaleY", 1.1f));
             scaleDown.setDuration(700);
