@@ -141,7 +141,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             }
         });
 
-        startGlowing();
+//        startGlowing();
 
 //        // Get the ActionBar here to configure the way it behaves.
         final ActionBar ab = getSupportActionBar();
