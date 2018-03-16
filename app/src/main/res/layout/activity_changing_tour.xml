@@ -229,7 +229,7 @@
             android:textColor="#ffffff"
             android:backgroundTint="@color/colorPrimary"
             android:onClick="playFiller"
-            android:text="NEXT"
+            android:text="SKIP"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
