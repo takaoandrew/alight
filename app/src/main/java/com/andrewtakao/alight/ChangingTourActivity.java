@@ -635,6 +635,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 closestPOI = POI;
             }
         }
+        if (closestPOI.latitude == null) {
+            Log.d(TAG, "closestPOI is null");
+            return;
+        }
         poiLatitude = Double.valueOf(closestPOI.latitude);
         poiLongitude = Double.valueOf(closestPOI.longitude);
         binding.directionToolbar.setText((int)minDistance+"m");
