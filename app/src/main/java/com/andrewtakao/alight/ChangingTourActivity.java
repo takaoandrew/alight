@@ -32,6 +32,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.SeekBar;
 
@@ -99,6 +100,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     float[] mGravity;
     float[] mGeomagnetic;
     Float azimuth;
+    Float oldAzimuth;
+    double latitude;
+    double longitude;;
+    double poiLatitude;;
+    double poiLongitude;
 
     //Context
     private Context context;
@@ -107,6 +113,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     protected void onCreate(Bundle savedInstanceState) {
 
         //This works, amazing
+        //angleFromCoordinate tells you how many degrees from north you need to turn to see a POI
+        //Compass tells you how many degrees from north you are.
+        //For angle from you to poi = you to north + north to poi
+
 //        Log.d(TAG, "angle should be 180 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
 //        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
 
@@ -157,6 +167,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         });
 
         //Compass
+        azimuth = 0f;
+        latitude = 0;
+        longitude = 0;
+        poiLatitude = 0;
+        poiLongitude = 0;
         mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
@@ -259,7 +274,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        stopGlowing();
 
 //Compass
-//        mCustomDrawableView = new CustomDrawableView(this);
+        mCustomDrawableView = new CustomDrawableView(this);
 //        setContentView(mCustomDrawableView);
 
 
@@ -292,8 +307,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         super.onResume();
 
         //Compass
-//        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
-//        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
+        mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
     }
 
     @Override
@@ -321,8 +336,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        if (locationManager != null) {
 //            locationManager.removeUpdates(locationListener);
 //        }
-        if (mMediaPlayer!=null && mMediaPlayer.isPlaying())
-        mMediaPlayer.stop();
+        if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+            pauseMusic(null);
+        }
 //        mImagesDatabaseRef.removeEventListener(mImagesListener);
 
         //Compass
@@ -387,11 +403,20 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
 //                azimuth = 180/(float)Math.PI*orientation[0]; // orientation contains: azimut, pitch and roll
-                azimuth = orientation[0]; // orientation contains: azimut, pitch and roll
-//                Log.d(TAG, "Azimuth = " + azimuth);
+
+                azimuth = Float.valueOf(String.valueOf(-180/(float)Math.PI*orientation[0]+angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
+//                azimuth = Float.valueOf(String.valueOf(orientation[0]+Math.PI/180*angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
+                Log.d(TAG, "Azimuth = " + azimuth);
+                oldAzimuth = azimuth;
+                RotateAnimation rotateAnimation = new RotateAnimation(oldAzimuth, azimuth, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                rotateAnimation.setInterpolator(new DecelerateInterpolator());
+                rotateAnimation.setRepeatCount(0);
+                rotateAnimation.setDuration(100);
+                rotateAnimation.setFillAfter(true);
+                binding.arrow.startAnimation(rotateAnimation);
             }
         }
-//        mCustomDrawableView.invalidate();
+//        mCustomDrawableView.invalic_filter_list_white_24dp.pngidate();
     }
 
     @Override
@@ -435,10 +460,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
         binding.changingTourBackgroundImage.setImageDrawable(null);
 //            Log.d(TAG, "addImage-- Uri.parse(fileName) = " + Uri.parse(fileName));
-            Picasso.with(mContext).load(new File(fileName))
-                    .fit()
-                    .centerCrop()
-                    .into(binding.changingTourBackgroundImage);
+        Picasso.with(mContext).load(new File(fileName))
+                .resize(binding.changingTourBackgroundImage.getWidth(), binding.changingTourBackgroundImage.getHeight())
+                .into(binding.changingTourBackgroundImage);
+
+//        binding.arrow.setImageResource(R.drawable.ic_launcher_alight);
+//        binding.arrow.setVisibility(View.INVISIBLE);
     }
     
     private void addImage(String key, String route) {
@@ -461,6 +488,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 .fit()
                 .centerCrop()
                 .into(binding.changingTourBackgroundImage);
+
+        //TODO visible invisible for friday testing- make invisible
+//        binding.arrow.setVisibility(View.VISIBLE);
+
+//        binding.arrow.setImageResource(R.drawable.ic_keyboard_arrow_up_white_24dp);
     }
 
     private void addFillerAudio(String key) {
@@ -580,6 +612,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void makeUseOfNewLocation(Location location) {
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
         Log.d(TAG, "makeUseOfNewLocation");
         if (location == null) {
             Log.d(TAG, "location == null");
@@ -599,6 +633,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 closestPOI = POI;
             }
         }
+        poiLatitude = Double.valueOf(closestPOI.latitude);
+        poiLongitude = Double.valueOf(closestPOI.longitude);
         binding.directionToolbar.setText((int)minDistance+"m");
 //        Log.d(TAG, "and here");
         if (closestPOI.imageName == null) {

@@ -59,6 +59,14 @@
                     android:paddingBottom="4dp"
                     android:layout_gravity="center_horizontal|bottom"/>
 
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginRight="20dp"
+                    android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
+                    android:id="@+id/arrow"/>
+
             </FrameLayout>
         </android.support.v7.widget.Toolbar>
 
