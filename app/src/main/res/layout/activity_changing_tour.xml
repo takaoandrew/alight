@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -67,11 +68,11 @@
         android:layout_height="match_parent">
 
         <ImageButton
-            android:layout_height="match_parent"
-            android:layout_width="match_parent"
             android:id="@+id/changing_tour_background_image"
-            >
-        </ImageButton>
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:layout_editor_absoluteX="55dp"
+            tools:layout_editor_absoluteY="0dp"></ImageButton>
 
         <TextView
             android:id="@+id/tv_time"
@@ -195,27 +196,35 @@
             app:layout_constraintTop_toBottomOf="@id/next_poi"
             android:background="@color/colorAccent"/>
 
-        <ImageButton
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter"
-            android:layout_margin="20dp"
-            android:id="@+id/next_poi"
-            android:src="@drawable/ic_launcher_alight"/>
-
         <Button
+            android:id="@+id/next_poi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
             android:layout_margin="20dp"
-            android:id="@+id/play_filler"
-            android:onClick="playFiller"
-            android:text="Tell me something"/>
+            android:adjustViewBounds="true"
+            android:background="@drawable/rounded_corner_button"
+            android:backgroundTint="@color/colorPrimary"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_launcher_alight"
+            android:text="NEARBY"
+            android:textColor="#ffffff"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
+        <Button
+            android:id="@+id/play_filler"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:layout_marginEnd="108dp"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/rounded_corner_button"
+            android:textColor="#ffffff"
+            android:backgroundTint="@color/colorPrimary"
+            android:onClick="playFiller"
+            android:text="NEXT"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
 
     </android.support.constraint.ConstraintLayout>

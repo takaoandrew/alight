@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/alight.iml" filepath="$PROJECT_DIR$/alight.iml" />
+      <module fileurl="file://$PROJECT_DIR$/AlightApp.iml" filepath="$PROJECT_DIR$/AlightApp.iml" />
+      <module fileurl="file://C:\Users\dwang8\Desktop\AlightApp\alight.iml" filepath="C:\Users\dwang8\Desktop\AlightApp\alight.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
