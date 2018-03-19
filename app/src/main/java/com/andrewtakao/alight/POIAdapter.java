@@ -40,6 +40,8 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 
     public POIAdapter(Context context, ArrayList<POI> poiArrayList) {
         this.context = context;
+        Log.d(TAG, "public POIAdapter");
+
         Collections.sort(poiArrayList, new Comparator<POI>() {
             @Override
             public int compare(POI poi, POI poi2) {

@@ -59,6 +59,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (ChangingTourActivity.mMediaPlayer!= null && ChangingTourActivity.mMediaPlayer.isPlaying()) {
+            Log.d(TAG, "mediaplayer still running");
+            ChangingTourActivity.mMediaPlayer.stop();
+        }
+
         context = getApplicationContext();
 
         Intent receivingIntent = getIntent();

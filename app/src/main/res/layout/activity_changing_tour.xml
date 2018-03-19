@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout>
+<layout xmlns:app="http://schemas.android.com/apk/res-auto">
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -193,21 +192,24 @@
             <!--android:visibility="gone"/>-->
 
         <View
-            android:layout_width="1dp"
-            android:layout_height="1dp"
             android:id="@+id/glow_view"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_margin="-10dp"
+            android:background="@color/colorAccent"
             android:visibility="invisible"
-            app:layout_constraintStart_toEndOf="@id/next_poi"
-            app:layout_constraintEnd_toStartOf="@id/next_poi"
-            app:layout_constraintBottom_toTopOf="@id/next_poi"
-            app:layout_constraintTop_toBottomOf="@id/next_poi"
-            android:background="@android:color/black"/>
+            android:alpha=".003"
+            app:layout_constraintBottom_toBottomOf="@+id/next_poi"
+            app:layout_constraintEnd_toEndOf="@+id/next_poi"
+            app:layout_constraintStart_toStartOf="@+id/next_poi"
+            app:layout_constraintTop_toTopOf="@+id/next_poi" />
 
         <Button
             android:id="@+id/next_poi"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
+            android:padding="10dp"
             android:adjustViewBounds="true"
             android:background="@drawable/rounded_corner_button"
             android:backgroundTint="@color/colorPrimary"

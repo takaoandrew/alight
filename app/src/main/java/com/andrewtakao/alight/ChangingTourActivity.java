@@ -24,12 +24,15 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.PersistableBundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
@@ -110,7 +113,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     private Context context;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+//    public void onCreate(Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
+    public void onCreate(Bundle savedInstanceState) {
+
+
 
         //This works, amazing
         //angleFromCoordinate tells you how many degrees from north you need to turn to see a POI
@@ -121,12 +127,14 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
 
         Log.d(TAG, "onCreate");
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         //Get bus route
         Intent intent = getIntent();
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
         Log.d(TAG, "onCreate-- Bus route = " + busRoute);
 
+//        super.onCreate(savedInstanceState, persistentState);
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_changing_tour);
         context = getApplicationContext();
@@ -272,7 +280,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         //TODO toggle this to enable location
 //        checkPermission();
 //
-//        startGlowing();
+        startGlowing();
 //        stopGlowing();
 
 //Compass
@@ -329,6 +337,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         if (locationManager != null) {
             locationManager.removeUpdates(locationListener);
         }
+        if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+            pauseMusic(null);
+        }
     }
 
     @Override
@@ -345,6 +356,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
         //Compass
         mSensorManager.unregisterListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        super.onDestroy();
     }
 
     public void playFiller(View view) {
@@ -408,7 +425,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
                 azimuth = Float.valueOf(String.valueOf(-180/(float)Math.PI*orientation[0]+angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
 //                azimuth = Float.valueOf(String.valueOf(orientation[0]+Math.PI/180*angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
-                Log.d(TAG, "Azimuth = " + azimuth);
+//                Log.d(TAG, "Azimuth = " + azimuth);
                 oldAzimuth = azimuth;
                 RotateAnimation rotateAnimation = new RotateAnimation(oldAzimuth, azimuth, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
                 rotateAnimation.setInterpolator(new DecelerateInterpolator());
@@ -427,25 +444,27 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     private void startGlowing() {
         binding.glowView.setVisibility(View.VISIBLE);
-        if (scaleDown == null) {
-            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
-                    binding.nextPoi,
-                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
-                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
-            scaleDown.setDuration(700);
-
-            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
-            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
-        }
-
-        scaleDown.start();
+//        if (scaleDown == null) {
+//            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
+//                    binding.glowView,
+//                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
+//                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
+//            scaleDown.setDuration(700);
+//
+//            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
+//            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
+//        }
+//
+//        scaleDown.start();
+        binding.nextPoi.setVisibility(View.VISIBLE);
     }
 
     private void stopGlowing() {
         binding.glowView.setVisibility(View.INVISIBLE);
-        if (scaleDown != null) {
-            scaleDown.end();
-        }
+//        if (scaleDown != null) {
+//            scaleDown.end();
+//        }
+        binding.nextPoi.setVisibility(View.INVISIBLE);
     }
 
     private void addFillerImage(String key) {
@@ -814,6 +833,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void startMusic(View v) {
+        Log.d(TAG, "startMusic");
+        Log.d(TAG, "View v = " + v);
         if (mMediaPlayer!=null&&!mMediaPlayer.isPlaying()){
             mMediaPlayer.start();
         }
@@ -851,7 +872,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                     Thread.sleep(mBarUpdateInterval);
                     runOnUiThread(new Runnable() {
                         @Override
-                        public void run() { binding.sbSong.setProgress(mMediaPlayer.getCurrentPosition());}
+                        public void run() {
+                            if (mMediaPlayer!=null) {
+                                binding.sbSong.setProgress(mMediaPlayer.getCurrentPosition());
+                            }
+                        }
                     }); }
                 } catch (InterruptedException e) { } }
         };
