@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import static com.andrewtakao.alight.Utils.fileExist;
+
 /**
  * Created by andrewtakao on 2/12/18.
  */
@@ -62,7 +64,15 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
     @Override
     public void onBindViewHolder(final POIViewHolder holder, final int position) {
         final POI poi = poiArrayList.get(position);
-        final String fileName = poi.imageLocalStorageLocation;
+        String route = poi.route;
+        String key = poi.imageName;
+        final String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language+"/"+route+"/"+readableKey(key);
+        Log.d(TAG, "addImage-- check fileexists for " + fileName);
+        if (poi == null || !fileExist(fileName)) {
+            Log.d(TAG, "addImage-- failed for key = " + key);
+            return;
+        }
+
         holder.backgroundImage.setImageDrawable(null);
         Log.d(TAG, "onBindViewHolder-- position, MainActivity.poiArrayList.get(position) = " + position + ", "
         + fileName);
@@ -84,7 +94,7 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 
 
         String location = poi.latitude + ", " + poi.longitude;
-        holder.locationView.setText(location);
+//        holder.locationView.setText(location);
         holder.imageNameView.setText(userFriendlyName(poi.imageName));
 
 //        holder.backgroundImage.setOnClickListener(new View.OnClickListener() {

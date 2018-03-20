@@ -39,6 +39,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     @Override
     public void onBindViewHolder(RecyclerViewViewHolder holder, final int position) {
+        //Don't show empties
+        if (poiArrayListArrayList.get(position).size() == 0) {
+            return;
+        }
         Log.d(TAG, "onBindViewHolder-- position, poiAdapters.get(position) = " + position + ", "
         + poiArrayListArrayList.get(position));
         final POIAdapter poiAdapter = new POIAdapter(context, poiArrayListArrayList.get(position));
@@ -46,6 +50,10 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         holder.recyclerView.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
         holder.recyclerView.setLayoutManager(layoutManager);
+        POI firstPOI = poiArrayListArrayList.get(position).get(0);
+        if (firstPOI!=null &&firstPOI.route!=null) {
+            holder.title.setText(firstPOI.route);
+        }
     }
 
     @Override
@@ -56,10 +64,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     class RecyclerViewViewHolder extends RecyclerView.ViewHolder {
 
+        TextView title;
         RecyclerView recyclerView;
 
         public RecyclerViewViewHolder(View itemView) {
             super(itemView);
+            title = itemView.findViewById(R.id.title);
             recyclerView = itemView.findViewById(R.id.rv_recycler_view);
         }
     }

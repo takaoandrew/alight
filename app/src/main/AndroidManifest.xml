@@ -22,15 +22,15 @@
         <activity android:name=".SigninActivity" android:noHistory="true"/>
         <activity android:name=".SignupActivity" android:noHistory="true"/>
         <activity android:name=".RoutePreviewActivity">
-        </activity>
-        <activity android:name=".LoginActivity">
-        </activity>
-        <activity android:name=".SplashActivity" android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".LoginActivity">
+        </activity>
+        <activity android:name=".SplashActivity" android:noHistory="true">
         </activity>
     </application>
 
