@@ -9,10 +9,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 
 import com.andrewtakao.alight.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -200,6 +204,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        // return true so that the menu pop up is opened
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.sign_out) {
+            signOut();
+        } else if (item.getItemId() == R.id.change_language){
+            Intent intent = new Intent(context, LanguageActivity.class);
+            startActivity(intent);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     protected void onStart() {
         super.onStart();
         if (busRouteAdapter!=null) {
@@ -215,6 +238,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         routesRef.removeEventListener(routesRefListener);
         super.onPause();
+    }
+
+    @Override
+    public void onBackPressed() {
+        Log.d(TAG, "onBackPressed");
+        moveTaskToBack(true);
     }
 
     public void listenToDatabase() {
@@ -481,4 +510,11 @@ private void addFillerAudioToTempFile(final String key, final POI addedPoi, fina
         File file = new File(fname);
         return file.exists();
     }
+
+    private void signOut() {
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(context, LoginActivity.class);
+        startActivity(intent);
+    }
 }
+

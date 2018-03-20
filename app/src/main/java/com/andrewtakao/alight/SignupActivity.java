@@ -8,7 +8,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.andrewtakao.alight.databinding.ActivityLoginBinding;
@@ -33,10 +35,20 @@ public class SignupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+
         database = Utils.getDatabase();
         context = getBaseContext();
         mAuth = FirebaseAuth.getInstance();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_signup);
+
+        binding.mainLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                return false;
+            }
+        });
 
         binding.btSignup.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,29 +86,6 @@ public class SignupActivity extends AppCompatActivity {
         super.onStart();
 //        FirebaseUser currentUser = mAuth.getCurrentUser();
 //        updateUI(currentUser);
-    }
-
-    void signIn(String email, String password) {
-        mAuth.signInWithEmailAndPassword(email, password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
-                            // Sign in success, update UI with the signed-in user's information
-                            Log.d(TAG, "signInWithEmail:success");
-                            FirebaseUser user = mAuth.getCurrentUser();
-//                            updateUI(user);
-                        } else {
-                            // If sign in fails, display a message to the user.
-                            Log.w(TAG, "signInWithEmail:failure", task.getException());
-                            Toast.makeText(SignupActivity.this, "Authentication failed.",
-                                    Toast.LENGTH_SHORT).show();
-//                            updateUI(null);
-                        }
-
-                        // ...
-                    }
-                });
     }
 
     public void getCurrentUser() {
