@@ -15,6 +15,57 @@
       },
       "oauth_client": [
         {
+          "client_id": "741583361490-khd3qa5eknodt31g83f1kbdtnbg3aiqm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.andrewtakao.alight",
+            "certificate_hash": "70afda0338d3c9d11fb203ba25b8af113df80352"
+          }
+        },
+        {
+          "client_id": "741583361490-4bhke453mfuqjmtbtvt55jn88ia4ti0g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1ICiixmvjWkNkQer4U-twQK-O0i7M-TU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741583361490-p3csgvnhilpfpbp0plebpkkut6l469gi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "takaoandrew.AlightiOS"
+              }
+            },
+            {
+              "client_id": "741583361490-4bhke453mfuqjmtbtvt55jn88ia4ti0g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741583361490:android:50bf47e0f14b7937",
+        "android_client_info": {
+          "package_name": "com.yourcompany.startupnamer"
+        }
+      },
+      "oauth_client": [
+        {
           "client_id": "741583361490-4bhke453mfuqjmtbtvt55jn88ia4ti0g.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -31,6 +82,57 @@
         "appinvite_service": {
           "status": 1,
           "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741583361490:android:050f81a6a8a49858",
+        "android_client_info": {
+          "package_name": "com.takaoandrew.flutteralight"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "741583361490-vcj8k19pq7kl9qj8ahmld1me0ghi8im1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.takaoandrew.flutteralight",
+            "certificate_hash": "5c5725d0f3b3aea8791fe2c6175d9aefb2cce871"
+          }
+        },
+        {
+          "client_id": "741583361490-4bhke453mfuqjmtbtvt55jn88ia4ti0g.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1ICiixmvjWkNkQer4U-twQK-O0i7M-TU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741583361490-p3csgvnhilpfpbp0plebpkkut6l469gi.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "takaoandrew.AlightiOS"
+              }
+            },
+            {
+              "client_id": "741583361490-4bhke453mfuqjmtbtvt55jn88ia4ti0g.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         },
         "ads_service": {
           "status": 2

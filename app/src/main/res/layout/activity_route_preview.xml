@@ -1,15 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
-    <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    <android.support.constraint.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context="com.andrewtakao.alight.RoutePreviewActivity">
+        android:background="@android:color/holo_blue_light"
+        tools:context="com.andrewtakao.alight.RoutePreviewActivity"
+        android:paddingRight="20dp"
+        android:paddingLeft="20dp"
+        android:paddingTop="100dp"
+        android:paddingBottom="100dp">
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_recycler_views"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:background="@android:color/holo_orange_dark">
 
         </android.support.v7.widget.RecyclerView>
     </android.support.constraint.ConstraintLayout>
