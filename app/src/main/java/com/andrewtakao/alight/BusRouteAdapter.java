@@ -2,6 +2,7 @@ package com.andrewtakao.alight;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.BitmapFactory;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -78,7 +79,10 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
 //                Intent intent = new Intent(context, TourActivity.class);
 //                Intent intent = new Intent(context, OrderedTourActivity.class);
 //                Intent intent = new Intent(context, FortySevenTourActivity.class);
-                Intent intent = new Intent(context, ChangingTourActivity.class);
+
+                //TODO Changed this to boarding activity
+//                Intent intent = new Intent(context, ChangingTourActivity.class);
+                Intent intent = new Intent(context, BoardingActivity.class);
 
                 intent.putExtra(BUS_ROUTE_EXTRA, currentRoute.route);
                 intent.putExtra(LANGUAGE_EXTRA, MainActivity.language);

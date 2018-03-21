@@ -38,8 +38,11 @@ import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.RotateAnimation;
 import android.widget.SeekBar;
+import android.widget.Toast;
 
 import com.andrewtakao.alight.databinding.ActivityChangingTourBinding;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -55,22 +58,19 @@ import java.util.Random;
 
 public class ChangingTourActivity extends AppCompatActivity implements SensorEventListener{
 
-//    public static StorageReference mStorageRef;
-//    public static StorageReference mAudioRef;
-//    public static StorageReference mImageRef;
     public static HashMap<String, POI> mPOIHashMap;
     public static HashMap<String, POI> mFillerPOIHashMap;
-//    private ChildEventListener mImagesListener;
     public static DatabaseReference mDatabaseRef;
-//    DataSnapshot firstChildSnapshot;
-//    DataSnapshot secondChildSnapshot;
+
+    FirebaseAuth mAuth;
+    FirebaseUser user;
 
     private ActivityChangingTourBinding binding;
     private static String busRoute;
     private final String TAG = ChangingTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
-    private final String LANGUAGE_EXTRA = "language_extra";
     public static String currentKey;
+    public static String displayedKey;
 
     //GPS
     public static Context mContext;
@@ -90,12 +90,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     Handler handler;
     Runnable runnable;
 
-    //Dao Database
-//    private static PoiDatabase db;
-
-    //Animation
-    ObjectAnimator scaleDown;
-
     //Compass
     private SensorManager mSensorManager;
     private Sensor accelerometer;
@@ -112,19 +106,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     //Context
     private Context context;
 
+    //Animation
+    ObjectAnimator scaleDown;
+
     @Override
-//    public void onCreate(Bundle savedInstanceState, @Nullable PersistableBundle persistentState) {
     public void onCreate(Bundle savedInstanceState) {
-
-
-
-        //This works, amazing
-        //angleFromCoordinate tells you how many degrees from north you need to turn to see a POI
-        //Compass tells you how many degrees from north you are.
-        //For angle from you to poi = you to north + north to poi
-
-//        Log.d(TAG, "angle should be 180 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
-//        Log.d(TAG, "angle should be 90 = " + angleFromCoordinate(43.7007, -71.1058, 42.5157, -71.1345));
 
         Log.d(TAG, "onCreate");
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -134,22 +120,19 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
         Log.d(TAG, "onCreate-- Bus route = " + busRoute);
 
-//        super.onCreate(savedInstanceState, persistentState);
         super.onCreate(savedInstanceState);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_changing_tour);
         context = getApplicationContext();
 
+        mAuth = FirebaseAuth.getInstance();
+        user = mAuth.getCurrentUser();
+        if (user == null) {
+            Toast.makeText(this, "Error- no user!", Toast.LENGTH_LONG).show();
+        }
+
 
         Toolbar tb = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(tb);
-        tb.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-//                getLastLocation();
-            }
-        });
-
-//        startGlowing();
 
 //        // Get the ActionBar here to configure the way it behaves.
         final ActionBar ab = getSupportActionBar();
@@ -172,9 +155,21 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                     return;
                 }
                 pauseMusic(null);
+                if (mMediaPlayer!=null) {
+                    mMediaPlayer.seekTo(mMediaPlayer.getDuration());
+                }
                 getLastLocation();
             }
         });
+
+        //Language
+        if (MainActivity.language.equals("Chinese")) {
+            binding.nextPoi.setText(R.string.nearby_ch);
+            binding.playFiller.setText(R.string.skip_ch);
+        } else {
+            binding.nextPoi.setText(R.string.nearby);
+            binding.playFiller.setText(R.string.skip);
+        }
 
         //Compass
         azimuth = 0f;
@@ -200,9 +195,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                     POI addedPoi = new POI(
                                             (String) poiChildSnapshot.getKey(),
                                             (String) poiChildSnapshot.child("audio").getValue(),
-                                            (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("coordinates").getValue(),
                                             (String) poiChildSnapshot.child("image").getValue(),
-                                            (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("index").getValue(),
                                             (String) poiChildSnapshot.child("language").getValue(),
                                             (String) poiChildSnapshot.child("latitude").getValue(),
                                             (String) poiChildSnapshot.child("longitude").getValue(),
@@ -224,9 +219,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                         POI addedPoi = new POI(
                                                 (String) poiChildSnapshot.getKey(),
                                                 (String) poiChildSnapshot.child("audio").getValue(),
-                                                (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
+                                                (String) poiChildSnapshot.child("coordinates").getValue(),
                                                 (String) poiChildSnapshot.child("image").getValue(),
-                                                (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
+                                                (String) poiChildSnapshot.child("index").getValue(),
                                                 (String) poiChildSnapshot.child("language").getValue(),
                                                 (String) poiChildSnapshot.child("latitude").getValue(),
                                                 (String) poiChildSnapshot.child("longitude").getValue(),
@@ -257,7 +252,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             @Override
             public void onLocationChanged(Location location) {
                 //Commented out while using button to debug
-                Log.d(TAG, "onLocationChanged");
+//                Log.d(TAG, "onLocationChanged");
                 makeUseOfNewLocation(location);
             }
 
@@ -280,13 +275,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         //TODO toggle this to enable location
 //        checkPermission();
 //
-        startGlowing();
-//        stopGlowing();
+//        startGlowing();
 
 //Compass
         mCustomDrawableView = new CustomDrawableView(this);
 //        setContentView(mCustomDrawableView);
-
 
         //Only have to do this once
         binding.changingTourBackgroundImage.setOnClickListener(new View.OnClickListener() {
@@ -310,6 +303,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 handler.postDelayed(runnable, 3000);
             }
         });
+
+        endTourGlow();
     }
 
     @Override
@@ -444,30 +439,22 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     private void startGlowing() {
         binding.glowView.setVisibility(View.VISIBLE);
-//        if (scaleDown == null) {
-//            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
-//                    binding.glowView,
-//                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
-//                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
-//            scaleDown.setDuration(700);
-//
-//            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
-//            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
-//        }
-//
-//        scaleDown.start();
         binding.nextPoi.setVisibility(View.VISIBLE);
     }
 
     private void stopGlowing() {
         binding.glowView.setVisibility(View.INVISIBLE);
-//        if (scaleDown != null) {
-//            scaleDown.end();
-//        }
         binding.nextPoi.setVisibility(View.INVISIBLE);
     }
 
     private void addFillerImage(String key) {
+        displayedKey = key;
+
+        //For testing endoftour button
+//        if (displayedKey.equals("hacker*jpg") || displayedKey.equals("Ecology*jpg")) {
+//            binding.alight.setVisibility(View.VISIBLE);
+//        }
+
         POI poi = mFillerPOIHashMap.get(key);
         Log.d(TAG, "addFillerImage-- Bus route = " + busRoute);
         String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language+"/"+busRoute+"/filler/"+
@@ -490,6 +477,11 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
     
     private void addImage(String key, String route) {
+        displayedKey = key;
+
+        if (displayedKey.equals("EndOfTour*jpg")) {
+            binding.alight.setVisibility(View.VISIBLE);
+        }
 
         Log.d(TAG, "addImage-- Bus route = " + route);
 
@@ -635,7 +627,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public void makeUseOfNewLocation(Location location) {
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        Log.d(TAG, "makeUseOfNewLocation");
+//        Log.d(TAG, "makeUseOfNewLocation");
         if (location == null) {
             Log.d(TAG, "location == null");
             return;
@@ -669,7 +661,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        Log.d(TAG, "finally here");
 
         if (currentKey.equals(closestPOI.imageName)) {
-            Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
+//            Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
             Log.d(TAG, "makeUseOfNewLocation-- closestPoi.imageName = " + closestPOI .imageName);
             if (currentKey==null || currentKey.equals("")) {
                 Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
@@ -683,7 +675,13 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                     Log.d(TAG, "makeUseOfNewLocation-- waiting for mediaplayer to stop");
                     return;
                 }
-                nextPOI();
+                //If paused towards the end of the media
+                if (mMediaPlayer!=null && mMediaPlayer.getCurrentPosition()>=mMediaPlayer.getDuration()-1000) {
+                    nextPOI();
+                } else if (mMediaPlayer!=null) {
+                    Log.d(TAG, "current position = " + mMediaPlayer.getCurrentPosition() +
+                            " and duration = " + mMediaPlayer.getDuration());
+                }
             }
             //For debugging purposes. Otherwise, comment this out.
 //            addImage(currentKey);
@@ -774,6 +772,40 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
     }
 
+    public void like(View view) {
+        POI poi = mPOIHashMap.get(displayedKey);
+        if (poi == null) {
+            poi = mFillerPOIHashMap.get(displayedKey);
+            Log.d(TAG, "filler! poi.index = " + poi.index);
+            mDatabaseRef.child(poi.index).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
+        } else {
+            Log.d(TAG, "not filler! poi.index = " + poi.index);
+            if (poi.index == null) {
+                Toast.makeText(context, "poi.index is null!", Toast.LENGTH_LONG).show();
+            }
+
+//        if (poi.coordinates.equals("0,0"))
+            mDatabaseRef.child(poi.index).child(poi.coordinates).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
+        }
+    }
+
+    public void dislike(View view) {
+        POI poi = mPOIHashMap.get(displayedKey);
+        if (poi == null) {
+            poi = mFillerPOIHashMap.get(displayedKey);
+            Log.d(TAG, "filler! poi.index = " + poi.index);
+            mDatabaseRef.child(poi.index).child(displayedKey).child("likes").child(user.getUid()).setValue("false");
+        } else {
+            Log.d(TAG, "not filler! poi.index = " + poi.index);
+            if (poi.index == null) {
+                Toast.makeText(context, "poi.index is null!", Toast.LENGTH_LONG).show();
+            }
+
+//        if (poi.coordinates.equals("0,0"))
+            mDatabaseRef.child(poi.index).child(poi.coordinates).child(displayedKey).child("likes").child(user.getUid()).setValue("false");
+        }
+    }
+
 
     private String userFriendlyName(String name) {
         if (name.indexOf("*") > 0) {
@@ -842,6 +874,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void pauseMusic(View v) {
+        Log.d(TAG, "pauseMusic");
         if (mMediaPlayer!=null&&mMediaPlayer.isPlaying()){
             mMediaPlayer.pause();
         }
@@ -914,7 +947,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
-                pauseMusic(null);
+//                pauseMusic(null);
             }
 
             @Override
@@ -948,6 +981,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         binding.ibRewind.setVisibility(View.VISIBLE);
         binding.tvDuration.setVisibility(View.VISIBLE);
         binding.sbSong.setVisibility(View.VISIBLE);
+        binding.ibLike.setVisibility(View.VISIBLE);
+        binding.ibDislike.setVisibility(View.VISIBLE);
     }
 
     public void hideMediaButtons() {
@@ -957,12 +992,34 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         binding.ibRewind.setVisibility(View.GONE);
         binding.tvDuration.setVisibility(View.GONE);
         binding.sbSong.setVisibility(View.GONE);
+        binding.ibLike.setVisibility(View.GONE);
+        binding.ibDislike.setVisibility(View.GONE);
     }
 
 
     public boolean fileExist(String fname){
         File file = new File(fname);
         return file.exists();
+    }
+
+    public void endTour(View view) {
+        Intent intent = new Intent(context, EndOfTourActivity.class);
+        startActivity(intent);
+    }
+
+    private void endTourGlow() {
+        if (scaleDown == null) {
+            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
+                    binding.alight,
+                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
+                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
+            scaleDown.setDuration(700);
+
+            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
+            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
+        }
+
+        scaleDown.start();
     }
 
 

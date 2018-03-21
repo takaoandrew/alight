@@ -35,10 +35,8 @@ public class POI {
     public String transcript;
 //    @ColumnInfo(name = "theme")
     public ArrayList<String> theme;
-//    @ColumnInfo(name = "imageLocalStorageLocation")
-    public String imageLocalStorageLocation;
-//    @ColumnInfo(name = "audioLocalStorageLocation")
-    public String audioLocalStorageLocation;
+    public String coordinates;
+    public String index;
 //    @ColumnInfo(name = "order")
 //    public int order;
 
@@ -46,12 +44,12 @@ public class POI {
 
     }
 
-    public POI(String imageName, String audio, String audioLocalStorageLocation, String image, String imageLocalStorageLocation,
+    public POI(String imageName, String audio, String coordinates, String image, String index,
                String language, String latitude, String longitude, String purpose, String route, ArrayList<String> theme, String transcript) {
         this.imageName = imageName;
         this.audio = audio;
-        this.audioLocalStorageLocation = audioLocalStorageLocation;
-        this.imageLocalStorageLocation = imageLocalStorageLocation;
+        this.coordinates = coordinates;
+        this.index = index;
         this.image = image;
         this.language = language;
         this.latitude = latitude;
@@ -77,15 +75,4 @@ public class POI {
         return d * 1000; // meters
 //        return Math.sqrt(Math.pow(this.latitude-latitude,2) + Math.pow(this.longitude-longitude, 2));
     }
-
-    public void setImageLocalStorageLocation(String imageLocalStorageLocation) {
-        this.imageLocalStorageLocation = imageLocalStorageLocation;
-    }
-
-    public void setAudioLocalStorageLocation(String audioLocalStorageLocation) {
-        this.audioLocalStorageLocation = audioLocalStorageLocation;
-    }
-//    public void setEnglishAudioLocalStorageLocation(String audioLocalStorageLocation) {
-//        this.englishAudioLocalStorageLocation = audioLocalStorageLocation;
-//    }
 }

@@ -97,43 +97,6 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 //        holder.locationView.setText(location);
         holder.imageNameView.setText(userFriendlyName(poi.imageName));
 
-//        holder.backgroundImage.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Log.d(TAG, "You clicked on poi.imageName " + poi.imageName);
-//                Log.d(TAG, "You clicked on poi.imageStorageLocation " + poi.imageLocalStorageLocation);
-//                Log.d(TAG, "You clicked on holder.imageNameView " + holder.imageNameView);
-//                Log.d(TAG, "You clicked on holder.locationView " + holder.locationView);
-//
-//                ((ChangingTourActivity)context).showMediaButtons();
-//                //Make unclickable
-////                holder.backgroundImage.setClickable(false);
-//                if (handler != null && runnable != null) {
-//                    handler.removeCallbacks(runnable);
-//                }
-//                runnable = new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        ((ChangingTourActivity)context).hideMediaButtons();
-//                        holder.backgroundImage.setClickable(true);
-//                    }
-//                };
-//                handler = new Handler();
-//                handler.postDelayed(runnable, 3000);
-//
-////                if (OrderedTourActivity.mMediaPlayer!=null && OrderedTourActivity.mMediaPlayer.isPlaying()) {
-////                    OrderedTourActivity.mMediaPlayer.stop();
-////                } else {
-////                    String fileName;
-////                    fileName = poi.audioLocalStorageLocation;
-////                    if (fileName != null) {
-////                        OrderedTourActivity.mMediaPlayer = MediaPlayer.create(OrderedTourActivity.mContext, Uri.parse(fileName));
-////                        OrderedTourActivity.mMediaPlayer.start();
-////                    }
-////                }
-//
-//            }
-//        });
     }
 
     public void updateAdapter(ArrayList<POI> poiArrayList) {

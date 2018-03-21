@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/sign_out"
-        android:title="Sign Out"/>
+        android:title="@string/sign_out"/>
     <item android:id="@+id/change_language"
-        android:title="Change Language"/>
+        android:title="@string/change_language"/>
 
 </menu>

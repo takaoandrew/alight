@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.widget.TextView;
 
 import com.andrewtakao.alight.databinding.ActivityMainBinding;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -93,6 +94,10 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG, "routesRefListener onChildAdded--");
                 childCount = 0;
                 downloadedCount = 0;
+                //TODO this only shows mit, hides all others!
+                if (!routeSnapshot.getKey().equals("mit")) {
+                    return;
+                }
 
                 //Count how many pois there should be
                 for (DataSnapshot indexSnapshot : routeSnapshot.getChildren()) {
@@ -207,6 +212,13 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
+        if (language.equals("Chinese")) {
+            (menu.findItem(R.id.sign_out)).setTitle(R.string.sign_out_ch);
+            (menu.findItem(R.id.change_language)).setTitle(R.string.change_language_ch);
+        } else {
+            (menu.findItem(R.id.sign_out)).setTitle(R.string.sign_out);
+            (menu.findItem(R.id.change_language)).setTitle(R.string.change_language);
+        }
         // return true so that the menu pop up is opened
         return true;
     }
@@ -275,9 +287,9 @@ public class MainActivity extends AppCompatActivity {
                                     POI addedPoi = new POI(
                                             (String) poiChildSnapshot.getKey(),
                                             (String) poiChildSnapshot.child("audio").getValue(),
-                                            (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("coordinates").getValue(),
                                             (String) poiChildSnapshot.child("image").getValue(),
-                                            (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
+                                            (String) poiChildSnapshot.child("index").getValue(),
                                             (String) poiChildSnapshot.child("language").getValue(),
                                             (String) poiChildSnapshot.child("latitude").getValue(),
                                             (String) poiChildSnapshot.child("longitude").getValue(),
@@ -321,9 +333,9 @@ public class MainActivity extends AppCompatActivity {
                                         POI addedPoi = new POI(
                                                 (String) poiChildSnapshot.getKey(),
                                                 (String) poiChildSnapshot.child("audio").getValue(),
-                                                (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
+                                                (String) poiChildSnapshot.child("coordinates").getValue(),
                                                 (String) poiChildSnapshot.child("image").getValue(),
-                                                (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
+                                                (String) poiChildSnapshot.child("index").getValue(),
                                                 (String) poiChildSnapshot.child("language").getValue(),
                                                 (String) poiChildSnapshot.child("latitude").getValue(),
                                                 (String) poiChildSnapshot.child("longitude").getValue(),
@@ -386,7 +398,6 @@ public class MainActivity extends AppCompatActivity {
 //                Log.d(TAG,"addAudioToTempFile-- databaseToAddTo = " + databaseToAddTo);
                 Log.d(TAG,"addAudioToTempFile-- localFile = " + localFile);
                 //TODO commented this out, might change things
-//                addedPoi.setAudioLocalStorageLocation(localFile.toString());
 //                databaseToChange.child(key).setValue(addedPoi);
                 listenToDatabase();
 

@@ -113,47 +113,75 @@
             app:layout_constraintBottom_toBottomOf="@id/tv_time"/>
 
         <ImageButton
-            android:id="@+id/ib_rewind"
+            android:id="@+id/ib_like"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginBottom="8dp"
-            android:layout_marginEnd="32dp"
-            android:layout_marginStart="32dp"
+            android:layout_marginEnd="22dp"
+            android:layout_marginStart="22dp"
             android:layout_marginTop="16dp"
-            android:onClick="rewindMusic"
-            android:src="@drawable/back"
+            android:onClick="like"
+            android:src="@drawable/ic_thumb_up_black_24dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintEnd_toStartOf="@id/ib_start"
+            app:layout_constraintEnd_toStartOf="@id/ib_rewind"
             app:layout_constraintStart_toStartOf="parent" />
+
+        <ImageButton
+            android:id="@+id/ib_rewind"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="22dp"
+            android:layout_marginStart="22dp"
+            android:onClick="rewindMusic"
+            android:src="@drawable/back"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toStartOf="@id/ib_start"
+            app:layout_constraintStart_toEndOf="@id/ib_like"
+            app:layout_constraintBottom_toBottomOf="@id/ib_like"
+            app:layout_constraintTop_toTopOf="@id/ib_like"/>
 
         <ImageButton
             android:id="@+id/ib_start"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginEnd="32dp"
-            android:layout_marginStart="32dp"
+            android:layout_marginEnd="22dp"
+            android:layout_marginStart="22dp"
             android:onClick="startAudio"
             android:src="@drawable/play"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintStart_toEndOf="@+id/ib_rewind"
             app:layout_constraintEnd_toStartOf="@id/ib_forward"
-            app:layout_constraintTop_toTopOf="@+id/ib_rewind"
-            app:layout_constraintBottom_toBottomOf="@id/ib_rewind" />
+            app:layout_constraintTop_toTopOf="@+id/ib_like"
+            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
 
         <ImageButton
             android:id="@+id/ib_forward"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginEnd="32dp"
-            android:layout_marginStart="32dp"
+            android:layout_marginEnd="22dp"
+            android:layout_marginStart="22dp"
             android:onClick="forwardMusic"
             android:src="@drawable/forward"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintStart_toEndOf="@+id/ib_start"
+            app:layout_constraintEnd_toStartOf="@id/ib_dislike"
+            app:layout_constraintTop_toTopOf="@+id/ib_like"
+            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
+
+        <ImageButton
+            android:id="@+id/ib_dislike"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="22dp"
+            android:layout_marginStart="22dp"
+            android:onClick="dislike"
+            android:src="@drawable/ic_thumb_down_black_24dp"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintStart_toEndOf="@+id/ib_forward"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/ib_rewind"
-            app:layout_constraintBottom_toBottomOf="@id/ib_rewind" />
+            app:layout_constraintTop_toTopOf="@+id/ib_like"
+            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -225,15 +253,27 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:layout_marginEnd="108dp"
+            android:layout_marginEnd="148dp"
             android:layout_marginTop="16dp"
             android:background="@drawable/rounded_corner_button"
-            android:textColor="#ffffff"
             android:backgroundTint="@color/colorPrimary"
             android:onClick="playFiller"
             android:text="SKIP"
+            android:textColor="#ffffff"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/alight"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_launcher_alight"
+            android:onClick="endTour"
+            android:layout_marginTop="30dp"
+            android:visibility="invisible"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
 
 
     </android.support.constraint.ConstraintLayout>

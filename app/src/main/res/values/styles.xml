@@ -24,8 +24,30 @@
     <style name="poiTextStyle">
         <item name="android:textColor">#ffffff</item>
         <item name="android:textStyle">bold</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:padding">4dp</item>
+    </style>
+
+
+    <style name="routePreviewPoiTextStyle">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:textSize">12sp</item>
         <item name="android:padding">4dp</item>
+    </style>
+
+    <style name="boardingText">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+    </style>
+
+    <style name="boardingTitleText">
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:padding">8dp</item>
     </style>
 
 </resources>

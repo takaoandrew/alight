@@ -13,6 +13,7 @@
         android:paddingTop="100dp"
         android:paddingBottom="100dp">
         <android.support.v7.widget.RecyclerView
+            android:padding="8dp"
             android:id="@+id/rv_recycler_views"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

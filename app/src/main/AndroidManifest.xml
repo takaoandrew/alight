@@ -16,22 +16,30 @@
         <activity android:name=".MainActivity" />
         <activity
             android:name=".ChangingTourActivity"
-            android:theme="@style/TourTheme"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".LanguageActivity" android:noHistory="true"/>
-        <activity android:name=".SigninActivity" android:noHistory="true"/>
-        <activity android:name=".SignupActivity" android:noHistory="true"/>
-        <activity android:name=".RoutePreviewActivity">
+            android:screenOrientation="portrait"
+            android:theme="@style/TourTheme" />
+        <activity
+            android:name=".LanguageActivity"
+            android:noHistory="true" />
+        <activity
+            android:name=".SigninActivity"
+            android:noHistory="true" />
+        <activity
+            android:name=".SignupActivity"
+            android:noHistory="true" />
+        <activity android:name=".RoutePreviewActivity" />
+        <activity android:name=".LoginActivity" />
+        <activity
+            android:name=".SplashActivity"
+            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginActivity">
-        </activity>
-        <activity android:name=".SplashActivity" android:noHistory="true">
-        </activity>
+        <activity android:name=".BoardingActivity" />
+        <activity android:name=".EndOfTourActivity"></activity>
     </application>
 
 </manifest>

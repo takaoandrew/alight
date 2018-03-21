@@ -100,9 +100,9 @@ public class RoutePreviewActivity extends AppCompatActivity {
                                         POI addedPoi = new POI(
                                             (String) individualSnapshot.getKey(),
                                             (String) individualSnapshot.child("audio").getValue(),
-                                            (String) individualSnapshot.child("audioLocalStorageLocation").getValue(),
+                                            (String) individualSnapshot.child("coordinates").getValue(),
                                             (String) individualSnapshot.child("image").getValue(),
-                                            (String) individualSnapshot.child("imageLocalStorageLocation").getValue(),
+                                            (String) individualSnapshot.child("index").getValue(),
                                             (String) individualSnapshot.child("language").getValue(),
                                             (String) individualSnapshot.child("latitude").getValue(),
                                             (String) individualSnapshot.child("longitude").getValue(),
@@ -189,107 +189,8 @@ public class RoutePreviewActivity extends AppCompatActivity {
             }
         };
 
-//        mDatabaseRef = MainActivity.routesRef.child(busRoute);
-//
-//        mDatabaseRef.addListenerForSingleValueEvent(
-//                new ValueEventListener() {
-//                    @Override
-//                    public void onDataChange(DataSnapshot dataSnapshot) {
-//                        for (DataSnapshot indexChildSnapshot : dataSnapshot.getChildren()) {
-//                            if (indexChildSnapshot.getKey().equals("filler")) {
-//                                for (DataSnapshot poiChildSnapshot : indexChildSnapshot.getChildren()) {
-//                                    //Set POI
-//                                    return;
-////                                    Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
-////                                    Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
-////                                    POI addedPoi = new POI(
-////                                            (String) poiChildSnapshot.getKey(),
-////                                            (String) poiChildSnapshot.child("audio").getValue(),
-////                                            (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
-////                                            (String) poiChildSnapshot.child("image").getValue(),
-////                                            (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
-////                                            (String) poiChildSnapshot.child("language").getValue(),
-////                                            (String) poiChildSnapshot.child("latitude").getValue(),
-////                                            (String) poiChildSnapshot.child("longitude").getValue(),
-////                                            (String) poiChildSnapshot.child("purpose").getValue(),
-////                                            (String) poiChildSnapshot.child("route").getValue(),
-////                                            (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
-////                                            (String) poiChildSnapshot.child("transcript").getValue()
-////                                    );
-////                                    Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
-////                                    mFillerPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
-//                                }
-//                            } else {
-//                                for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
-//                                    for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
-//
-//                                        //Set POI
-//                                        Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
-//                                        Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
-//                                        POI addedPoi = new POI(
-//                                                (String) poiChildSnapshot.getKey(),
-//                                                (String) poiChildSnapshot.child("audio").getValue(),
-//                                                (String) poiChildSnapshot.child("audioLocalStorageLocation").getValue(),
-//                                                (String) poiChildSnapshot.child("image").getValue(),
-//                                                (String) poiChildSnapshot.child("imageLocalStorageLocation").getValue(),
-//                                                (String) poiChildSnapshot.child("language").getValue(),
-//                                                (String) poiChildSnapshot.child("latitude").getValue(),
-//                                                (String) poiChildSnapshot.child("longitude").getValue(),
-//                                                (String) poiChildSnapshot.child("purpose").getValue(),
-//                                                (String) poiChildSnapshot.child("route").getValue(),
-//                                                (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
-//                                                (String) poiChildSnapshot.child("transcript").getValue()
-//                                        );
-//                                        Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
-//                                        mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//
-//                    @Override
-//                    public void onCancelled(DatabaseError databaseError) {
-//                        //handle databaseError
-//                    }
-//                });
 
         listenToDatabase();
-//
-//        theme = new ArrayList<>();
-//        theme.add("theme test");
-//        poiArrayList = new ArrayList<>();
-//        poiArrayList.add(new POI("test*jpg", "test",
-//                "test", "test", "test", "test",
-//                "test", "test", "test", "test", theme,"test"));
-//        poiArrayList.add(new POI("testie*jpg", "testie",
-//                "testie", "testie", "testie", "testie",
-//                "testie", "testie", "testie", "testie", theme,"testie"));
-//        poiArrayList2 = new ArrayList<>();
-//        poiArrayList2.add(new POI("test2*jpg", "test2",
-//                "test2", "test2", "test2", "test2",
-//                "test2", "test2", "test2", "test2", theme,"test2"));
-//        poiArrayList2.add(new POI("testie2*jpg", "testie2",
-//                "testie2", "testie2", "testie2", "testie2",
-//                "testie2", "testie2", "testie2", "testie2", theme,"testie2"));
-//        poiArrayList3 = new ArrayList<>();
-//        poiArrayList3.add(new POI("test3*jpg", "test3",
-//                "test3", "test3", "test3", "test3",
-//                "test3", "test3", "test3", "test3", theme,"test3"));
-//        poiArrayList3.add(new POI("testie3*jpg", "testie3",
-//                "testie3", "testie3", "testie3", "testie3",
-//                "testie3", "testie3", "testie3", "testie3", theme,"testie3"));
-//        poiArrayList4 = new ArrayList<>();
-//        poiArrayList4.add(new POI("test4*jpg", "test4",
-//                "test4", "test4", "test4", "test4",
-//                "test4", "test4", "test4", "test4", theme,"test4"));
-//        poiArrayList4.add(new POI("testie4*jpg", "testie4",
-//                "testie4", "testie4", "testie4", "testie4",
-//                "testie4", "testie4", "testie4", "testie4", theme,"testie4"));
-//        poiArrayListArrayList.add(poiArrayList);
-//        poiArrayListArrayList.add(poiArrayList2);
-//        poiArrayListArrayList.add(poiArrayList3);
-//        poiArrayListArrayList.add(poiArrayList4);
     }
 
     public void listenToDatabase() {
