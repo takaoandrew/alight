@@ -17,13 +17,13 @@
     <string name="nearby">Nearby</string>
 
     <string name="board_description_title_ch">描述</string>
-    <string name="board_description_ch"> -每15分钟 ，循环MIT校园的小巴</string>
+    <string name="board_description_ch"> -巴士会绕校园一圈回到上车点，每程15分钟</string>
     <string name="board_time_title_ch">时间</string>
     <string name="board_time_ch">-周一至周五，早上7点到下午7点</string>
     <string name="board_cost_title_ch">票价</string>
-    <string name="board_cost_ch">- $2/票 \n -免费（需要MIT学生证或去Alight的办公室（7号楼336室）拿票）</string>
+    <string name="board_cost_ch">- $2/票 \n -持MIT的学生证上车免费，或者去Alight的办公室7号楼336室可取免费票</string>
     <string name="board_instructions_title_ch"> 说明 </string>
-    <string name="board_instructions_ch">- 站在“EZ RIDE”牌子旁边</string>
+    <string name="board_instructions_ch">- 巴士不是每站都停，需站在“EZ RIDE”的牌子旁边等车</string>
     <string name="board_start_ch">开始</string>
     <string name="end_of_tour_survey_prompt_ch">感谢你的使用！ \n  为了帮Alight的应用不断的进步，请您填这个2分钟的调查，同时参与我们的抽奖活动！</string>
     <string name="end_of_tour_survey_button_ch">用户反馈</string>
