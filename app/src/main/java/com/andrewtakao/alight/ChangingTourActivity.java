@@ -70,6 +70,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     private final String TAG = ChangingTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
     public static String currentKey;
+    public static ArrayList<String> currentKeys;
     public static String displayedKey;
 
     //GPS
@@ -145,6 +146,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         //Initialize
         mContext = this;
         currentKey = "";
+        currentKeys = new ArrayList<>();
         mPOIHashMap = new HashMap<>();
         mFillerPOIHashMap = new HashMap<>();
 
@@ -625,25 +627,33 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void makeUseOfNewLocation(Location location) {
+//        Log.d(TAG, "makeUseOfNewLocation");
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-//        Log.d(TAG, "makeUseOfNewLocation");
-        if (location == null) {
-            Log.d(TAG, "location == null");
-            return;
-        }
         String latitude = String.valueOf(location.getLatitude());
         String longitude = String.valueOf(location.getLongitude());
-//        Log.d(TAG, "reached here");
 
 //        double minDistance = 1000;
 //        Choosing this as minDistance will show closest POI, as opposed to the closest POI within 1000m
         double minDistance = 100000;
         POI closestPOI = new POI();
+        ArrayList<POI> closestPOIs = new ArrayList<>();
         for (POI POI : mPOIHashMap.values()) {
+            Log.d(TAG, "POI.imageName = " + POI.imageName);
             if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
+//            if (POI.distanceFromBucket(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
+                Log.d(TAG, "New minimum!");
                 minDistance = POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude));
+//                minDistance = POI.distanceFromBucket(Double.parseDouble(latitude), Double.parseDouble(longitude));
+                closestPOIs = new ArrayList<>();
                 closestPOI = POI;
+                closestPOIs.add(closestPOI);
+            }
+//            else if (POI.distanceFromBucket(Double.parseDouble(latitude), Double.parseDouble(longitude)) == minDistance) {
+            else if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) == minDistance) {
+                Log.d(TAG, "Adding to bucket!");
+                closestPOI = POI;
+                closestPOIs.add(closestPOI);
             }
         }
         if (closestPOI.latitude == null) {
@@ -652,7 +662,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
         poiLatitude = Double.valueOf(closestPOI.latitude);
         poiLongitude = Double.valueOf(closestPOI.longitude);
-        binding.directionToolbar.setText((int)minDistance+"m");
+        binding.directionToolbar.setText((int) minDistance+"m");
 //        Log.d(TAG, "and here");
         if (closestPOI.imageName == null) {
             Log.d(TAG, "closestPOI.imagename is null");
@@ -767,7 +777,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             //TODO Choose between GPS and network provider
             //TODO listen to both GPS AND Network, then use timestamps to find most recent
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, locationListener);
 //            locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
         }
     }
