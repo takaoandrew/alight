@@ -95,7 +95,7 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 
         String location = poi.latitude + ", " + poi.longitude;
 //        holder.locationView.setText(location);
-        holder.imageNameView.setText(userFriendlyName(poi.imageName));
+//        holder.imageNameView.setText(userFriendlyName(poi.imageName));
 
     }
 

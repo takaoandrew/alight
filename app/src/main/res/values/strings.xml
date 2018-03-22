@@ -17,11 +17,11 @@
     <string name="nearby">Nearby</string>
 
     <string name="board_description_title_ch">描述</string>
-    <string name="board_description_ch"> -巴士会绕校园一圈回到上车点，每程15分钟</string>
+    <string name="board_description_ch">- 巴士会绕校园一圈回到上车点，每程15分钟</string>
     <string name="board_time_title_ch">时间</string>
-    <string name="board_time_ch">-周一至周五，早上7点到下午7点</string>
+    <string name="board_time_ch">- 周一至周五，早上7点到下午7点</string>
     <string name="board_cost_title_ch">票价</string>
-    <string name="board_cost_ch">- $2/票 \n -持MIT的学生证上车免费，或者去Alight的办公室7号楼336室可取免费票</string>
+    <string name="board_cost_ch">- $2/票 \n- 持MIT的学生证上车免费，或者去Alight的办公室7号楼336室可取免费票</string>
     <string name="board_instructions_title_ch"> 说明 </string>
     <string name="board_instructions_ch">- 巴士不是每站都停，需站在“EZ RIDE”的牌子旁边等车</string>
     <string name="board_start_ch">开始</string>
@@ -31,5 +31,6 @@
     <string name="change_language_ch">语言</string>
     <string name="skip_ch">下一个</string>
     <string name="nearby_ch">附近</string>
+    <string name="title_activity_maps">Map</string>
 
 </resources>
