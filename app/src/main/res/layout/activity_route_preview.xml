@@ -6,7 +6,7 @@
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@android:color/holo_blue_light"
+        android:background="@android:color/transparent"
         tools:context="com.andrewtakao.alight.RoutePreviewActivity"
         android:orientation="vertical">
         <fragment
@@ -21,13 +21,14 @@
             tools:context="com.andrewtakao.alight.RoutePreviewActivity" />
 
         <android.support.v7.widget.RecyclerView
+            android:elevation="8dp"
             android:paddingTop="8dp"
             android:id="@+id/rv_recycler_views"
             android:layout_width="100dp"
             android:layout_height="0dp"
             android:layout_weight="1"
             android:layout_gravity="center_horizontal"
-            android:background="@android:color/holo_orange_dark">
+            android:background="@android:color/transparent">
 
         </android.support.v7.widget.RecyclerView>
     </LinearLayout>
