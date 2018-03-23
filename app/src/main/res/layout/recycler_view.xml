@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     xmlns:style="http://schemas.android.com/apk/res-auto"
     android:layout_marginTop="8dp"
     android:background="@color/colorPrimary">
@@ -26,10 +26,32 @@
         style:layout_constraintRight_toRightOf="@id/rv_recycler_view"/>
 
     <android.support.v7.widget.RecyclerView
+        android:visibility="gone"
         android:id="@+id/rv_recycler_view"
         style:layout_constraintTop_toBottomOf="@id/title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
     </android.support.v7.widget.RecyclerView>
+
+    <SeekBar
+        android:id="@+id/sb_poi"
+        android:layout_width="200dp"
+        android:layout_height="20dp"
+        android:rotation="90"
+        android:background="@android:color/black"
+        style:layout_constraintTop_toBottomOf="parent"
+        style:layout_constraintBottom_toTopOf="parent"
+        style:layout_constraintRight_toRightOf="parent"
+        style:layout_constraintLeft_toLeftOf="parent"/>
+
+    <Button
+        android:id="@+id/choose_poi"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        style:layout_constraintRight_toRightOf="parent"
+        style:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="8dp"
+        android:text="@string/choose_poi"
+        android:onClick="choosePoi"/>
 </android.support.constraint.ConstraintLayout>

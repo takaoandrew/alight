@@ -14,6 +14,7 @@ import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.util.Log;
+import android.view.View;
 
 import com.andrewtakao.alight.databinding.ActivityRoutePreviewBinding;
 import com.google.android.gms.maps.CameraUpdate;
@@ -22,6 +23,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -46,7 +49,7 @@ import static com.andrewtakao.alight.Utils.readableKey;
 
 public class RoutePreviewActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private final String TAG = RoutePreviewActivity.class.getSimpleName();
+    private final static String TAG = RoutePreviewActivity.class.getSimpleName();
     private final String LANGUAGE_EXTRA = "language_extra";
     private Context context;
 
@@ -58,14 +61,17 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 
     public static String language = "English";
 
+    //General
     public static HashMap<String, Route> busRoutes;
     private RecyclerViewAdapter recyclerViewAdapter;
+    private ArrayList<POI> currentPoiArrayList;
 
     //Map
     private GoogleMap mMap;
     HashMap<String, PolylineOptions> polylineOptionsHashMap;
     PolylineOptions polylineOptions;
-    LatLng latLng;
+    MarkerOptions lastMarkerOptions;
+    Marker lastMarker;
 
 
     ActivityRoutePreviewBinding binding;
@@ -108,14 +114,23 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         binding.rvRecyclerViews.setLayoutManager(layoutManager);
         binding.rvRecyclerViews.setAdapter(recyclerViewAdapter);
+        binding.rvPreviewPois.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
 
         database = Utils.getDatabase();
         routesRef = database.getReference(language+"/routes");
 
-
-
         SnapHelper helper = new LinearSnapHelper();
         helper.attachToRecyclerView(binding.rvRecyclerViews);
+
+//
+//        //Just to get the currentPOIArrayList initialized
+//        LinearLayoutManager poiLayoutManager = ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager());
+//        int firstVisiblePosition = poiLayoutManager.findFirstVisibleItemPosition();
+//
+//        changeRoute(poiArrayListArrayList.get(firstVisiblePosition).get(0).route,
+//                poiArrayListArrayList.get(firstVisiblePosition)
+//        );
 
         binding.rvRecyclerViews.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -126,6 +141,9 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG, "current position = " + firstVisiblePosition);
 //                Should have poi at 0 if hiding empty routes
                 Log.d(TAG, "current route = " + poiArrayListArrayList.get(firstVisiblePosition).get(0).route);
+                changeRoute(poiArrayListArrayList.get(firstVisiblePosition).get(0).route,
+                        poiArrayListArrayList.get(firstVisiblePosition)
+                );
 
 //                recyclerView.getLayoutManager().findFirstVisibleItemPosition();
             }
@@ -232,17 +250,13 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                     return;
                 }
 
-                poiArrayListArrayList.add(poiArrayList);
 //                recyclerViewAdapter = new RecyclerViewAdapter(context, poiArrayListArrayList, busRoutes);
 //                binding.rvRecyclerViews.setAdapter(recyclerViewAdapter);
 //                LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
 //                binding.rvRecyclerViews.setLayoutManager(layoutManager);
 
+                poiArrayListArrayList.add(poiArrayList);
                 polylineOptionsHashMap.put(routeSnapshot.getKey(), polylineOptions);
-                if (routeSnapshot.getKey().equals("mit")) {
-                    Log.d(TAG, "Found mit");
-                    setMap(routeSnapshot.getKey());
-                }
 
                 recyclerViewAdapter.notifyDataSetChanged();
 
@@ -317,14 +331,27 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             Log.d(TAG, "map is null");
             return;
         }
+        mMap.clear();
         mMap.addPolyline(polylineOptionsHashMap.get(route));
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        if (polylineOptionsHashMap.get("mit").getPoints().get(0) == null) {
+        if (polylineOptionsHashMap.get(route).getPoints().get(0) == null) {
             Log.d(TAG, "polylineoptions latlng was null");
             return;
         }
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(polylineOptionsHashMap.get(route).getPoints().get(0)));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(14f));
+
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        for (LatLng latLngPoint : polylineOptionsHashMap.get(route).getPoints()) {
+            boundsBuilder.include(latLngPoint);
+        }
+
+        int routePadding = 100;
+        LatLngBounds latLngBounds = boundsBuilder.build();
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, routePadding));
+
+        scrollToPosition(0);
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(polylineOptionsHashMap.get(route).getPoints().get(center)));
+//        mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
 
     }
 
@@ -564,5 +591,44 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG,"addFillerImageToTempFile-- onFailure");
             }
         });
+    }
+
+    public void scrollToPosition(int position) {
+        Log.d(TAG, "position is " + position);
+        binding.rvPreviewPois.smoothScrollToPosition(position);
+
+        if (currentPoiArrayList==null) {
+            currentPoiArrayList=poiArrayListArrayList.get(0);
+        }
+
+        double latitude = Double.valueOf(currentPoiArrayList.get(position).latitude);
+        double longitude = Double.valueOf(currentPoiArrayList.get(position).longitude);
+        String poiName = currentPoiArrayList.get(position).imageName;
+
+        if (lastMarker != null) {
+            lastMarker.remove();
+        }
+        lastMarkerOptions = new MarkerOptions()
+                .position(new LatLng(latitude, longitude))
+                .title(poiName);
+
+        lastMarker = mMap.addMarker(lastMarkerOptions);
+
+    }
+
+    public void changeRoute(String route, ArrayList<POI> poiArrayList) {
+        currentPoiArrayList = poiArrayList;
+        binding.rvPreviewPois.setAdapter(new POIAdapter(context, poiArrayList));
+        setMap(route);
+    }
+
+    public void toggleMapImage(View view) {
+        if (binding.rvPreviewPois.getVisibility()==View.VISIBLE) {
+            binding.rvPreviewPois.setVisibility(View.INVISIBLE);
+            binding.toggleMapImage.setText(R.string.toggle_image_on);
+        } else {
+            binding.rvPreviewPois.setVisibility(View.VISIBLE);
+            binding.toggleMapImage.setText(R.string.toggle_map_on);
+        }
     }
 }

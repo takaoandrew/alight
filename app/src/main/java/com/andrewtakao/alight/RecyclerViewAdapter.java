@@ -8,8 +8,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import org.w3c.dom.Text;
@@ -56,7 +58,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         Log.d(TAG, "at position " + position + ", firstPOI.imageName = " + firstPOI.imageName);
         Log.d(TAG, "busRoutes.get(position).firebaseCount = " + busRoutes.get(firstPOI.route).firebaseCount);
         Log.d(TAG, "busRoutes.get(position).downloadCount = " + busRoutes.get(firstPOI.route).downloadedCount);
+        String route = "";
         if (firstPOI.route!=null) {
+            route = firstPOI.route;
             if (busRoutes.get(firstPOI.route).firebaseCount != busRoutes.get(firstPOI.route).downloadedCount) {
                 holder.downloadView.setVisibility(View.VISIBLE);
             } else {
@@ -66,7 +70,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             holder.downloadView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    ((RoutePreviewActivity)context).downloadPOIs(firstPOI.route, MainActivity.language);
+                    ((RoutePreviewActivity)context).downloadPOIs(firstPOI.route, RoutePreviewActivity.language);
                 }
             });
 
@@ -76,6 +80,38 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         holder.recyclerView.setHasFixedSize(true);
         LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
         holder.recyclerView.setLayoutManager(layoutManager);
+
+        holder.chooseButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (firstPOI.route == null) {
+                    return;
+                }
+                Intent intent = new Intent(context, BoardingActivity.class);
+                intent.putExtra(BUS_ROUTE_EXTRA, firstPOI.route);
+                intent.putExtra(LANGUAGE_EXTRA, RoutePreviewActivity.language);
+                context.startActivity(intent);
+            }
+        });
+
+        holder.seekBar.setMax(poiArrayListArrayList.get(position).size()-1);
+        holder.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                ((RoutePreviewActivity)context).scrollToPosition(seekBar.getProgress());
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+//                Log.d(TAG, "seekbar.getProgress = " + seekBar.getProgress());
+//                ((RoutePreviewActivity)context).scrollToPosition(seekBar.getProgress());
+            }
+        });
 
     }
 
@@ -91,12 +127,16 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         TextView title;
         RecyclerView recyclerView;
         ImageView downloadView;
+        SeekBar seekBar;
+        Button chooseButton;
 
         public RecyclerViewViewHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.title);
             recyclerView = itemView.findViewById(R.id.rv_recycler_view);
             downloadView = itemView.findViewById(R.id.download_button);
+            seekBar = itemView.findViewById(R.id.sb_poi);
+            chooseButton = itemView.findViewById(R.id.choose_poi);
 
         }
 

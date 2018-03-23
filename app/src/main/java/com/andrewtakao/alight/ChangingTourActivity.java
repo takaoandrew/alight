@@ -165,7 +165,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         });
 
         //Language
-        if (MainActivity.language.equals("Chinese")) {
+        if (RoutePreviewActivity.language.equals("Chinese")) {
             binding.nextPoi.setText(R.string.nearby_ch);
             binding.playFiller.setText(R.string.skip_ch);
         } else {
@@ -183,7 +183,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        mDatabaseRef = MainActivity.routesRef.child(busRoute);
+        mDatabaseRef = RoutePreviewActivity.routesRef.child(busRoute);
         mDatabaseRef.addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
@@ -363,6 +363,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     public void playFiller(View view) {
         Random rand = new Random();
+        if (mFillerPOIHashMap.size()==0) {
+            Toast.makeText(context, "No filler content", Toast.LENGTH_SHORT).show();
+        }
         int n = rand.nextInt(mFillerPOIHashMap.size());
         int count = 0;
         for (POI poi : mFillerPOIHashMap.values()) {
@@ -459,7 +462,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
         POI poi = mFillerPOIHashMap.get(key);
         Log.d(TAG, "addFillerImage-- Bus route = " + busRoute);
-        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language+"/"+busRoute+"/filler/"+
+        String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language+"/"+busRoute+"/filler/"+
                 readableKey(key);
 //        Log.d(TAG, "addFillerImage-- filename = " + fileName);
 //        Log.d(TAG, "addFillerImage-- check fileexists for " + fileName);
@@ -488,7 +491,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         Log.d(TAG, "addImage-- Bus route = " + route);
 
         POI poi = mPOIHashMap.get(key);
-        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language+"/"+route+"/"+readableKey(key);
+        String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language+"/"+route+"/"+readableKey(key);
         Log.d(TAG, "addImage-- check fileexists for " + fileName);
         if (poi == null || !fileExist(fileName)) {
             Log.d(TAG, "addImage-- failed for key = " + key);
@@ -514,7 +517,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         Log.d(TAG, "addFillerAudio");
         Log.d(TAG, "addFillerAudio-- Bus route = " + busRoute);
         POI poi = mFillerPOIHashMap.get(key);
-        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language
+        String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language
                 +"/"+busRoute+"/filler/"+audioKey(readableKey(key));
 
         if (poi == null) {
@@ -542,7 +545,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     private void addAudio(String key, String route) {
         Log.d(TAG, "addAudio");
         Log.d(TAG, "addAudio-- Bus route = " + route);
-        String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language
+        String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language
                 +"/"+route+"/"+audioKey(readableKey(key));
         POI poi = mPOIHashMap.get(key);
         if (poi == null) {

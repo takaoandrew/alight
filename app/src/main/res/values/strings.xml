@@ -32,5 +32,8 @@
     <string name="skip_ch">下一个</string>
     <string name="nearby_ch">附近</string>
     <string name="title_activity_maps">Map</string>
+    <string name="toggle_image_on">Show Pictures</string>
+    <string name="toggle_map_on">Show Map</string>
+    <string name="choose_poi">Go!</string>
 
 </resources>
