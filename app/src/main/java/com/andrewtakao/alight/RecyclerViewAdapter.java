@@ -2,19 +2,15 @@ package com.andrewtakao.alight;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
-
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,15 +48,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             return;
         }
 
-//        Log.d(TAG, "onBindViewHolder-- position, poiArrayListArrayList.get(position) = " + position + ", "
-//        + poiArrayListArrayList.get(position));
         final POI firstPOI = poiArrayListArrayList.get(position).get(0);
         Log.d(TAG, "at position " + position + ", firstPOI.imageName = " + firstPOI.imageName);
         Log.d(TAG, "busRoutes.get(position).firebaseCount = " + busRoutes.get(firstPOI.route).firebaseCount);
         Log.d(TAG, "busRoutes.get(position).downloadCount = " + busRoutes.get(firstPOI.route).downloadedCount);
-        String route = "";
+
         if (firstPOI.route!=null) {
-            route = firstPOI.route;
             if (busRoutes.get(firstPOI.route).firebaseCount != busRoutes.get(firstPOI.route).downloadedCount) {
                 holder.downloadView.setVisibility(View.VISIBLE);
             } else {
@@ -75,11 +68,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             });
 
         }
-        final POIAdapter poiAdapter = new POIAdapter(context, poiArrayListArrayList.get(position));
-        holder.recyclerView.setAdapter(poiAdapter);
-        holder.recyclerView.setHasFixedSize(true);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false);
-        holder.recyclerView.setLayoutManager(layoutManager);
 
         holder.chooseButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -125,7 +113,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
     class RecyclerViewViewHolder extends RecyclerView.ViewHolder {
 
         TextView title;
-        RecyclerView recyclerView;
         ImageView downloadView;
         SeekBar seekBar;
         Button chooseButton;
@@ -133,11 +120,9 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         public RecyclerViewViewHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.title);
-            recyclerView = itemView.findViewById(R.id.rv_recycler_view);
             downloadView = itemView.findViewById(R.id.download_button);
             seekBar = itemView.findViewById(R.id.sb_poi);
             chooseButton = itemView.findViewById(R.id.choose_poi);
-
         }
 
 

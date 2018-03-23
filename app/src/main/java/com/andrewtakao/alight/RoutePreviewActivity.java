@@ -14,6 +14,9 @@ import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 
 import com.andrewtakao.alight.databinding.ActivityRoutePreviewBinding;
@@ -29,6 +32,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -104,7 +108,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         context = getBaseContext();
 
         Intent receivingIntent = getIntent();
-//        language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
+        language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
 
         poiArrayListArrayList = new ArrayList<>();
         busRoutes = new HashMap<>();
@@ -300,6 +304,33 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         listenToDatabase();
     }
 
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        if (language.equals("Chinese")) {
+            (menu.findItem(R.id.sign_out)).setTitle(R.string.sign_out_ch);
+            (menu.findItem(R.id.change_language)).setTitle(R.string.change_language_ch);
+        } else {
+            (menu.findItem(R.id.sign_out)).setTitle(R.string.sign_out);
+            (menu.findItem(R.id.change_language)).setTitle(R.string.change_language);
+        }
+        // return true so that the menu pop up is opened
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.sign_out) {
+            signOut();
+        } else if (item.getItemId() == R.id.change_language){
+            Intent intent = new Intent(context, LanguageActivity.class);
+            startActivity(intent);
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
     public void listenToDatabase() {
         if (routesRef!=null&&routesRefListener!=null) {
             Log.d(TAG, "resetting listener");
@@ -404,18 +435,6 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                                 for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
                                     for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
 
-
-                                        DatabaseReference databaseToChange = mDatabaseRef.child(
-                                                indexChildSnapshot.getKey()).child(coordinateChildSnapshot.getKey());
-                                        //Ignore it if it's already in the HashMap (was stored locally)
-//                                if (mPOIHashMap.containsKey(poiChildSnapshot.getKey())) {
-//                                    Log.d(TAG, "key " + poiChildSnapshot.getKey() + " is already in mPOIHashMap");
-//                                } else {
-//                                    if (databaseToDownloadTo.poiDao().findByNameAndRoute(poiChildSnapshot.getKey(),route)!=null) {
-//                                        Log.d(TAG, "onDataChange- poi " + poiChildSnapshot.getKey() + " is already downloaded" +
-//                                                "in route " + route);
-//                                        break;
-//                                    }
                                         //Set POI
                                         Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
                                         Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
@@ -434,8 +453,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                                                 (String) poiChildSnapshot.child("transcript").getValue()
                                         );
                                         Log.d(TAG, "addedPOI.busRoute = " + addedPoi.route);
-//                                    databaseToDownloadTo.poiDao().insertAll(addedPoi);
-//                                    mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
+
                                         try {
                                             addImageToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
                                         } catch (IOException e) { e.printStackTrace(); }
@@ -459,6 +477,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                         //handle databaseError
                     }
                 });
+
 
     }
 
@@ -536,6 +555,8 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG, "attempted to add key " + readableKey(key) + " into local file " + localFile);
             }
         });
+
+        binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
     private void addFillerAudioToTempFile(final String key, final POI addedPoi, final String route) throws IOException {
 
@@ -561,6 +582,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG,"addFillerAudioToTempFile-- onFailure");
             }
         });
+        binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
 
     private void addFillerImageToTempFile(final String key, final POI addedPOI, final String route) throws IOException {
@@ -591,6 +613,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG,"addFillerImageToTempFile-- onFailure");
             }
         });
+        binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
 
     public void scrollToPosition(int position) {
@@ -630,5 +653,11 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             binding.rvPreviewPois.setVisibility(View.VISIBLE);
             binding.toggleMapImage.setText(R.string.toggle_map_on);
         }
+    }
+
+    private void signOut() {
+        FirebaseAuth.getInstance().signOut();
+        Intent intent = new Intent(context, LoginActivity.class);
+        startActivity(intent);
     }
 }
