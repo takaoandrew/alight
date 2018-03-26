@@ -66,7 +66,7 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
         final POI poi = poiArrayList.get(position);
         String route = poi.route;
         String key = poi.imageName;
-        final String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language+"/"+route+"/"+readableKey(key);
+        final String fileName = (String) context.getFilesDir().getPath()+"/"+MainActivity.language+"/"+route+"/"+readableKey(key);
         Log.d(TAG, "addImage-- check fileexists for " + fileName);
         if (poi == null || !fileExist(fileName)) {
             Log.d(TAG, "addImage-- failed for key = " + key);

@@ -95,9 +95,9 @@ public class MainActivity extends AppCompatActivity {
                 childCount = 0;
                 downloadedCount = 0;
                 //TODO this only shows mit, hides all others!
-//                if (!routeSnapshot.getKey().equals("mit")) {
-//                    return;
-//                }
+                if (!routeSnapshot.getKey().equals("mit")) {
+                    return;
+                }
 
                 //Count how many pois there should be
                 for (DataSnapshot indexSnapshot : routeSnapshot.getChildren()) {

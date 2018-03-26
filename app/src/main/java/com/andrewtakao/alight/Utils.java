@@ -33,15 +33,6 @@ public class Utils {
         return file.exists();
     }
 
-    public static String audioKey(String key) {
-        key = key.replace(".jpeg", ".mp3");
-        key = key.replace(".png", ".mp3");
-        key = key.replace(".JPG", ".mp3");
-        key = key.replace(".PNG", ".mp3");
-        return key.replace(".jpg", ".mp3");
-    }
-
-
 
 
 

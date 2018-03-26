@@ -49,11 +49,11 @@ public class SplashActivity extends AppCompatActivity {
                         Intent intent = new Intent(context, LanguageActivity.class);
                         startActivity(intent);
                     } else if (language.equals("english")){
-                        Intent intent = new Intent(context, RoutePreviewActivity.class);
+                        Intent intent = new Intent(context, MainActivity.class);
                         intent.putExtra(LANGUAGE_EXTRA, "English");
                         startActivity(intent);
                     } else if (language.equals("chinese")){
-                        Intent intent = new Intent(context, RoutePreviewActivity.class);
+                        Intent intent = new Intent(context, MainActivity.class);
                         intent.putExtra(LANGUAGE_EXTRA, "Chinese");
                         startActivity(intent);
                     } else {

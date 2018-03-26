@@ -53,7 +53,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
 
     @Override
     public void onBindViewHolder(BusRouteViewHolder holder, final int position) {
-        Log.d(TAG, "onBindViewHolder-- position, RoutePreviewActivity.busRoutes.get(position) = " + position + ", "
+        Log.d(TAG, "onBindViewHolder-- position, MainActivity.busRoutes.get(position) = " + position + ", "
         + busRoutes.get(position));
         final Route currentRoute = busRoutes.get(position);
         holder.busRoute.setText(currentRoute.route);
@@ -67,7 +67,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
         holder.downloadButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ((RoutePreviewActivity)context).downloadPOIs(currentRoute.route, RoutePreviewActivity.language);
+                ((MainActivity)context).downloadPOIs(currentRoute.route, MainActivity.language);
             }
         });
         holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -85,7 +85,7 @@ public class BusRouteAdapter extends RecyclerView.Adapter<BusRouteAdapter.BusRou
                 Intent intent = new Intent(context, BoardingActivity.class);
 
                 intent.putExtra(BUS_ROUTE_EXTRA, currentRoute.route);
-                intent.putExtra(LANGUAGE_EXTRA, RoutePreviewActivity.language);
+                intent.putExtra(LANGUAGE_EXTRA, MainActivity.language);
                 context.startActivity(intent);
             }
         });

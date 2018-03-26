@@ -50,14 +50,14 @@ public class LanguageActivity extends AppCompatActivity {
     }
 
     public void launchEnglish(View view) {
-        Intent intent = new Intent(this, RoutePreviewActivity.class);
+        Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra(LANGUAGE_EXTRA, "English");
         DatabaseReference userRef = database.getReference("users/"+userId);
         userRef.child("language").setValue("english");
         startActivity(intent);
     }
     public void launchChinese(View view) {
-        Intent intent = new Intent(this, RoutePreviewActivity.class);
+        Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra(LANGUAGE_EXTRA, "Chinese");
         DatabaseReference userRef = database.getReference("users/"+userId);
         userRef.child("language").setValue("chinese");
