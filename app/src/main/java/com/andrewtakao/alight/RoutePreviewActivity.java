@@ -107,7 +107,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 
         context = getBaseContext();
 
-        Intent receivingIntent = getIntent();
+        final Intent receivingIntent = getIntent();
         language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
 
         poiArrayListArrayList = new ArrayList<>();
@@ -156,6 +156,10 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         routesRefListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot routeSnapshot, String s) {
+
+                if (!routeSnapshot.getKey().equals("mit")) {
+                    return;
+                }
                 Log.d(TAG, "routesRefListener onChildAdded--");
                 childCount = 0;
                 downloadedCount = 0;
@@ -580,6 +584,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             @Override
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG,"addFillerAudioToTempFile-- onFailure");
+                Log.d(TAG, "failed for key" + localFile);
             }
         });
         binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
@@ -611,6 +616,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             public void onFailure(@NonNull Exception exception) {
                 Log.d(TAG, "Exception " + exception);
                 Log.d(TAG,"addFillerImageToTempFile-- onFailure");
+                Log.d(TAG, "failed for key" + localFile);
             }
         });
         binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
@@ -648,10 +654,10 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
     public void toggleMapImage(View view) {
         if (binding.rvPreviewPois.getVisibility()==View.VISIBLE) {
             binding.rvPreviewPois.setVisibility(View.INVISIBLE);
-            binding.toggleMapImage.setText(R.string.toggle_image_on);
+            binding.toggleMapImage.setImageResource(R.drawable.map_image);
         } else {
             binding.rvPreviewPois.setVisibility(View.VISIBLE);
-            binding.toggleMapImage.setText(R.string.toggle_map_on);
+            binding.toggleMapImage.setImageResource(R.drawable.mit);
         }
     }
 

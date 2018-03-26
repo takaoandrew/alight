@@ -48,6 +48,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
             return;
         }
 
+
         final POI firstPOI = poiArrayListArrayList.get(position).get(0);
         Log.d(TAG, "at position " + position + ", firstPOI.imageName = " + firstPOI.imageName);
         Log.d(TAG, "busRoutes.get(position).firebaseCount = " + busRoutes.get(firstPOI.route).firebaseCount);

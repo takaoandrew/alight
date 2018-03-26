@@ -37,9 +37,10 @@
     <SeekBar
         android:id="@+id/sb_poi"
         android:layout_width="200dp"
-        android:layout_height="20dp"
+        android:layout_height="40dp"
         android:rotation="90"
-        android:background="@android:color/black"
+        android:background="@drawable/seekbar_poi_style"
+        android:thumb="@drawable/seekbar_poi_thumb_style"
         style:layout_constraintTop_toBottomOf="parent"
         style:layout_constraintBottom_toTopOf="parent"
         style:layout_constraintRight_toRightOf="parent"
