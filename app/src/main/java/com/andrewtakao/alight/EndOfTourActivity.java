@@ -13,7 +13,7 @@ public class EndOfTourActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_end_of_tour);
-        if (MainActivity.language.equals("Chinese")) {
+        if (RoutePreviewActivity.language.equals("Chinese")) {
             ((TextView) findViewById(R.id.survey_prompt)).setText(R.string.end_of_tour_survey_prompt_ch);
             ((TextView) findViewById(R.id.survey_button)).setText(R.string.end_of_tour_survey_button_ch);
         } else {

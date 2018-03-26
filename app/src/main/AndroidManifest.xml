@@ -28,13 +28,11 @@
             android:name=".SignupActivity"
             android:noHistory="true" />
         <activity android:name=".RoutePreviewActivity">
-
         </activity>
         <activity android:name=".LoginActivity" />
         <activity
             android:name=".SplashActivity"
             android:noHistory="true">
-
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

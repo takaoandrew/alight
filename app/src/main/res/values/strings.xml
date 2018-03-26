@@ -32,9 +32,6 @@
     <string name="skip_ch">下一个</string>
     <string name="nearby_ch">附近</string>
     <string name="title_activity_maps">Map</string>
-<<<<<<< HEAD
     <string name="choose_poi">Go!</string>
-=======
->>>>>>> ec9f2d71f7ac30dce0bc5fb089823b8391c8a90e
 
 </resources>

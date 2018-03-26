@@ -4,13 +4,20 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.DatabaseUtils;
 import android.databinding.DataBindingUtil;
+import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SnapHelper;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
 
 import com.andrewtakao.alight.databinding.ActivityRoutePreviewBinding;
 import com.google.android.gms.maps.CameraUpdate;
@@ -19,22 +26,34 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class RoutePreviewActivity extends FragmentActivity implements OnMapReadyCallback {
+import static com.andrewtakao.alight.Utils.audioKey;
+import static com.andrewtakao.alight.Utils.readableKey;
 
-    private final String TAG = RoutePreviewActivity.class.getSimpleName();
+public class RoutePreviewActivity extends AppCompatActivity implements OnMapReadyCallback {
+
+    private final static String TAG = RoutePreviewActivity.class.getSimpleName();
     private final String LANGUAGE_EXTRA = "language_extra";
     private Context context;
 
@@ -46,13 +65,17 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
 
     public static String language = "English";
 
-    public static ArrayList<Route> busRoutes;
+    //General
+    public static HashMap<String, Route> busRoutes;
+    private RecyclerViewAdapter recyclerViewAdapter;
+    private ArrayList<POI> currentPoiArrayList;
 
     //Map
     private GoogleMap mMap;
     HashMap<String, PolylineOptions> polylineOptionsHashMap;
     PolylineOptions polylineOptions;
-    LatLng latLng;
+    MarkerOptions lastMarkerOptions;
+    Marker lastMarker;
 
 
     ActivityRoutePreviewBinding binding;
@@ -82,25 +105,53 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        context = getApplicationContext();
+        context = getBaseContext();
 
-<<<<<<< HEAD
         final Intent receivingIntent = getIntent();
         language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
-=======
-        Intent receivingIntent = getIntent();
-//        language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
->>>>>>> ec9f2d71f7ac30dce0bc5fb089823b8391c8a90e
 
         poiArrayListArrayList = new ArrayList<>();
+        busRoutes = new HashMap<>();
+
+        recyclerViewAdapter = new RecyclerViewAdapter(this, poiArrayListArrayList, busRoutes);
+//        binding.rvRecyclerViews.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
+        binding.rvRecyclerViews.setLayoutManager(layoutManager);
+        binding.rvRecyclerViews.setAdapter(recyclerViewAdapter);
+        binding.rvPreviewPois.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+
 
         database = Utils.getDatabase();
         routesRef = database.getReference(language+"/routes");
 
-
-
         SnapHelper helper = new LinearSnapHelper();
         helper.attachToRecyclerView(binding.rvRecyclerViews);
+
+//
+//        //Just to get the currentPOIArrayList initialized
+//        LinearLayoutManager poiLayoutManager = ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager());
+//        int firstVisiblePosition = poiLayoutManager.findFirstVisibleItemPosition();
+//
+//        changeRoute(poiArrayListArrayList.get(firstVisiblePosition).get(0).route,
+//                poiArrayListArrayList.get(firstVisiblePosition)
+//        );
+
+        binding.rvRecyclerViews.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager());
+                int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
+                Log.d(TAG, "current position = " + firstVisiblePosition);
+//                Should have poi at 0 if hiding empty routes
+                Log.d(TAG, "current route = " + poiArrayListArrayList.get(firstVisiblePosition).get(0).route);
+                changeRoute(poiArrayListArrayList.get(firstVisiblePosition).get(0).route,
+                        poiArrayListArrayList.get(firstVisiblePosition)
+                );
+
+//                recyclerView.getLayoutManager().findFirstVisibleItemPosition();
+            }
+        });
 
         routesRefListener = new ChildEventListener() {
             @Override
@@ -123,9 +174,9 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
                         for (DataSnapshot individualSnapshot: indexSnapshot.getChildren()) {
                             Log.d(TAG, "individualSnapshot.getKey() = " + individualSnapshot.getKey());
                             Log.d(TAG, "fileExist() is checking " + (String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/filler"+
-                                    Utils.readableKey(individualSnapshot.getKey()));
+                                    readableKey(individualSnapshot.getKey()));
                             if (Utils.fileExist((String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/filler/"+
-                                    Utils.readableKey(individualSnapshot.getKey()))) {
+                                    readableKey(individualSnapshot.getKey()))) {
                                 downloadedCount+=1;
                             }
                             childCount += 1;
@@ -146,9 +197,29 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
                                 for (DataSnapshot individualSnapshot: coordinateSnapshot.getChildren()) {
                                     Log.d(TAG, "individualSnapshot.getKey() = " + individualSnapshot.getKey());
                                     if (Utils.fileExist((String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/"+
-                                            Utils.readableKey(individualSnapshot.getKey()))) {
+                                            readableKey(individualSnapshot.getKey()))) {
                                         downloadedCount+=1;
-                                        POI addedPoi = new POI(
+                                        //Moving this outside- now database will show when images aren't downloaded
+//                                        POI addedPoi = new POI(
+//                                            (String) individualSnapshot.getKey(),
+//                                            (String) individualSnapshot.child("audio").getValue(),
+//                                            (String) individualSnapshot.child("coordinates").getValue(),
+//                                            (String) individualSnapshot.child("image").getValue(),
+//                                            (String) individualSnapshot.child("index").getValue(),
+//                                            (String) individualSnapshot.child("language").getValue(),
+//                                            (String) individualSnapshot.child("latitude").getValue(),
+//                                            (String) individualSnapshot.child("longitude").getValue(),
+//                                            (String) individualSnapshot.child("purpose").getValue(),
+//                                            (String) individualSnapshot.child("route").getValue(),
+//                                            (ArrayList<String>) individualSnapshot.child("theme").getValue(),
+//                                            (String) individualSnapshot.child("transcript").getValue()
+//                                        );
+//                                        poiArrayList.add(addedPoi);
+//                                        LatLng latLng = new LatLng(Double.valueOf(addedPoi.latitude),
+//                                                Double.valueOf(addedPoi.longitude));
+//                                        polylineOptions.add(latLng);
+                                    }
+                                    POI addedPoi = new POI(
                                             (String) individualSnapshot.getKey(),
                                             (String) individualSnapshot.child("audio").getValue(),
                                             (String) individualSnapshot.child("coordinates").getValue(),
@@ -161,12 +232,8 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
                                             (String) individualSnapshot.child("route").getValue(),
                                             (ArrayList<String>) individualSnapshot.child("theme").getValue(),
                                             (String) individualSnapshot.child("transcript").getValue()
-                                        );
-                                        poiArrayList.add(addedPoi);
-//                                        LatLng latLng = new LatLng(Double.valueOf(addedPoi.latitude),
-//                                                Double.valueOf(addedPoi.longitude));
-//                                        polylineOptions.add(latLng);
-                                    }
+                                    );
+                                    poiArrayList.add(addedPoi);
                                     childCount += 1;
                                 }
                             }
@@ -177,22 +244,29 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
                         }
                     }
                 }
+                Log.d(TAG, "Route = " + routeSnapshot.getKey());
+                Log.d(TAG, "downloaded, child = " + downloadedCount + ", " + childCount);
+
+
+
+                busRoutes.put(routeSnapshot.getKey(), new Route(routeSnapshot.getKey(), childCount, downloadedCount));
+                Log.d(TAG, "added to bus routes, key, firebase, download = "
+                        + routeSnapshot.getKey() +","+ childCount+","+ downloadedCount);
 
                 if (poiArrayList.size()==0) {
                     Log.d(TAG, "Hiding empty routes");
                     return;
                 }
-                poiArrayListArrayList.add(poiArrayList);
-                RecyclerViewAdapter recyclerViewAdapter = new RecyclerViewAdapter(context, poiArrayListArrayList);
-                binding.rvRecyclerViews.setAdapter(recyclerViewAdapter);
-                LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
-                binding.rvRecyclerViews.setLayoutManager(layoutManager);
 
+//                recyclerViewAdapter = new RecyclerViewAdapter(context, poiArrayListArrayList, busRoutes);
+//                binding.rvRecyclerViews.setAdapter(recyclerViewAdapter);
+//                LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
+//                binding.rvRecyclerViews.setLayoutManager(layoutManager);
+
+                poiArrayListArrayList.add(poiArrayList);
                 polylineOptionsHashMap.put(routeSnapshot.getKey(), polylineOptions);
-                if (routeSnapshot.getKey().equals("mit")) {
-                    Log.d(TAG, "Found mit");
-                    setMap(routeSnapshot.getKey());
-                }
+
+                recyclerViewAdapter.notifyDataSetChanged();
 
             }
 
@@ -208,15 +282,15 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
                 Log.d(TAG, "routesRefListener onChildRemoved--");
                 Log.d(TAG, "dataSnapshot.getKey() = " + routeSnapshot.getKey());
                 Route routeToRemove = null;
-                for (Route route: busRoutes) {
-                    if (route.route.equals(routeSnapshot.getKey())) {
-                        routeToRemove = route;
-                    }
-                }
-                if (null!=routeToRemove) {
-//                    currentRouteDatabase.routeDao().delete(routeToRemove);
-                    busRoutes.remove(routeToRemove);
-                }
+//                for (Route route: busRoutes) {
+//                    if (route.route.equals(routeSnapshot.getKey())) {
+//                        routeToRemove = route;
+//                    }
+////                }
+//                if (null!=routeToRemove) {
+////                    currentRouteDatabase.routeDao().delete(routeToRemove);
+//                    busRoutes.remove(routeToRemove);
+//                }
             }
 
             @Override
@@ -232,6 +306,33 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
 
 
         listenToDatabase();
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+        if (language.equals("Chinese")) {
+            (menu.findItem(R.id.sign_out)).setTitle(R.string.sign_out_ch);
+            (menu.findItem(R.id.change_language)).setTitle(R.string.change_language_ch);
+        } else {
+            (menu.findItem(R.id.sign_out)).setTitle(R.string.sign_out);
+            (menu.findItem(R.id.change_language)).setTitle(R.string.change_language);
+        }
+        // return true so that the menu pop up is opened
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.sign_out) {
+            signOut();
+        } else if (item.getItemId() == R.id.change_language){
+            Intent intent = new Intent(context, LanguageActivity.class);
+            startActivity(intent);
+        }
+        return super.onOptionsItemSelected(item);
     }
 
     public void listenToDatabase() {
@@ -265,16 +366,14 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
             Log.d(TAG, "map is null");
             return;
         }
+        mMap.clear();
         mMap.addPolyline(polylineOptionsHashMap.get(route));
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        if (polylineOptionsHashMap.get("mit").getPoints().get(0) == null) {
+        if (polylineOptionsHashMap.get(route).getPoints().get(0) == null) {
             Log.d(TAG, "polylineoptions latlng was null");
             return;
         }
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(polylineOptionsHashMap.get(route).getPoints().get(0)));
-        mMap.moveCamera(CameraUpdateFactory.zoomTo(14f));
 
-<<<<<<< HEAD
         LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
         for (LatLng latLngPoint : polylineOptionsHashMap.get(route).getPoints()) {
             boundsBuilder.include(latLngPoint);
@@ -566,7 +665,5 @@ public class RoutePreviewActivity extends FragmentActivity implements OnMapReady
         FirebaseAuth.getInstance().signOut();
         Intent intent = new Intent(context, LoginActivity.class);
         startActivity(intent);
-=======
->>>>>>> ec9f2d71f7ac30dce0bc5fb089823b8391c8a90e
     }
 }
