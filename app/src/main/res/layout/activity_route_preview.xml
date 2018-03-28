@@ -12,7 +12,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1">
+            android:layout_weight="4">
             <fragment
                 xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:map="http://schemas.android.com/apk/res-auto"
@@ -40,17 +40,23 @@
                 android:onClick="toggleMapImage" />
         </FrameLayout>
 
+        <!--<LinearLayout-->
+            <!--android:id="@+id/filter_layout"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="0dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:orientation="horizontal"-->
+            <!--android:background="@color/colorPrimaryDark">-->
+        <!--</LinearLayout>-->
 
 
         <android.support.v7.widget.RecyclerView
-            android:elevation="8dp"
-            android:paddingTop="8dp"
             android:id="@+id/rv_recycler_views"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_weight="5"
             android:layout_gravity="center_horizontal"
-            android:background="@color/colorPrimary">
+            android:background="@android:color/white">
 
         </android.support.v7.widget.RecyclerView>
     </LinearLayout>

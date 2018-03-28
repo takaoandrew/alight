@@ -8,7 +8,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import com.andrewtakao.alight.databinding.ActivityLoginBinding;
@@ -32,6 +34,7 @@ public class SigninActivity extends AppCompatActivity {
     Context context;
     private final String LANGUAGE_EXTRA = "language_extra";
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,6 +43,16 @@ public class SigninActivity extends AppCompatActivity {
         context = getBaseContext();
         mAuth = FirebaseAuth.getInstance();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_signin);
+
+        binding.mainLayout.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+                return false;
+            }
+        });
+
 
         binding.btSignin.setOnClickListener(new View.OnClickListener() {
             @Override

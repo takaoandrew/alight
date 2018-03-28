@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
-        <shape android:shape="rectangle">
-            <solid android:color="@color/colorAccent"/>
-            <size
-                android:width="35dp"
-                android:height="35dp"/>
-        </shape>
-    </item>
-</layer-list>
+    <layer-list xmlns:android="http://schemas.android.com/apk/res/android" >
+
+        <item>
+            <shape>
+                <size
+                    android:height="20dp"
+                    android:width="20dp" />
+
+                <bitmap android:src="@drawable/tilted_pin"/>
+            </shape>
+        </item>
+
+    </layer-list>

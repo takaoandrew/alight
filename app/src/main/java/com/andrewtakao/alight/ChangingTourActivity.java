@@ -365,6 +365,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         Random rand = new Random();
         if (mFillerPOIHashMap.size()==0) {
             Toast.makeText(context, "No filler content", Toast.LENGTH_SHORT).show();
+            return;
         }
         int n = rand.nextInt(mFillerPOIHashMap.size());
         int count = 0;
@@ -790,13 +791,15 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         if (poi == null) {
             poi = mFillerPOIHashMap.get(displayedKey);
             Log.d(TAG, "filler! poi.index = " + poi.index);
+            if (poi.index == null) {
+                Toast.makeText(context, "Not set up to be liked, update database", Toast.LENGTH_SHORT).show();
+                return;
+            }
             mDatabaseRef.child(poi.index).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
         } else {
-            Log.d(TAG, "not filler! poi.index = " + poi.index);
             if (poi.index == null) {
                 Toast.makeText(context, "poi.index is null!", Toast.LENGTH_LONG).show();
             }
-
 //        if (poi.coordinates.equals("0,0"))
             mDatabaseRef.child(poi.index).child(poi.coordinates).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
         }
@@ -806,7 +809,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         POI poi = mPOIHashMap.get(displayedKey);
         if (poi == null) {
             poi = mFillerPOIHashMap.get(displayedKey);
-            Log.d(TAG, "filler! poi.index = " + poi.index);
+            if (poi.index == null) {
+                Toast.makeText(context, "Not set up to be liked, update database", Toast.LENGTH_SHORT).show();
+                return;
+            }
             mDatabaseRef.child(poi.index).child(displayedKey).child("likes").child(user.getUid()).setValue("false");
         } else {
             Log.d(TAG, "not filler! poi.index = " + poi.index);

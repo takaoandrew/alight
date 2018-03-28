@@ -2,25 +2,20 @@ package com.andrewtakao.alight;
 
 import android.content.Context;
 import android.content.Intent;
-import android.database.DatabaseUtils;
 import android.databinding.DataBindingUtil;
 import android.support.annotation.NonNull;
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SnapHelper;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 
 import com.andrewtakao.alight.databinding.ActivityRoutePreviewBinding;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -53,34 +48,34 @@ import static com.andrewtakao.alight.Utils.readableKey;
 
 public class RoutePreviewActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    private final static String TAG = RoutePreviewActivity.class.getSimpleName();
+    private final String TAG = RoutePreviewActivity.class.getSimpleName();
     private final String LANGUAGE_EXTRA = "language_extra";
-    private Context context;
-
-    public static FirebaseDatabase database;
-    public static DatabaseReference routesRef;
-    public static StorageReference mStorageRef;
-    public static DatabaseReference mDatabaseRef;
-    private ChildEventListener routesRefListener;
-
     public static String language = "English";
+    private Context context;
+    ActivityRoutePreviewBinding binding;
+
+    //Firebase
+    private FirebaseDatabase database;
+    public static DatabaseReference routesRef;
+    private StorageReference mStorageRef;
+    private DatabaseReference mDatabaseRef;
+    private ChildEventListener routesRefListener;
 
     //General
     public static HashMap<String, Route> busRoutes;
     private RecyclerViewAdapter recyclerViewAdapter;
-    private ArrayList<POI> currentPoiArrayList;
 
     //Map
     private GoogleMap mMap;
-    HashMap<String, PolylineOptions> polylineOptionsHashMap;
-    PolylineOptions polylineOptions;
-    MarkerOptions lastMarkerOptions;
-    Marker lastMarker;
+    private HashMap<String, PolylineOptions> polylineOptionsHashMap;
+    private PolylineOptions polylineOptions;
+    private MarkerOptions lastMarkerOptions;
+    private Marker lastMarker;
 
-
-    ActivityRoutePreviewBinding binding;
-    ArrayList<ArrayList<POI>> poiArrayListArrayList;
-
+    //Misc
+    private ArrayList<ArrayList<POI>> poiArrayListArrayList;
+    private ArrayList<POI> currentPoiArrayList;
+    private ArrayList<String> existingRouteNames;
     int childCount = 0;
     int downloadedCount = 0;
 
@@ -88,78 +83,46 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate");
-//        latLng = new LatLng(42.1, -71.1);
-//        LatLng latLng2 = new LatLng(42.2, -71.2);
-//        LatLng latLng3 = new LatLng(42.3, -71.3);
-//        LatLng latLng4 = new LatLng(42.4, -71.4);
+        context = getBaseContext();
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_route_preview);
+        final Intent receivingIntent = getIntent();
+        language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
+
         polylineOptions = new PolylineOptions();
         polylineOptionsHashMap = new HashMap<>();
-//        polylineOptions.add(latLng);
-//        polylineOptions.add(latLng2);
-//        polylineOptions.add(latLng3);
-//        polylineOptions.add(latLng4);
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_route_preview);
+        poiArrayListArrayList = new ArrayList<>();
+        busRoutes = new HashMap<>();
+        recyclerViewAdapter = new RecyclerViewAdapter(this, poiArrayListArrayList, busRoutes);
+        existingRouteNames = new ArrayList<>();
 
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
-        context = getBaseContext();
-
-        final Intent receivingIntent = getIntent();
-        language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
-
-        poiArrayListArrayList = new ArrayList<>();
-        busRoutes = new HashMap<>();
-
-        recyclerViewAdapter = new RecyclerViewAdapter(this, poiArrayListArrayList, busRoutes);
-//        binding.rvRecyclerViews.setLayoutManager(new LinearLayoutManager(this));
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        binding.rvRecyclerViews.setLayoutManager(layoutManager);
+        binding.rvRecyclerViews.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         binding.rvRecyclerViews.setAdapter(recyclerViewAdapter);
         binding.rvPreviewPois.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-
+        binding.rvPreviewPois.addOnItemTouchListener(new RecyclerViewDisabler());
 
         database = Utils.getDatabase();
         routesRef = database.getReference(language+"/routes");
-
-        SnapHelper helper = new LinearSnapHelper();
-        helper.attachToRecyclerView(binding.rvRecyclerViews);
-
-//
-//        //Just to get the currentPOIArrayList initialized
-//        LinearLayoutManager poiLayoutManager = ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager());
-//        int firstVisiblePosition = poiLayoutManager.findFirstVisibleItemPosition();
-//
-//        changeRoute(poiArrayListArrayList.get(firstVisiblePosition).get(0).route,
-//                poiArrayListArrayList.get(firstVisiblePosition)
-//        );
 
         binding.rvRecyclerViews.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager());
-                int firstVisiblePosition = layoutManager.findFirstVisibleItemPosition();
-                Log.d(TAG, "current position = " + firstVisiblePosition);
-//                Should have poi at 0 if hiding empty routes
-                Log.d(TAG, "current route = " + poiArrayListArrayList.get(firstVisiblePosition).get(0).route);
-                changeRoute(poiArrayListArrayList.get(firstVisiblePosition).get(0).route,
-                        poiArrayListArrayList.get(firstVisiblePosition)
-                );
-
-//                recyclerView.getLayoutManager().findFirstVisibleItemPosition();
+                Log.d(TAG, "onScrolled");
+                changeFocus(-1);
             }
         });
 
         routesRefListener = new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot routeSnapshot, String s) {
-
-                if (!routeSnapshot.getKey().equals("mit")) {
-                    return;
-                }
+                //HIDE all but mit
+//                if (!routeSnapshot.getKey().equals("mit")) {
+//                    return;
+//                }
                 Log.d(TAG, "routesRefListener onChildAdded--");
                 childCount = 0;
                 downloadedCount = 0;
@@ -172,9 +135,6 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 for (DataSnapshot indexSnapshot : routeSnapshot.getChildren()) {
                     if (indexSnapshot.getKey().equals("filler")) {
                         for (DataSnapshot individualSnapshot: indexSnapshot.getChildren()) {
-                            Log.d(TAG, "individualSnapshot.getKey() = " + individualSnapshot.getKey());
-                            Log.d(TAG, "fileExist() is checking " + (String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/filler"+
-                                    readableKey(individualSnapshot.getKey()));
                             if (Utils.fileExist((String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/filler/"+
                                     readableKey(individualSnapshot.getKey()))) {
                                 downloadedCount+=1;
@@ -182,8 +142,6 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                             childCount += 1;
                         }
                     } else {
-
-//                    Log.d(TAG, "snapshot.getKey() = " + snapshot.getKey());
                         for (DataSnapshot coordinateSnapshot: indexSnapshot.getChildren()) {
                             String thisLongitudeString = coordinateSnapshot.getKey()
                                     .substring(0, coordinateSnapshot.getKey().indexOf(",")).replace("*",".");
@@ -195,29 +153,9 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                             }
                             else if (coordinateSnapshot.hasChildren()) {
                                 for (DataSnapshot individualSnapshot: coordinateSnapshot.getChildren()) {
-                                    Log.d(TAG, "individualSnapshot.getKey() = " + individualSnapshot.getKey());
                                     if (Utils.fileExist((String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/"+
                                             readableKey(individualSnapshot.getKey()))) {
                                         downloadedCount+=1;
-                                        //Moving this outside- now database will show when images aren't downloaded
-//                                        POI addedPoi = new POI(
-//                                            (String) individualSnapshot.getKey(),
-//                                            (String) individualSnapshot.child("audio").getValue(),
-//                                            (String) individualSnapshot.child("coordinates").getValue(),
-//                                            (String) individualSnapshot.child("image").getValue(),
-//                                            (String) individualSnapshot.child("index").getValue(),
-//                                            (String) individualSnapshot.child("language").getValue(),
-//                                            (String) individualSnapshot.child("latitude").getValue(),
-//                                            (String) individualSnapshot.child("longitude").getValue(),
-//                                            (String) individualSnapshot.child("purpose").getValue(),
-//                                            (String) individualSnapshot.child("route").getValue(),
-//                                            (ArrayList<String>) individualSnapshot.child("theme").getValue(),
-//                                            (String) individualSnapshot.child("transcript").getValue()
-//                                        );
-//                                        poiArrayList.add(addedPoi);
-//                                        LatLng latLng = new LatLng(Double.valueOf(addedPoi.latitude),
-//                                                Double.valueOf(addedPoi.longitude));
-//                                        polylineOptions.add(latLng);
                                     }
                                     POI addedPoi = new POI(
                                             (String) individualSnapshot.getKey(),
@@ -234,40 +172,27 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                                             (String) individualSnapshot.child("transcript").getValue()
                                     );
                                     poiArrayList.add(addedPoi);
+                                    Log.d(TAG, "Important: addedPoi " + addedPoi.imageName);
                                     childCount += 1;
                                 }
                             }
                             else {
-                                //This probably never happens, coordinatesnapshot will always have children if not empty
-                                Log.d(TAG, "coordinateSnapshot.getKey() = " + coordinateSnapshot.getKey());
                             }
                         }
                     }
                 }
-                Log.d(TAG, "Route = " + routeSnapshot.getKey());
-                Log.d(TAG, "downloaded, child = " + downloadedCount + ", " + childCount);
-
-
-
                 busRoutes.put(routeSnapshot.getKey(), new Route(routeSnapshot.getKey(), childCount, downloadedCount));
-                Log.d(TAG, "added to bus routes, key, firebase, download = "
-                        + routeSnapshot.getKey() +","+ childCount+","+ downloadedCount);
-
                 if (poiArrayList.size()==0) {
-                    Log.d(TAG, "Hiding empty routes");
                     return;
                 }
 
-//                recyclerViewAdapter = new RecyclerViewAdapter(context, poiArrayListArrayList, busRoutes);
-//                binding.rvRecyclerViews.setAdapter(recyclerViewAdapter);
-//                LinearLayoutManager layoutManager = new LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false);
-//                binding.rvRecyclerViews.setLayoutManager(layoutManager);
-
-                poiArrayListArrayList.add(poiArrayList);
-                polylineOptionsHashMap.put(routeSnapshot.getKey(), polylineOptions);
-
-                recyclerViewAdapter.notifyDataSetChanged();
-
+                if (!existingRouteNames.contains(routeSnapshot.getKey())) {
+                    Log.d(TAG, "Important: adding poiArrayList " + poiArrayList.size());
+                    poiArrayListArrayList.add(poiArrayList);
+                    polylineOptionsHashMap.put(routeSnapshot.getKey(), polylineOptions);
+                    recyclerViewAdapter.notifyDataSetChanged();
+                    existingRouteNames.add(routeSnapshot.getKey());
+                }
             }
 
             @Override
@@ -303,11 +228,14 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 
             }
         };
-
-
         listenToDatabase();
     }
 
+    @Override
+    public void onBackPressed() {
+        Log.d(TAG, "onBackPressed");
+        moveTaskToBack(true);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -403,71 +331,28 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 
                             //Different procedure for filler content
                             if (indexChildSnapshot.getKey().equals("filler")) {
-                                Log.d(TAG, "This index is filler");
                                 for (DataSnapshot poiChildSnapshot : indexChildSnapshot.getChildren()) {
-                                    DatabaseReference databaseToChange = mDatabaseRef.child(
-                                            indexChildSnapshot.getKey());
-
-                                    POI addedPoi = new POI(
-                                            (String) poiChildSnapshot.getKey(),
-                                            (String) poiChildSnapshot.child("audio").getValue(),
-                                            (String) poiChildSnapshot.child("coordinates").getValue(),
-                                            (String) poiChildSnapshot.child("image").getValue(),
-                                            (String) poiChildSnapshot.child("index").getValue(),
-                                            (String) poiChildSnapshot.child("language").getValue(),
-                                            (String) poiChildSnapshot.child("latitude").getValue(),
-                                            (String) poiChildSnapshot.child("longitude").getValue(),
-                                            (String) poiChildSnapshot.child("purpose").getValue(),
-                                            (String) poiChildSnapshot.child("route").getValue(),
-                                            (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
-                                            (String) poiChildSnapshot.child("transcript").getValue()
-                                    );
-                                    Log.d(TAG, "addedPOI.busRoute = " + addedPoi.route);
-//                                    databaseToDownloadTo.poiDao().insertAll(addedPoi);
-//                                    mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
                                     try {
-                                        addFillerImageToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
+                                        addFillerImageToFile(poiChildSnapshot.getKey(), (String) poiChildSnapshot.child("route").getValue());
                                     } catch (IOException e) { e.printStackTrace(); }
 
                                     //Store audio location
                                     try {
-                                        addFillerAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
+                                        addFillerAudioToFile(poiChildSnapshot.getKey(), (String) poiChildSnapshot.child("route").getValue());
                                     } catch (IOException e) { e.printStackTrace();}
                                 }
                             } else {
-
                                 for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
                                     for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
-
                                         //Set POI
-                                        Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
-                                        Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
-                                        POI addedPoi = new POI(
-                                                (String) poiChildSnapshot.getKey(),
-                                                (String) poiChildSnapshot.child("audio").getValue(),
-                                                (String) poiChildSnapshot.child("coordinates").getValue(),
-                                                (String) poiChildSnapshot.child("image").getValue(),
-                                                (String) poiChildSnapshot.child("index").getValue(),
-                                                (String) poiChildSnapshot.child("language").getValue(),
-                                                (String) poiChildSnapshot.child("latitude").getValue(),
-                                                (String) poiChildSnapshot.child("longitude").getValue(),
-                                                (String) poiChildSnapshot.child("purpose").getValue(),
-                                                (String) poiChildSnapshot.child("route").getValue(),
-                                                (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
-                                                (String) poiChildSnapshot.child("transcript").getValue()
-                                        );
-                                        Log.d(TAG, "addedPOI.busRoute = " + addedPoi.route);
-
+//                                        Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
+//                                        Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
                                         try {
-                                            addImageToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
+                                            addImageToFile(poiChildSnapshot.getKey(), (String) poiChildSnapshot.child("route").getValue());
                                         } catch (IOException e) { e.printStackTrace(); }
-
-                                        //Store audio location
                                         try {
-                                            addAudioToTempFile(poiChildSnapshot.getKey(), addedPoi, addedPoi.route);
+                                            addAudioToFile(poiChildSnapshot.getKey(), (String) poiChildSnapshot.child("route").getValue());
                                         } catch (IOException e) { e.printStackTrace();}
-//                                }
-
                                     }
                                 }
                             }
@@ -481,89 +366,53 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                         //handle databaseError
                     }
                 });
-
-
     }
 
-    private void addAudioToTempFile(final String key, final POI addedPoi, final String route) throws IOException {
-
-        Log.d(TAG, "addAudioToTempFile-- audio key = " + audioKey(readableKey(key)));
-        //Get local file
-
+    private void addAudioToFile(final String key, final String route) throws IOException {
         StorageReference mAudioRef = mStorageRef.child(audioKey(readableKey(key)));
 
-//        Log.d(TAG, "addAudioToTempFile-- mAudioRef.getPath() = " + mAudioRef.getPath());
-
-//        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
         File directory = context.getFilesDir();
         final File localDirectory = new File(directory, language+"/"+route);
         localDirectory.mkdirs();
         final File localFile = new File(localDirectory, audioKey(readableKey(key)));
-//        final File localFile = new File(directory, language+"/"+route+"/"+audioKey(readableKey(key)));
-        Log.d(TAG, "addAudioToTempFile-- localFile = " + localFile);
 
         mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG,"addAudioToTempFile-- onSuccess");
-//                Log.d(TAG,"addAudioToTempFile-- databaseToAddTo = " + databaseToAddTo);
-                Log.d(TAG,"addAudioToTempFile-- localFile = " + localFile);
-                //TODO commented this out, might change things
-//                databaseToChange.child(key).setValue(addedPoi);
                 listenToDatabase();
-
-
             }
         }).addOnFailureListener(new OnFailureListener() {
             //Try wav?
             @Override
             public void onFailure(@NonNull Exception exception) {
-                Log.d(TAG,"addAudioToTempFile-- onFailure");
-                Log.d(TAG, "attempted to add " + audioKey(readableKey(key)) + " into local file " + localFile);
+                Log.d(TAG, "addAudioToFile--Failure: attempted to add key " + audioKey(readableKey(key)) + " into local file " + localFile);
             }
         });
     }
 
-    private void addImageToTempFile(final String key, final POI addedPOI, final String route) throws IOException {
+    private void addImageToFile(final String key, final String route) throws IOException {
+        StorageReference mImageRef = mStorageRef.child(readableKey(key));
 
         File directory = context.getFilesDir();
         final File localDirectory = new File(directory, language+"/"+route);
         localDirectory.mkdirs();
         final File localFile = new File(localDirectory, readableKey(key));
 
-        StorageReference mImageRef = mStorageRef.child(readableKey(key));
-
-//        Log.d(TAG, "addImageToTempFile-- mImageRef.getPath() = " + mImageRef.getPath());
-
-        //TODO there is a / here before the imageName child. It may not be there in the future and cause errors.
-        //For now we get rid of it
-//
-//        String slashlessKey = key.replace("/", "");
-//        slashlessKey = slashlessKey.replace("*", ".");
-//
-////        final File localFile = File.createTempFile(slashlessKey, "");
-        Log.d(TAG, "addImageToTempFile-- localFile = " + localFile);
-
         mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG, "addImageToTempFile-- onSuccess");
                 listenToDatabase();
             }
         }).addOnFailureListener(new OnFailureListener() {
-            //Try wav?
             @Override
             public void onFailure(@NonNull Exception exception) {
-                Log.d(TAG, "Exception " + exception);
-                Log.d(TAG,"addImageToTempFile-- onFailure");
-                Log.d(TAG, "attempted to add key " + readableKey(key) + " into local file " + localFile);
+                Log.d(TAG, "addAudioToFile--Failure: attempted to add key " + readableKey(key) + " into local file " + localFile);
             }
         });
 
         binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
-    private void addFillerAudioToTempFile(final String key, final POI addedPoi, final String route) throws IOException {
-
+    private void addFillerAudioToFile(final String key, final String route) throws IOException {
         StorageReference mAudioRef = mStorageRef.child("filler").child(audioKey(readableKey(key)));
 
         File directory = context.getFilesDir();
@@ -571,51 +420,38 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         localDirectory.mkdirs();
         final File localFile = new File(localDirectory, audioKey(readableKey(key)));
 
-        Log.d(TAG, "addFillerAudioToTempFile-- localFile = " + localFile);
-//        final File localFile = File.createTempFile(audioKey(readableKey(key)), "");
         mAudioRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG,"addFillerAudioToTempFile-- onSuccess");
                 listenToDatabase();
             }
         }).addOnFailureListener(new OnFailureListener() {
             //Try wav?
             @Override
             public void onFailure(@NonNull Exception exception) {
-                Log.d(TAG,"addFillerAudioToTempFile-- onFailure");
+//                Log.d(TAG,"addFillerAudioToFile-- onFailure");
                 Log.d(TAG, "failed for key" + localFile);
             }
         });
         binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
 
-    private void addFillerImageToTempFile(final String key, final POI addedPOI, final String route) throws IOException {
+    private void addFillerImageToFile(final String key, final String route) throws IOException {
         StorageReference mImageRef = mStorageRef.child("filler").child(readableKey(key));
-//        String slashlessKey = key.replace("/", "");
-//        slashlessKey = slashlessKey.replace("*", ".");
-
 
         File directory = context.getFilesDir();
         final File localDirectory = new File(directory, language+"/"+route+"/filler");
         localDirectory.mkdirs();
         final File localFile = new File(localDirectory, readableKey(key));
 
-//        File directory = context.getFilesDir();
-//        final File localFile = new File(directory, language+"/"+route+"/"+readableKey(key));
-        Log.d(TAG, "addFillerImageToTempFile-- localFile = " + localFile);
-//        final File localFile = File.createTempFile(slashlessKey, "");
         mImageRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                Log.d(TAG,"addFillerImageToTempFile-- onSuccess");
                 listenToDatabase();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
-                Log.d(TAG, "Exception " + exception);
-                Log.d(TAG,"addFillerImageToTempFile-- onFailure");
                 Log.d(TAG, "failed for key" + localFile);
             }
         });
@@ -625,9 +461,11 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
     public void scrollToPosition(int position) {
         Log.d(TAG, "position is " + position);
         binding.rvPreviewPois.smoothScrollToPosition(position);
-
         if (currentPoiArrayList==null) {
-            currentPoiArrayList=poiArrayListArrayList.get(0);
+            return;
+        }
+        if (currentPoiArrayList.size()<=position) {
+            return;
         }
 
         double latitude = Double.valueOf(currentPoiArrayList.get(position).latitude);
@@ -645,6 +483,15 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 
     }
 
+    public void scrollToCard(int position) {
+        Log.d(TAG, "position is " + position);
+        ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager()).scrollToPositionWithOffset(position, 0);
+//        binding.rvRecyclerViews.smoothScrollToPosition(position);
+        recyclerViewAdapter.selected = position;
+        recyclerViewAdapter.notifyDataSetChanged();
+//        changeFocus();
+    }
+
     public void changeRoute(String route, ArrayList<POI> poiArrayList) {
         currentPoiArrayList = poiArrayList;
         binding.rvPreviewPois.setAdapter(new POIAdapter(context, poiArrayList));
@@ -654,10 +501,10 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
     public void toggleMapImage(View view) {
         if (binding.rvPreviewPois.getVisibility()==View.VISIBLE) {
             binding.rvPreviewPois.setVisibility(View.INVISIBLE);
-            binding.toggleMapImage.setImageResource(R.drawable.map_image);
+            binding.toggleMapImage.setImageResource(R.drawable.mit);
         } else {
             binding.rvPreviewPois.setVisibility(View.VISIBLE);
-            binding.toggleMapImage.setImageResource(R.drawable.mit);
+            binding.toggleMapImage.setImageResource(R.drawable.map_image);
         }
     }
 
@@ -666,4 +513,40 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         Intent intent = new Intent(context, LoginActivity.class);
         startActivity(intent);
     }
+
+    public boolean checkDifferent(int position) {
+        if (position == recyclerViewAdapter.selected) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    public void changeFocus(int position) {
+        Log.d(TAG, "changeFocus");
+        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager());
+        int firstCompletelyVisibleItemPosition;
+        if (position >= 0) {
+            firstCompletelyVisibleItemPosition = position;
+            recyclerViewAdapter.selected = position;
+        } else {
+            firstCompletelyVisibleItemPosition= layoutManager.findFirstCompletelyVisibleItemPosition();
+        }
+        if (firstCompletelyVisibleItemPosition == -1 )
+//                || firstCompletelyVisibleItemPosition == recyclerViewAdapter.selected)
+        {
+            Log.d(TAG, "firstCompletelyVisibleItemPosition, recyclerViewAdapter.selected = " +
+                    firstCompletelyVisibleItemPosition + ", " +recyclerViewAdapter.selected);
+            return;
+        }
+        recyclerViewAdapter.selected = firstCompletelyVisibleItemPosition;
+        recyclerViewAdapter.notifyDataSetChanged();
+        Log.d(TAG, "current position = " + firstCompletelyVisibleItemPosition);
+//                Should have poi at 0 if hiding empty routes
+        Log.d(TAG, "current route = " + poiArrayListArrayList.get(firstCompletelyVisibleItemPosition).get(0).route);
+        changeRoute(poiArrayListArrayList.get(firstCompletelyVisibleItemPosition).get(0).route,
+                poiArrayListArrayList.get(firstCompletelyVisibleItemPosition)
+        );
+    }
+
 }

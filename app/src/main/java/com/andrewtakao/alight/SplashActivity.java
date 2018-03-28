@@ -8,11 +8,13 @@ import android.os.Bundle;
 import android.util.Log;
 
 import com.andrewtakao.alight.databinding.ActivityLoginBinding;
+import com.crashlytics.android.Crashlytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import io.fabric.sdk.android.Fabric;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -25,6 +27,7 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_splash);
         mAuth = FirebaseAuth.getInstance();
         database = Utils.getDatabase();

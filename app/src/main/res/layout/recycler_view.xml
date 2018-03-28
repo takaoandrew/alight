@@ -1,58 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     xmlns:style="http://schemas.android.com/apk/res-auto"
-    android:layout_marginTop="8dp"
-    android:background="@color/colorPrimary">
-
-    <ImageView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:gravity="end"
-        android:visibility="invisible"
-        android:layout_gravity="end"
-        android:src="@drawable/ic_file_download_white_24dp"
-        android:id="@+id/download_button"
-        android:adjustViewBounds="true"
-        android:scaleType="fitCenter"/>
+    android:background="@android:color/white"
+    android:layout_margin="8dp"
+    android:elevation="8dp">
 
     <TextView
         android:id="@+id/title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        style="@style/busRouteTextStyle"
-        style:layout_constraintLeft_toLeftOf="@id/rv_recycler_view"
-        style:layout_constraintRight_toRightOf="@id/rv_recycler_view"/>
-
-    <android.support.v7.widget.RecyclerView
-        android:visibility="gone"
-        android:id="@+id/rv_recycler_view"
-        style:layout_constraintTop_toBottomOf="@id/title"
+        android:background="@color/colorPrimaryDark"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-    </android.support.v7.widget.RecyclerView>
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        style="@style/busRouteTextStyle"/>
 
     <SeekBar
         android:id="@+id/sb_poi"
-        android:layout_width="200dp"
-        android:layout_height="40dp"
-        android:rotation="90"
-        android:background="@drawable/seekbar_poi_style"
-        android:thumb="@drawable/seekbar_poi_thumb_style"
-        style:layout_constraintTop_toBottomOf="parent"
-        style:layout_constraintBottom_toTopOf="parent"
-        style:layout_constraintRight_toRightOf="parent"
-        style:layout_constraintLeft_toLeftOf="parent"/>
-
-    <Button
-        android:id="@+id/choose_poi"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:thumb="@drawable/tilted_pin"
+        android:background="@drawable/seekbar_poi_style"
+        android:progressTint="@android:color/transparent"
+        android:splitTrack="false"
+        style:layout_constraintTop_toBottomOf="@id/title"/>
+
+    <ImageView
+        android:id="@+id/download_button"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:visibility="invisible"
+        android:src="@drawable/ic_file_download_black_24dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitCenter"
+        style:layout_constraintTop_toBottomOf="@id/sb_poi"
+        style:layout_constraintLeft_toLeftOf="parent"
+        style:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="20dp"
+        android:layout_marginStart="20dp"
+        />
+
+    <ImageView
+        android:id="@+id/choose_poi"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        style:layout_constraintTop_toBottomOf="@id/sb_poi"
         style:layout_constraintRight_toRightOf="parent"
         style:layout_constraintBottom_toBottomOf="parent"
-        android:layout_margin="8dp"
-        android:text="@string/choose_poi"
+        android:layout_marginBottom="20dp"
+        android:layout_marginEnd="20dp"
+        android:src="@drawable/go"
+        android:layout_marginTop="24dp"
         android:onClick="choosePoi"/>
 </android.support.constraint.ConstraintLayout>

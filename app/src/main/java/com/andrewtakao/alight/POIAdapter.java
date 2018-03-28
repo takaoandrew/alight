@@ -67,20 +67,20 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
         String route = poi.route;
         String key = poi.imageName;
         final String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language+"/"+route+"/"+readableKey(key);
-        Log.d(TAG, "addImage-- check fileexists for " + fileName);
+//        Log.d(TAG, "addImage-- check fileexists for " + fileName);
         if (poi == null || !fileExist(fileName)) {
             Log.d(TAG, "addImage-- failed for key = " + key);
             return;
         }
 
         holder.backgroundImage.setImageDrawable(null);
-        Log.d(TAG, "onBindViewHolder-- position, MainActivity.poiArrayList.get(position) = " + position + ", "
-        + fileName);
+//        Log.d(TAG, "onBindViewHolder-- position, MainActivity.poiArrayList.get(position) = " + position + ", "
+//        + fileName);
 
         if (fileName != null) {
-            Log.d(TAG, "onBindViewHolder-- fileName (localFile) is " + fileName);
-
-            Log.d(TAG, "onBindViewHolder-- Uri.parse(fileName) = " + Uri.parse(fileName));
+//            Log.d(TAG, "onBindViewHolder-- fileName (localFile) is " + fileName);
+//
+//            Log.d(TAG, "onBindViewHolder-- Uri.parse(fileName) = " + Uri.parse(fileName));
 
             Picasso.with(context).load(new File(fileName))
 //                    .placeholder(R.drawable.profile_wall_picture)
@@ -97,24 +97,6 @@ public class POIAdapter extends RecyclerView.Adapter<POIAdapter.POIViewHolder> {
 //        holder.locationView.setText(location);
 //        holder.imageNameView.setText(userFriendlyName(poi.imageName));
 
-    }
-
-    public void updateAdapter(ArrayList<POI> poiArrayList) {
-        Log.d(TAG, "updateAdapter");
-        ///TODO Order commented may ruin everything
-        //Remove order and hope for the best
-//        Collections.sort(poiArrayList, new Comparator<POI>() {
-//            @Override
-//            public int compare(POI poi, POI poi2) {
-//                if (poi.order>poi2.order) {
-//                    return 1;
-//                } else if (poi.order == poi2.order) {
-//                    return 0;
-//                }
-//                return -1;
-//            }
-//        });
-        this.poiArrayList = poiArrayList;
     }
 
     @Override
