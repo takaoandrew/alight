@@ -41,6 +41,20 @@ public class Utils {
         return key.replace(".jpg", ".mp3");
     }
 
+    public static String userFriendlyName(String name) {
+        if (name.indexOf("*") > 0) {
+            name = name.substring(0, name.indexOf("*"));
+        }
+        return name.replaceAll(
+                String.format("%s|%s|%s",
+                        "(?<=[A-Z])(?=[A-Z][a-z])",
+                        "(?<=[^A-Z])(?=[A-Z])",
+                        "(?<=[A-Za-z])(?=[^A-Za-z])"
+                ),
+                " "
+        );
+    }
+
 
 
 

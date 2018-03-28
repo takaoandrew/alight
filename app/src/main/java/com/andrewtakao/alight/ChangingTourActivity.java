@@ -4,14 +4,10 @@ import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
-import android.arch.persistence.room.Room;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
-import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -24,20 +20,14 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.PersistableBundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.Animation;
-import android.view.animation.AnimationUtils;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.RotateAnimation;
-import android.widget.SeekBar;
 import android.widget.Toast;
 
 import com.andrewtakao.alight.databinding.ActivityChangingTourBinding;
@@ -56,22 +46,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 
+import static com.andrewtakao.alight.Utils.audioKey;
+import static com.andrewtakao.alight.Utils.readableKey;
+import static com.andrewtakao.alight.Utils.userFriendlyName;
+
 public class ChangingTourActivity extends AppCompatActivity implements SensorEventListener{
 
-    public static HashMap<String, POI> mPOIHashMap;
-    public static HashMap<String, POI> mFillerPOIHashMap;
+    //Context
+    private Context context;
+
+    private FirebaseAuth mAuth;
+    private FirebaseUser user;
+    private ActivityChangingTourBinding binding;
     public static DatabaseReference mDatabaseRef;
 
-    FirebaseAuth mAuth;
-    FirebaseUser user;
-
-    private ActivityChangingTourBinding binding;
     private static String busRoute;
     private final String TAG = ChangingTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
-    public static String currentKey;
     public static ArrayList<String> currentKeys;
+    public static String currentKey;
     public static String displayedKey;
+    public static HashMap<String, POI> mPOIHashMap;
+    public static HashMap<String, POI> mFillerPOIHashMap;
+    public static ArrayList<POI> poiHistory;
+
 
     //GPS
     public static Context mContext;
@@ -104,26 +102,21 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     double poiLatitude;;
     double poiLongitude;
 
-    //Context
-    private Context context;
-
     //Animation
     ObjectAnimator scaleDown;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-
         Log.d(TAG, "onCreate");
+        super.onCreate(savedInstanceState);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        context = getApplicationContext();
+        binding = DataBindingUtil.setContentView(this, R.layout.activity_changing_tour);
 
         //Get bus route
         Intent intent = getIntent();
         busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
         Log.d(TAG, "onCreate-- Bus route = " + busRoute);
-
-        super.onCreate(savedInstanceState);
-        binding = DataBindingUtil.setContentView(this, R.layout.activity_changing_tour);
-        context = getApplicationContext();
 
         mAuth = FirebaseAuth.getInstance();
         user = mAuth.getCurrentUser();
@@ -131,45 +124,20 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             Toast.makeText(this, "Error- no user!", Toast.LENGTH_LONG).show();
         }
 
-
-        Toolbar tb = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(tb);
-
-//        // Get the ActionBar here to configure the way it behaves.
-        final ActionBar ab = getSupportActionBar();
-//        ab.setHomeAsUpIndicator(R.drawable.ic_menu); // set a custom icon for the default home button
-        ab.setDisplayShowHomeEnabled(false); // show or hide the default home button
-        ab.setDisplayHomeAsUpEnabled(false);
-        ab.setDisplayShowCustomEnabled(true); // enable overriding the default toolbar layout
-        ab.setDisplayShowTitleEnabled(false); // disable the default title element here (for centered title)
-
         //Initialize
         mContext = this;
         currentKey = "";
         currentKeys = new ArrayList<>();
         mPOIHashMap = new HashMap<>();
         mFillerPOIHashMap = new HashMap<>();
-
-        binding.nextPoi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (binding.glowView.getVisibility()==View.INVISIBLE) {
-                    return;
-                }
-                pauseMusic(null);
-                if (mMediaPlayer!=null) {
-                    mMediaPlayer.seekTo(mMediaPlayer.getDuration());
-                }
-                getLastLocation();
-            }
-        });
+        poiHistory = new ArrayList<>();
 
         //Language
         if (RoutePreviewActivity.language.equals("Chinese")) {
-            binding.nextPoi.setText(R.string.nearby_ch);
+            binding.nearby.setText(R.string.nearby_ch);
             binding.playFiller.setText(R.string.skip_ch);
         } else {
-            binding.nextPoi.setText(R.string.nearby);
+            binding.nearby.setText(R.string.nearby);
             binding.playFiller.setText(R.string.skip);
         }
 
@@ -276,21 +244,14 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
         //TODO toggle this to enable location
 //        checkPermission();
-//
 //        startGlowing();
-
-//Compass
-        mCustomDrawableView = new CustomDrawableView(this);
-//        setContentView(mCustomDrawableView);
 
         //Only have to do this once
         binding.changingTourBackgroundImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
                 showMediaButtons();
                 //Make unclickable
-                binding.changingTourBackgroundImage.setClickable(false);
                 if (handler != null && runnable != null) {
                     handler.removeCallbacks(runnable);
                 }
@@ -298,7 +259,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                     @Override
                     public void run() {
                         hideMediaButtons();
-                        binding.changingTourBackgroundImage.setClickable(true);
                     }
                 };
                 handler = new Handler();
@@ -306,13 +266,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             }
         });
 
-        endTourGlow();
+//        endTourGlow();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
         //Compass
         mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
         mSensorManager.registerListener(this, magnetometer, SensorManager.SENSOR_DELAY_UI);
@@ -343,14 +302,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     protected void onPause() {
         super.onPause();
         Log.d(TAG, "onPause");
-//        if (locationManager != null) {
-//            locationManager.removeUpdates(locationListener);
-//        }
         if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
             pauseMusic(null);
         }
-//        mImagesDatabaseRef.removeEventListener(mImagesListener);
-
         //Compass
         mSensorManager.unregisterListener(this);
     }
@@ -379,36 +333,16 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
     }
 
-    public class CustomDrawableView extends View {
-        Paint paint = new Paint();
-        public CustomDrawableView(Context context) {
-            super(context);
-            paint.setColor(0xff00ff00);
-            paint.setStyle(Paint.Style.STROKE);
-            paint.setStrokeWidth(2);
-            paint.setAntiAlias(true);
-        };
-
-        protected void onDraw(Canvas canvas) {
-            int width = getWidth();
-            int height = getHeight();
-            int centerx = width/2;
-            int centery = height/2;
-            canvas.drawLine(centerx, 0, centerx, height, paint);
-            canvas.drawLine(0, centery, width, centery, paint);
-            // Rotate the canvas with the azimut
-            if (azimuth != null)
-                canvas.rotate(-azimuth*360/(2*3.14159f), centerx, centery);
-            paint.setColor(0xff0000ff);
-            canvas.drawLine(centerx, -1000, centerx, +1000, paint);
-            canvas.drawLine(-1000, centery, 1000, centery, paint);
-            canvas.drawText("N", centerx+5, centery-10, paint);
-            canvas.drawText("S", centerx-10, centery+15, paint);
-            paint.setColor(0xff00ff00);
+    public void nearby(View view) {
+        if (binding.glowView.getVisibility()==View.INVISIBLE) {
+            return;
         }
+        pauseMusic(null);
+        if (mMediaPlayer!=null) {
+            mMediaPlayer.seekTo(mMediaPlayer.getDuration());
+        }
+        getLastLocation();
     }
-
-    CustomDrawableView mCustomDrawableView;
 
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
@@ -436,7 +370,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 binding.arrow.startAnimation(rotateAnimation);
             }
         }
-//        mCustomDrawableView.invalic_filter_list_white_24dp.pngidate();
     }
 
     @Override
@@ -445,12 +378,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     private void startGlowing() {
         binding.glowView.setVisibility(View.VISIBLE);
-        binding.nextPoi.setVisibility(View.VISIBLE);
+        binding.nearby.setVisibility(View.VISIBLE);
     }
 
     private void stopGlowing() {
         binding.glowView.setVisibility(View.INVISIBLE);
-        binding.nextPoi.setVisibility(View.INVISIBLE);
+        binding.nearby.setVisibility(View.INVISIBLE);
     }
 
     private void addFillerImage(String key) {
@@ -477,9 +410,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         Picasso.with(mContext).load(new File(fileName))
                 .resize(binding.changingTourBackgroundImage.getWidth(), binding.changingTourBackgroundImage.getHeight())
                 .into(binding.changingTourBackgroundImage);
-
-//        binding.arrow.setImageResource(R.drawable.ic_launcher_alight);
-//        binding.arrow.setVisibility(View.INVISIBLE);
     }
     
     private void addImage(String key, String route) {
@@ -634,9 +564,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        Log.d(TAG, "makeUseOfNewLocation");
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        String latitude = String.valueOf(location.getLatitude());
-        String longitude = String.valueOf(location.getLongitude());
-
 //        double minDistance = 1000;
 //        Choosing this as minDistance will show closest POI, as opposed to the closest POI within 1000m
         double minDistance = 100000;
@@ -644,17 +571,17 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         ArrayList<POI> closestPOIs = new ArrayList<>();
         for (POI POI : mPOIHashMap.values()) {
             Log.d(TAG, "POI.imageName = " + POI.imageName);
-            if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
+            if (POI.distanceFrom(latitude, longitude) < minDistance) {
 //            if (POI.distanceFromBucket(Double.parseDouble(latitude), Double.parseDouble(longitude)) < minDistance) {
                 Log.d(TAG, "New minimum!");
-                minDistance = POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude));
+                minDistance = POI.distanceFrom(latitude, longitude);
 //                minDistance = POI.distanceFromBucket(Double.parseDouble(latitude), Double.parseDouble(longitude));
                 closestPOIs = new ArrayList<>();
                 closestPOI = POI;
                 closestPOIs.add(closestPOI);
             }
 //            else if (POI.distanceFromBucket(Double.parseDouble(latitude), Double.parseDouble(longitude)) == minDistance) {
-            else if (POI.distanceFrom(Double.parseDouble(latitude), Double.parseDouble(longitude)) == minDistance) {
+            else if (POI.distanceFrom(latitude, longitude) == minDistance) {
                 Log.d(TAG, "Adding to bucket!");
                 closestPOI = POI;
                 closestPOIs.add(closestPOI);
@@ -667,23 +594,16 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         poiLatitude = Double.valueOf(closestPOI.latitude);
         poiLongitude = Double.valueOf(closestPOI.longitude);
         binding.directionToolbar.setText((int) minDistance+"m");
-//        Log.d(TAG, "and here");
         if (closestPOI.imageName == null) {
             Log.d(TAG, "closestPOI.imagename is null");
             return;
         }
-//        Log.d(TAG, "finally here");
-
         if (currentKey.equals(closestPOI.imageName)) {
-//            Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
             Log.d(TAG, "makeUseOfNewLocation-- closestPoi.imageName = " + closestPOI .imageName);
             if (currentKey==null || currentKey.equals("")) {
                 Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
                 return;
             }
-
-            //TODO check if button is glowing
-
             else if (binding.glowView.getVisibility()==View.VISIBLE) {
                 if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
                     Log.d(TAG, "makeUseOfNewLocation-- waiting for mediaplayer to stop");
@@ -697,9 +617,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                             " and duration = " + mMediaPlayer.getDuration());
                 }
             }
-            //For debugging purposes. Otherwise, comment this out.
-//            addImage(currentKey);
-            //Do nothing
         } else {
             Log.d(TAG,"minDistance = "+ minDistance);
             Log.d(TAG, "closestPOI.imageName = " + closestPOI.imageName);
@@ -708,13 +625,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 Log.d(TAG, "makeUseOfNewLocation-- currentKey = " + currentKey);
                 return;
             }
-
             //Will always be visible
             //TODO check if button is not glowing, then make it glow
             if (binding.glowView.getVisibility()==View.INVISIBLE) {
-                //Don't need this if it's an image
-//                binding.nextPoi.setText("Next: " + userFriendlyName(closestPOI.imageName));
-//                binding.nextPoi.setVisibility(View.VISIBLE);
                 startGlowing();
             }
 
@@ -725,15 +638,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             else {
                 nextPOI();
             }
-
-
-            //DEBUG ONLY
-//                binding.closestPoi.setText(closestPOI.imageName);
-
         }
-        //DEBUG ONLY
-//            binding.location.setText(currentLocation);
-
     }
 
     private void nextPOI() {
@@ -826,22 +731,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
 
-    private String userFriendlyName(String name) {
-        if (name.indexOf("*") > 0) {
-
-            name = name.substring(0, name.indexOf("*"));
-
-        }
-        return name.replaceAll(
-                String.format("%s|%s|%s",
-                        "(?<=[A-Z])(?=[A-Z][a-z])",
-                        "(?<=[^A-Z])(?=[A-Z])",
-                        "(?<=[A-Za-z])(?=[^A-Za-z])"
-                ),
-                " "
-        );
-    }
-
     private double angleFromCoordinate(double lat1, double long1, double lat2,
                                        double long2) {
 
@@ -908,33 +797,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
     }
 
-    public void forwardMusic(View v) {
-        if (mMediaPlayer!=null) {
-            int position = mMediaPlayer.getCurrentPosition();
-            mMediaPlayer.seekTo(position + mSkipTime);
-        }
-    }
-
-
-    public void updateBar() {
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-                try { while (!isInterrupted()) {
-                    Thread.sleep(mBarUpdateInterval);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (mMediaPlayer!=null) {
-                                binding.sbSong.setProgress(mMediaPlayer.getCurrentPosition());
-                            }
-                        }
-                    }); }
-                } catch (InterruptedException e) { } }
-        };
-        t.start();
-    }
-
     public void setMediaPlayer(Object object) throws IOException {
         mMediaPlayer = new MediaPlayer();
         mMetaRetriever = new MediaMetadataRetriever();
@@ -948,71 +810,21 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         else {
             Log.d(TAG, "What's the instanceof");
         }
-
         mMediaPlayer.prepare();
-
         mDuration = Integer.parseInt(mMetaRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION));
-//            mStartStopButton.setVisibility(View.VISIBLE);
-//            mStopButton.setVisibility(View.VISIBLE);
-//        binding.sbSong.setVisibility(View.VISIBLE);
-        binding.sbSong.setMax(mDuration);
-        binding.tvDuration.setText(convertToMinutesAndSeconds(mDuration));
-
-        binding.sbSong.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                binding.tvTime.setText(convertToMinutesAndSeconds(i));
-            }
-
-            @Override
-            public void onStartTrackingTouch(SeekBar seekBar) {
-//                pauseMusic(null);
-            }
-
-            @Override
-            public void onStopTrackingTouch(SeekBar seekBar) {
-                mMediaPlayer.seekTo(seekBar.getProgress());
-//                startMusic(null);
-            }
-        });
-
-        updateBar();
         startMusic(null);
     }
 
-    public static String convertToMinutesAndSeconds(int milliseconds) {
-        int seconds = milliseconds/1000;
-        int minutes = seconds/60;
-        int leftOverSeconds = seconds - minutes*60;
-        String colon = ":";
-        if (leftOverSeconds<10) {
-            colon = ":0";
-        }
-        String returnString = (minutes+colon+leftOverSeconds);
-        return returnString;
-
-    }
-
     public void showMediaButtons() {
-        binding.tvTime.setVisibility(View.VISIBLE);
         binding.ibStart.setVisibility(View.VISIBLE);
-        binding.ibForward.setVisibility(View.VISIBLE);
         binding.ibRewind.setVisibility(View.VISIBLE);
-        binding.tvDuration.setVisibility(View.VISIBLE);
-        binding.sbSong.setVisibility(View.VISIBLE);
         binding.ibLike.setVisibility(View.VISIBLE);
-        binding.ibDislike.setVisibility(View.VISIBLE);
     }
 
     public void hideMediaButtons() {
-        binding.tvTime.setVisibility(View.GONE);
         binding.ibStart.setVisibility(View.GONE);
-        binding.ibForward.setVisibility(View.GONE);
         binding.ibRewind.setVisibility(View.GONE);
-        binding.tvDuration.setVisibility(View.GONE);
-        binding.sbSong.setVisibility(View.GONE);
         binding.ibLike.setVisibility(View.GONE);
-        binding.ibDislike.setVisibility(View.GONE);
     }
 
 
@@ -1037,19 +849,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
             scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
         }
-
         scaleDown.start();
-    }
-
-
-    private String readableKey(String key) {
-        return key.replace("*", ".");
-    }
-    private String audioKey(String key) {
-        key = key.replace(".jpeg", ".mp3");
-        key = key.replace(".png", ".mp3");
-        key = key.replace(".JPG", ".mp3");
-        key = key.replace(".PNG", ".mp3");
-        return key.replace(".jpg", ".mp3");
     }
 }

@@ -8,15 +8,6 @@
         android:orientation="vertical"
         tools:context="com.andrewtakao.alight.ChangingTourActivity">
 
-        <!--<android.support.v7.widget.Toolbar-->
-            <!--android:id="@+id/my_toolbar"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="?attr/actionBarSize"-->
-            <!--android:background="?attr/colorPrimary"-->
-            <!--android:elevation="4dp"-->
-            <!--android:theme="@style/ThemeOverlay.AppCompat.ActionBar"-->
-            <!--app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>-->
-
         <android.support.v7.widget.Toolbar
             xmlns:android="http://schemas.android.com/apk/res/android"
             xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -80,39 +71,45 @@
             tools:layout_editor_absoluteX="55dp"
             tools:layout_editor_absoluteY="0dp"></ImageButton>
 
-        <TextView
-            android:id="@+id/tv_time"
-            tools:text="0:01"
-            android:gravity="center"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="10dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/sb_song"
-            app:layout_constraintBottom_toTopOf="@id/ib_forward"/>
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:background="@color/colorPrimary"
+            android:alpha=".5"
+            app:layout_constraintTop_toTopOf="@id/ib_like"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
 
-        <SeekBar
-            android:id="@+id/sb_song"
+        <ImageView
+            android:id="@+id/ib_rewind"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toTopOf="@+id/tv_time"
-            app:layout_constraintTop_toBottomOf="@id/tv_time"
-            app:layout_constraintEnd_toStartOf="@id/tv_duration"
-            app:layout_constraintStart_toEndOf="@id/tv_time"/>
+            android:layout_height="0dp"
+            android:layout_marginEnd="22dp"
+            android:layout_marginStart="22dp"
+            android:padding="10dp"
+            android:onClick="rewindMusic"
+            android:src="@drawable/back"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toStartOf="@id/ib_start"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toBottomOf="@id/ib_like"
+            app:layout_constraintTop_toTopOf="@id/ib_like"/>
 
-        <TextView
-            android:id="@+id/tv_duration"
-            tools:text="3:31"
-            android:gravity="center"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginEnd="10dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/sb_song"
-            app:layout_constraintBottom_toBottomOf="@id/tv_time"/>
+        <ImageView
+            android:id="@+id/ib_start"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginEnd="50dp"
+            android:layout_marginStart="50dp"
+            android:src="@drawable/play"
+            android:padding="5dp"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintStart_toEndOf="@+id/ib_rewind"
+            app:layout_constraintEnd_toStartOf="@id/ib_like"
+            app:layout_constraintTop_toTopOf="@+id/ib_like"
+            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
 
-        <ImageButton
+        <ImageView
             android:id="@+id/ib_like"
             android:layout_width="0dp"
             android:layout_height="0dp"
@@ -122,102 +119,11 @@
             android:layout_marginTop="16dp"
             android:onClick="like"
             android:src="@drawable/ic_thumb_up_black_24dp"
+            android:padding="10dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintEnd_toStartOf="@id/ib_rewind"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <ImageButton
-            android:id="@+id/ib_rewind"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginEnd="22dp"
-            android:layout_marginStart="22dp"
-            android:onClick="rewindMusic"
-            android:src="@drawable/back"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintEnd_toStartOf="@id/ib_start"
-            app:layout_constraintStart_toEndOf="@id/ib_like"
-            app:layout_constraintBottom_toBottomOf="@id/ib_like"
-            app:layout_constraintTop_toTopOf="@id/ib_like"/>
-
-        <ImageButton
-            android:id="@+id/ib_start"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginEnd="22dp"
-            android:layout_marginStart="22dp"
-            android:onClick="startAudio"
-            android:src="@drawable/play"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintStart_toEndOf="@+id/ib_rewind"
-            app:layout_constraintEnd_toStartOf="@id/ib_forward"
-            app:layout_constraintTop_toTopOf="@+id/ib_like"
-            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
-
-        <ImageButton
-            android:id="@+id/ib_forward"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginEnd="22dp"
-            android:layout_marginStart="22dp"
-            android:onClick="forwardMusic"
-            android:src="@drawable/forward"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintStart_toEndOf="@+id/ib_start"
-            app:layout_constraintEnd_toStartOf="@id/ib_dislike"
-            app:layout_constraintTop_toTopOf="@+id/ib_like"
-            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
-
-        <ImageButton
-            android:id="@+id/ib_dislike"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginEnd="22dp"
-            android:layout_marginStart="22dp"
-            android:onClick="dislike"
-            android:src="@drawable/ic_thumb_down_black_24dp"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintStart_toEndOf="@+id/ib_forward"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/ib_like"
-            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
-            android:textSize="24sp"
-            android:id="@+id/location"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@android:color/black"
-            android:textSize="24sp"
-            app:layout_constraintTop_toBottomOf="@id/location"
-            android:id="@+id/closest_poi"/>
-
-        <!--<Button-->
-            <!--android:id="@+id/get_location"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--app:layout_constraintBottom_toBottomOf="parent"-->
-            <!--app:layout_constraintLeft_toLeftOf="parent"-->
-            <!--android:text="Get Location"-->
-            <!--android:onClick="getLocation"-->
-            <!--android:layout_margin="12dp"/>-->
-
-        <!--<Button-->
-            <!--android:id="@+id/play_audio"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--app:layout_constraintBottom_toBottomOf="parent"-->
-            <!--app:layout_constraintRight_toRightOf="parent"-->
-            <!--android:text="Play Audio"-->
-            <!--android:onClick="playAudio"-->
-            <!--android:layout_margin="12dp"-->
-            <!--android:visibility="gone"/>-->
+            app:layout_constraintStart_toEndOf="@id/ib_start"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <View
             android:id="@+id/glow_view"
@@ -227,13 +133,13 @@
             android:background="@color/colorAccent"
             android:visibility="invisible"
             android:alpha=".003"
-            app:layout_constraintBottom_toBottomOf="@+id/next_poi"
-            app:layout_constraintEnd_toEndOf="@+id/next_poi"
-            app:layout_constraintStart_toStartOf="@+id/next_poi"
-            app:layout_constraintTop_toTopOf="@+id/next_poi" />
+            app:layout_constraintBottom_toBottomOf="@id/nearby"
+            app:layout_constraintEnd_toEndOf="@id/nearby"
+            app:layout_constraintStart_toStartOf="@id/nearby"
+            app:layout_constraintTop_toTopOf="@id/nearby" />
 
         <Button
-            android:id="@+id/next_poi"
+            android:id="@+id/nearby"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
@@ -243,8 +149,9 @@
             android:backgroundTint="@color/colorPrimary"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_launcher_alight"
-            android:text="NEARBY"
+            android:text="@string/nearby"
             android:textColor="#ffffff"
+            android:onClick="nearby"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
