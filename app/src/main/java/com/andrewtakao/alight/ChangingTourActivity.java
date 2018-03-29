@@ -68,7 +68,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public static HashMap<String, POI> mFillerPOIHashMap;
     public static ArrayList<POI> poiHistory;
 //    private final double mMinDistance = 5750.22644;
-    private final double mMinDistance = 20;
+    private final double mMinDistance = 50;
     private int previouslyFirstCompletelyVisibleItemPosition = -1;
 
     //GPS
@@ -408,6 +408,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         Log.d(TAG, "checkSwipedToLast");
         LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
         int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+        if (firstCompletelyVisibleItemPosition < poiHistory.size()-2 && firstCompletelyVisibleItemPosition!=-1) {
+            Log.d(TAG, "checkSwipedToLast-- newer poi available");
+            binding.btCurrentPoi.setVisibility(View.VISIBLE);
+        } else {
+            binding.btCurrentPoi.setVisibility(View.GONE);
+        }
         if (firstCompletelyVisibleItemPosition == previouslyFirstCompletelyVisibleItemPosition) {
             Log.d(TAG, "checkSwipedToLast-- wasn't changed to a new POI");
             return;
