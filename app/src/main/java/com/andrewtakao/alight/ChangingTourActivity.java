@@ -67,8 +67,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public static HashMap<String, POI> mPOIHashMap;
     public static HashMap<String, POI> mFillerPOIHashMap;
     public static ArrayList<POI> poiHistory;
-    private boolean completed;
-    private final double mMinDistance = 5750.22644;
+//    private final double mMinDistance = 5750.22644;
+    private final double mMinDistance = 20;
     private int previouslyFirstCompletelyVisibleItemPosition = -1;
 
     //GPS
@@ -109,7 +109,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         context = getApplicationContext();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_changing_tour);
-        completed = false;
 
         //Get bus route
         Intent intent = getIntent();
@@ -326,46 +325,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     }
 
-    private void addAudio(String key, String route) {
-        Log.d(TAG, "addAudio-- Bus route = " + route);
-        String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language
-                +"/"+route+"/"+audioKey(readableKey(key));
-        POI poi = mPOIHashMap.get(key);
-        if (poi == null) {
-            Log.d(TAG, "addAudio-- poi == null");
-            return;
-        }
-        if (mMediaPlayer!=null) {
-            if (mMediaPlayer.isPlaying()) {
-                mMediaPlayer.stop();
-            }
-        }
-        mMediaPlayer = MediaPlayer.create(context, Uri.parse(fileName));
-        try {
-            setMediaPlayer(Uri.parse(fileName));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        startMusic(null);
-    }
-
-    public void playFiller(View view) {
-        Random rand = new Random();
-        if (mFillerPOIHashMap.size()==0) {
-            Toast.makeText(context, "No filler content", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        int n = rand.nextInt(mFillerPOIHashMap.size());
-        int count = 0;
-        for (POI poi : mFillerPOIHashMap.values()) {
-            if (count == n) {
-//                currentKey = poi.imageName;
-                nextFillerPOI();
-                break;
-            }
-            count += 1;
-        }
-    }
 
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
@@ -489,6 +448,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void replacePOIOnDeck() {
+        if (poiHistory.size()==0) {
+            Log.d(TAG, "replacePOIOnDeck-- Nothing to replace");
+            return;
+        }
         POI poiOnDeck = poiHistory.get(poiHistory.size()-1);
         double minDistance = mMinDistance;
         POI closestPoi = new POI();
@@ -537,10 +500,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         Log.d(TAG, "makeUseOfNewLocation");
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        if (!completed) {
+        if (poiHistory.size()==0) {
             Log.d(TAG, "run me once!");
             addFirstPOI();
-            completed = true;
         } else {
             replacePOIOnDeck();
             //If poiOnDeck is no longer the closest, or of it's filler... replace it
@@ -591,18 +553,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         mAdapter.notifyDataSetChanged();
     }
 
-    private void nextPOI() {
-        Log.d(TAG, "nextPOI");
-//        addImage(currentKey, busRoute);
-//        addAudio(currentKey, busRoute);
-//        binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
-    }
-
-    private void nextFillerPOI() {
-        Log.d(TAG, "nextFillerPOI");
-//        addFillerImage(currentKey);
-//        addFillerAudio(currentKey);
-//        binding.closestPoiToolbar.setText(userFriendlyName(currentKey));
+    public void currentPOI(View view) {
+        if (poiHistory.size()>1) {
+            binding.rvTourPois.smoothScrollToPosition(poiHistory.size()-2);
+        }
     }
 
     // Checks if user has enabled permission. If they have, get the last location.

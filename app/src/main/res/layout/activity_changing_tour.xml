@@ -6,16 +6,35 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:background="@color/colorPrimary"
         tools:context="com.andrewtakao.alight.ChangingTourActivity">
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/rv_tour_pois"
-            android:background="@android:color/black"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
-        </android.support.v7.widget.RecyclerView>
 
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitXY"
+                android:src="@drawable/finding_location"/>
+            <android.support.v7.widget.RecyclerView
+                android:id="@+id/rv_tour_pois"
+                android:background="@android:color/transparent"
+                android:src="@drawable/finding_location"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            </android.support.v7.widget.RecyclerView>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="right|top"
+                android:layout_margin="20dp"
+                android:text="Current"
+                android:onClick="currentPOI"/>
+
+        </FrameLayout>
         <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -24,7 +43,7 @@
                 android:layout_height="0dp"
                 android:background="@color/colorPrimary"
                 android:alpha=".5"
-                app:layout_constraintTop_toTopOf="@id/ib_like"
+                app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 />
 
