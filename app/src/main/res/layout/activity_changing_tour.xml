@@ -8,183 +8,82 @@
         android:orientation="vertical"
         tools:context="com.andrewtakao.alight.ChangingTourActivity">
 
-        <android.support.v7.widget.Toolbar
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:app="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/toolbar"
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/rv_tour_pois"
+            android:background="@android:color/black"
             android:layout_width="match_parent"
-            android:layout_height="72dp"
-            android:background="?attr/colorPrimary">
-            <FrameLayout
+            android:layout_height="0dp"
+            android:layout_weight="1">
+        </android.support.v7.widget.RecyclerView>
+
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="0dp"
+                android:background="@color/colorPrimary"
+                android:alpha=".5"
+                app:layout_constraintTop_toTopOf="@id/ib_like"
+                app:layout_constraintBottom_toBottomOf="parent"
+                />
 
-                <TextView
-                    android:id="@+id/toolbar_title"
-                    android:orientation="horizontal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="fill_parent"
-                    android:layout_marginRight="?attr/actionBarSize"
-                    android:layout_gravity="center"
-                    android:gravity="center_vertical"
-                    android:visibility="gone"
-                    android:text="@string/app_name"
-                    android:textColor="@android:color/white"
-                    style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title.Inverse"
-                    />
+            <ImageView
+                android:id="@+id/ib_rewind"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginEnd="22dp"
+                android:layout_marginStart="22dp"
+                android:padding="10dp"
+                android:onClick="rewindMusic"
+                android:src="@drawable/back"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintEnd_toStartOf="@id/ib_start"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/ib_like"
+                app:layout_constraintTop_toTopOf="@id/ib_like"/>
 
-                <TextView
-                    android:id="@+id/closest_poi_toolbar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    style="@style/poiTextStyle"
-                    android:layout_gravity="center_horizontal|top"/>
+            <ImageView
+                android:id="@+id/ib_start"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginEnd="50dp"
+                android:layout_marginStart="50dp"
+                android:src="@drawable/play"
+                android:padding="5dp"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintStart_toEndOf="@+id/ib_rewind"
+                app:layout_constraintEnd_toStartOf="@id/ib_like"
+                app:layout_constraintTop_toTopOf="@+id/ib_like"
+                app:layout_constraintBottom_toBottomOf="@id/ib_like" />
 
-                <TextView
-                    android:id="@+id/direction_toolbar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
-                    android:gravity="bottom"
-                    android:paddingBottom="4dp"
-                    android:layout_gravity="center_horizontal|bottom"/>
+            <ImageView
+                android:id="@+id/ib_like"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginBottom="8dp"
+                android:layout_marginEnd="22dp"
+                android:layout_marginStart="22dp"
+                android:layout_marginTop="16dp"
+                android:onClick="like"
+                android:src="@drawable/ic_thumb_up_black_24dp"
+                android:padding="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintDimensionRatio="1:1"
+                app:layout_constraintStart_toEndOf="@id/ib_start"
+                app:layout_constraintEnd_toEndOf="parent" />
 
-                <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginRight="20dp"
-                    android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
-                    android:id="@+id/arrow"/>
-
-            </FrameLayout>
-        </android.support.v7.widget.Toolbar>
-
-    <android.support.constraint.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ImageButton
-            android:id="@+id/changing_tour_background_image"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            tools:layout_editor_absoluteX="55dp"
-            tools:layout_editor_absoluteY="0dp"></ImageButton>
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:background="@color/colorPrimary"
-            android:alpha=".5"
-            app:layout_constraintTop_toTopOf="@id/ib_like"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-
-        <ImageView
-            android:id="@+id/ib_rewind"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginEnd="22dp"
-            android:layout_marginStart="22dp"
-            android:padding="10dp"
-            android:onClick="rewindMusic"
-            android:src="@drawable/back"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintEnd_toStartOf="@id/ib_start"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintBottom_toBottomOf="@id/ib_like"
-            app:layout_constraintTop_toTopOf="@id/ib_like"/>
-
-        <ImageView
-            android:id="@+id/ib_start"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginEnd="50dp"
-            android:layout_marginStart="50dp"
-            android:src="@drawable/play"
-            android:padding="5dp"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintStart_toEndOf="@+id/ib_rewind"
-            app:layout_constraintEnd_toStartOf="@id/ib_like"
-            app:layout_constraintTop_toTopOf="@+id/ib_like"
-            app:layout_constraintBottom_toBottomOf="@id/ib_like" />
-
-        <ImageView
-            android:id="@+id/ib_like"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="22dp"
-            android:layout_marginStart="22dp"
-            android:layout_marginTop="16dp"
-            android:onClick="like"
-            android:src="@drawable/ic_thumb_up_black_24dp"
-            android:padding="10dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintDimensionRatio="1:1"
-            app:layout_constraintStart_toEndOf="@id/ib_start"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <View
-            android:id="@+id/glow_view"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_margin="-10dp"
-            android:background="@color/colorAccent"
-            android:visibility="invisible"
-            android:alpha=".003"
-            app:layout_constraintBottom_toBottomOf="@id/nearby"
-            app:layout_constraintEnd_toEndOf="@id/nearby"
-            app:layout_constraintStart_toStartOf="@id/nearby"
-            app:layout_constraintTop_toTopOf="@id/nearby" />
-
-        <Button
-            android:id="@+id/nearby"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="20dp"
-            android:padding="10dp"
-            android:adjustViewBounds="true"
-            android:background="@drawable/rounded_corner_button"
-            android:backgroundTint="@color/colorPrimary"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_launcher_alight"
-            android:text="@string/nearby"
-            android:textColor="#ffffff"
-            android:onClick="nearby"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <Button
-            android:id="@+id/play_filler"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="20dp"
-            android:layout_marginEnd="148dp"
-            android:layout_marginTop="16dp"
-            android:background="@drawable/rounded_corner_button"
-            android:backgroundTint="@color/colorPrimary"
-            android:onClick="playFiller"
-            android:text="SKIP"
-            android:textColor="#ffffff"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <ImageView
-            android:id="@+id/alight"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:src="@drawable/ic_launcher_alight"
-            android:onClick="endTour"
-            android:layout_marginTop="30dp"
-            android:visibility="invisible"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
-
-
-    </android.support.constraint.ConstraintLayout>
-
+            <ImageView
+                android:id="@+id/alight"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:src="@drawable/ic_launcher_alight"
+                android:onClick="endTour"
+                android:layout_marginTop="30dp"
+                android:visibility="invisible"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"/>
+        </android.support.constraint.ConstraintLayout>
     </LinearLayout>
-
 </layout>
