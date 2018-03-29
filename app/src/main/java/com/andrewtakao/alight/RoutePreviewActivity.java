@@ -120,9 +120,9 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             @Override
             public void onChildAdded(DataSnapshot routeSnapshot, String s) {
                 //HIDE all but mit
-//                if (!routeSnapshot.getKey().equals("mit")) {
-//                    return;
-//                }
+                if (!routeSnapshot.getKey().equals("mit")) {
+                    return;
+                }
                 Log.d(TAG, "routesRefListener onChildAdded--");
                 childCount = 0;
                 downloadedCount = 0;

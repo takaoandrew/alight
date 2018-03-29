@@ -703,7 +703,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             mDatabaseRef.child(poi.index).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
         } else {
             if (poi.index == null) {
-                Toast.makeText(context, "poi.index is null!", Toast.LENGTH_LONG).show();
+                Toast.makeText(context, "Not set up to be liked, update database", Toast.LENGTH_LONG).show();
+                return;
             }
 //        if (poi.coordinates.equals("0,0"))
             mDatabaseRef.child(poi.index).child(poi.coordinates).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
@@ -803,6 +804,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
         if (object instanceof Uri) {
             Log.d(TAG, "Uri object = " + object);
+            if (!fileExist(String.valueOf(object))) {
+                Log.d(TAG, "setMediaPlayer- uri does not exist");
+                return;
+            }
             mMetaRetriever.setDataSource(this, (Uri) object);
             mMediaPlayer.setDataSource(this, (Uri) object);
             mMetaRetriever.setDataSource(this, (Uri) object);

@@ -59,7 +59,7 @@ public class BoardingActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_boarding);
-        context = getBaseContext();
+        context = this;
         Intent receivingIntent = getIntent();
         route = receivingIntent.getStringExtra(BUS_ROUTE_EXTRA);
         language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
