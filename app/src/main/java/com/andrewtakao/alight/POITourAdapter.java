@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.squareup.picasso.Picasso;
 
@@ -47,6 +48,11 @@ public class POITourAdapter extends RecyclerView.Adapter<POITourAdapter.POIViewH
     @Override
     public void onBindViewHolder(final POIViewHolder holder, final int position) {
         final POI poi = poiArrayList.get(position);
+        if (poi == null) {
+            Toast.makeText(context, "poi couldn't be found", Toast.LENGTH_SHORT).show();
+            Log.d(TAG, "poi couldn't be found");
+            return;
+        }
         String route = poi.route;
         String key = poi.imageName;
         String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language+"/"+route+"/"+readableKey(key);

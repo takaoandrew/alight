@@ -471,6 +471,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             if (poiOnDeck.index!=null && poiOnDeck.index.equals("filler")||
                     poiOnDeck.distanceFrom(latitude, longitude) > closestPoi.distanceFrom(latitude, longitude)) {
                 Log.d(TAG, "replacePOIOnDeck-- poiOnDeck is no longer closest");
+                //Fillers were not appearing at all when they were put on deck (removed from fillerpoihashmap), then removed from history
+                if (poiOnDeck.index.equals("filler")) {
+                    mFillerPOIHashMap.put(poiOnDeck.imageName, poiOnDeck);
+                }
                 poiHistory.remove(poiOnDeck);
                 poiHistory.add(closestPoi);
                 mAdapter.notifyDataSetChanged();
@@ -532,7 +536,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             Log.d(TAG, "addFirstPOI- close poi unavailable, grabbing filler");
             POI fillerPOI = fillerPoi();
             if (fillerPOI !=null) {
-                poiHistory.add(fillerPoi());
+                poiHistory.add(fillerPOI);
                 mAdapter.notifyDataSetChanged();
             }
         }
