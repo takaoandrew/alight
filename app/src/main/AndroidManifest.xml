@@ -21,7 +21,8 @@
         <activity
             android:name=".ChangingTourActivity"
             android:screenOrientation="portrait"
-            android:theme="@style/TourTheme" />
+            android:theme="@style/TourTheme">
+        </activity>
         <activity
             android:name=".LanguageActivity"
             android:noHistory="true" />
@@ -32,16 +33,16 @@
             android:name=".SignupActivity"
             android:noHistory="true" />
         <activity android:name=".RoutePreviewActivity">
-        </activity>
-        <activity android:name=".LoginActivity" />
-        <activity
-            android:name=".SplashActivity"
-            android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".LoginActivity" />
+        <activity
+            android:name=".SplashActivity"
+            android:noHistory="true">
         </activity>
         <activity android:name=".BoardingActivity" />
         <activity android:name=".EndOfTourActivity" />

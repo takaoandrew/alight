@@ -47,6 +47,11 @@ public class POITourAdapter extends RecyclerView.Adapter<POITourAdapter.POIViewH
 
     @Override
     public void onBindViewHolder(final POIViewHolder holder, final int position) {
+        Log.d(TAG, "onBindViewHolder-- position, poiHistory.size, poiArrayList.size = " +
+                position + ", " + ChangingTourActivity.poiHistory.size() + ", " + poiArrayList.size());
+        for (int i = 0; i<position; i++) {
+            Log.d(TAG, "poiArrayList.get("+i+") = " + poiArrayList.get(i).imageName);
+        }
         final POI poi = poiArrayList.get(position);
         if (poi == null) {
             Toast.makeText(context, "poi couldn't be found", Toast.LENGTH_SHORT).show();
@@ -58,7 +63,7 @@ public class POITourAdapter extends RecyclerView.Adapter<POITourAdapter.POIViewH
         String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language+"/"+route+"/"+readableKey(key);
 //        Log.d(TAG, "addImage-- check fileexists for " + fileName);
         if (!fileExist(fileName)) {
-            Log.d(TAG, "onBindViewHolder-- couldn't find non-filler poi, key = " + key);
+//            Log.d(TAG, "onBindViewHolder-- couldn't find non-filler poi, key = " + key);
             fileName = context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language+"/"+route+"/filler/"+readableKey(key);
             if (!fileExist(fileName)) {
                 Log.d(TAG, "onBindViewHolder-- couldn't find filler poi, key = " + key);
@@ -78,12 +83,11 @@ public class POITourAdapter extends RecyclerView.Adapter<POITourAdapter.POIViewH
         String location = poi.latitude + ", " + poi.longitude;
         holder.locationView.setText(location);
         holder.imageNameView.setText(userFriendlyName(poi.imageName));
-
     }
 
     @Override
     public int getItemCount() {
-//        Log.d(TAG, "getItemCount-- count = " + poiArrayList.size());
+        Log.d(TAG, "getItemCount-- count = " + poiArrayList.size());
         return poiArrayList.size();
     }
 

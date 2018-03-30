@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <LinearLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
@@ -8,6 +9,58 @@
         android:orientation="vertical"
         android:background="@color/colorPrimary"
         tools:context="com.andrewtakao.alight.ChangingTourActivity">
+        <android.support.v7.widget.Toolbar
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="72dp"
+            android:background="?attr/colorPrimary">
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <TextView
+                    android:id="@+id/toolbar_title"
+                    android:orientation="horizontal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="fill_parent"
+                    android:layout_marginRight="?attr/actionBarSize"
+                    android:layout_gravity="center"
+                    android:gravity="center_vertical"
+                    android:visibility="gone"
+                    android:text="@string/app_name"
+                    android:textColor="@android:color/white"
+                    style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title.Inverse"
+                    />
+
+                <TextView
+                    android:id="@+id/closest_poi_toolbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="@style/poiTextStyle"
+                    android:layout_gravity="center_horizontal|top"/>
+
+                <TextView
+                    android:id="@+id/direction_toolbar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/white"
+                    android:gravity="bottom"
+                    android:paddingBottom="4dp"
+                    android:layout_gravity="center_horizontal|bottom"/>
+
+                <ImageView
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical|end"
+                    android:layout_marginRight="20dp"
+                    android:visibility="gone"
+                    android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
+                    android:id="@+id/arrow"/>
+
+            </FrameLayout>
+        </android.support.v7.widget.Toolbar>
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -30,11 +83,30 @@
                 android:id="@+id/bt_current_poi"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="right|top"
+                android:layout_gravity="center|top"
                 android:layout_margin="20dp"
                 android:visibility="invisible"
                 android:text="Current"
                 android:onClick="currentPOI"/>
+
+            <ImageView
+                android:id="@+id/iv_alight"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="top|start"
+                android:layout_margin="20dp"
+                android:visibility="invisible"
+                android:src="@drawable/tilted_pin"
+                android:onClick="alight"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:layout_margin="20dp"
+                android:background="@android:color/black"
+                style="@style/busRouteTextStyle"
+                android:id="@+id/distance"/>
 
         </FrameLayout>
         <android.support.constraint.ConstraintLayout
@@ -57,7 +129,7 @@
                 android:layout_marginStart="22dp"
                 android:padding="10dp"
                 android:onClick="rewindMusic"
-                android:src="@drawable/back"
+                android:src="@drawable/ic_replay_5_white_24dp"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintEnd_toStartOf="@id/ib_start"
                 app:layout_constraintStart_toStartOf="parent"
@@ -70,7 +142,7 @@
                 android:layout_height="0dp"
                 android:layout_marginEnd="50dp"
                 android:layout_marginStart="50dp"
-                android:src="@drawable/play"
+                android:src="@drawable/ic_play_arrow_white_24dp"
                 android:padding="5dp"
                 app:layout_constraintDimensionRatio="1:1"
                 app:layout_constraintStart_toEndOf="@+id/ib_rewind"
@@ -87,7 +159,7 @@
                 android:layout_marginStart="22dp"
                 android:layout_marginTop="16dp"
                 android:onClick="like"
-                android:src="@drawable/ic_thumb_up_black_24dp"
+                android:src="@drawable/ic_favorite_border_white_24dp"
                 android:padding="10dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintDimensionRatio="1:1"

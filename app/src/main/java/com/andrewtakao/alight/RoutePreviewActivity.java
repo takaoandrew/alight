@@ -489,7 +489,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 //        binding.rvRecyclerViews.smoothScrollToPosition(position);
         recyclerViewAdapter.selected = position;
         recyclerViewAdapter.notifyDataSetChanged();
-//        checkSwipedToLast();
+//        recyclerViewScrolled();
     }
 
     public void changeRoute(String route, ArrayList<POI> poiArrayList) {
@@ -523,7 +523,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
     }
 
     public void changeFocus(int position) {
-        Log.d(TAG, "checkSwipedToLast");
+        Log.d(TAG, "recyclerViewScrolled");
         LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvRecyclerViews.getLayoutManager());
         int firstCompletelyVisibleItemPosition;
         if (position >= 0) {

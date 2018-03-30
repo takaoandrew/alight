@@ -2,6 +2,7 @@ package com.andrewtakao.alight;
 
 import android.Manifest;
 import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -39,6 +40,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
@@ -50,20 +52,24 @@ import static com.andrewtakao.alight.Utils.angleFromCoordinate;
 import static com.andrewtakao.alight.Utils.audioKey;
 import static com.andrewtakao.alight.Utils.fileExist;
 import static com.andrewtakao.alight.Utils.readableKey;
+import static com.andrewtakao.alight.Utils.userFriendlyName;
 
 public class ChangingTourActivity extends AppCompatActivity implements SensorEventListener{
 
     //Context
     private Context context;
 
+    private FirebaseDatabase database;
     private FirebaseAuth mAuth;
     private FirebaseUser user;
     private ActivityChangingTourBinding binding;
     public static DatabaseReference mDatabaseRef;
 
-    private static String busRoute;
+    private String language = "English";
+    private static String busRoute = "mit";
     private final String TAG = ChangingTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
+    private final String LANGUAGE_EXTRA = "language_extra";
     public static HashMap<String, POI> mPOIHashMap;
     public static HashMap<String, POI> mFillerPOIHashMap;
     public static ArrayList<POI> poiHistory;
@@ -82,7 +88,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public static MediaPlayer mMediaPlayer;
     MediaMetadataRetriever mMetaRetriever;
     int mDuration;
-    private static final int mSkipTime = 1000;
+    private static final int mSkipTime = 5000;
+    MediaPlayer.OnCompletionListener onCompletionListener;
     Handler handler;
     Runnable runnable;
 
@@ -112,7 +119,13 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
         //Get bus route
         Intent intent = getIntent();
-        busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
+
+        if (intent.hasExtra(BUS_ROUTE_EXTRA)) {
+            busRoute = intent.getStringExtra(BUS_ROUTE_EXTRA);
+        }
+        if (intent.hasExtra(LANGUAGE_EXTRA)) {
+            language = intent.getStringExtra(LANGUAGE_EXTRA);
+        }
         Log.d(TAG, "onCreate-- Bus route = " + busRoute);
 
         mAuth = FirebaseAuth.getInstance();
@@ -137,19 +150,23 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
-                Log.d(TAG, "onScrolled");
-                checkSwipedToLast();
+//                Log.d(TAG, "onScrolled");
+                recyclerViewScrolled();
+                showLocation();
             }
         });
 
-//        //Language
-//        if (RoutePreviewActivity.language.equals("Chinese")) {
-//            binding.nearby.setText(R.string.nearby_ch);
-//            binding.playFiller.setText(R.string.skip_ch);
-//        } else {
-//            binding.nearby.setText(R.string.nearby);
-//            binding.playFiller.setText(R.string.skip);
-//        }
+        onCompletionListener = new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mediaPlayer) {
+                Log.d(TAG, "onCompletion");
+                LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
+                int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+                if (firstCompletelyVisibleItemPosition < poiHistory.size() - 1) {
+                    binding.rvTourPois.smoothScrollToPosition(poiHistory.size() - 1);
+                }
+            }
+        };
 
         //Compass
         azimuth = 0f;
@@ -161,7 +178,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
-        mDatabaseRef = RoutePreviewActivity.routesRef.child(busRoute);
+
+        database = Utils.getDatabase();
+        mDatabaseRef = database.getReference(language+"/routes").child(busRoute);
         mDatabaseRef.addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
@@ -186,7 +205,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                             (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
                                             (String) poiChildSnapshot.child("transcript").getValue()
                                     );
-                                    Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
+//                                    Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
                                     mFillerPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
                                 }
                             } else {
@@ -194,7 +213,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                     for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
 
                                         //Set POI
-                                        Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
+//                                        Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
                                         Log.d(TAG, "poiChildSnapshot.getKey() = " + poiChildSnapshot.getKey());
                                         POI addedPoi = new POI(
                                                 (String) poiChildSnapshot.getKey(),
@@ -210,7 +229,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                                 (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
                                                 (String) poiChildSnapshot.child("transcript").getValue()
                                         );
-                                        Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
+                                        Log.d(TAG, "purpose = " + poiChildSnapshot.child("purpose").getValue());
                                         mPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
                                     }
                                 }
@@ -298,33 +317,6 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         super.onDestroy();
     }
 
-    private void addFillerAudio(String key) {
-        Log.d(TAG, "addFillerAudio-- Bus route = " + busRoute);
-        POI poi = mFillerPOIHashMap.get(key);
-        String fileName = (String) context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language
-                +"/"+busRoute+"/filler/"+audioKey(readableKey(key));
-
-        if (poi == null) {
-            Log.d(TAG, "addFillerAudio-- poi == null");
-            return;
-        }
-
-        if (mMediaPlayer!=null) {
-            if (mMediaPlayer.isPlaying()) {
-                mMediaPlayer.stop();
-            }
-        }
-
-        mMediaPlayer = MediaPlayer.create(context, Uri.parse(fileName));
-        try {
-            setMediaPlayer(Uri.parse(fileName));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        startMusic(null);
-
-    }
-
 
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER)
@@ -377,12 +369,59 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
     }
 
-    public void playAudio(int position) {
+    public void recyclerViewScrolled() {
+//        Log.d(TAG, "recyclerViewScrolled");
+        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
+        int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+
+        if (firstCompletelyVisibleItemPosition == previouslyFirstCompletelyVisibleItemPosition) {
+//            Log.d(TAG, "recyclerViewScrolled-- wasn't changed to a new POI");
+            return;
+        }
+        if (firstCompletelyVisibleItemPosition == -1 )
+        {
+//            Log.d(TAG, "firstCompletelyVisibleItemPosition = " + firstCompletelyVisibleItemPosition);
+            return;
+        }
+        previouslyFirstCompletelyVisibleItemPosition = firstCompletelyVisibleItemPosition;
+
+        showNewTitle(firstCompletelyVisibleItemPosition);
+        //Should show current position?
+        shouldShowCurrentButton();
+
+        isLiked(firstCompletelyVisibleItemPosition);
+
+        playAudio(firstCompletelyVisibleItemPosition);
+
+        isAlighting(firstCompletelyVisibleItemPosition);
+//        Log.d(TAG, "current position = " + firstCompletelyVisibleItemPosition);
+//        Log.d(TAG, "previouslyFirstCompletelyVisibleItemPosition = " + previouslyFirstCompletelyVisibleItemPosition);
+
+        //Check if swiped to last
+        if (firstCompletelyVisibleItemPosition == poiHistory.size()-1) {
+            addPOIOnDeck();
+        }
+    }
+
+    private void isAlighting(int position) {
         POI currentPoi = poiHistory.get(position);
-        String fileName = context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language
+        Log.d(TAG, "purpose = " + currentPoi.purpose);
+        Toast.makeText(context, "purpose = " +currentPoi.purpose, Toast.LENGTH_SHORT).show();
+        if (currentPoi.purpose.equals("alighting")) {
+            binding.ivAlight.setVisibility(View.VISIBLE);
+            makeGlow();
+        } else {
+            binding.ivAlight.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void playAudio(int position) {
+        Log.d(TAG, "Position, poiHistory.get(position) = " + position + ", " + poiHistory.get(position));
+        POI currentPoi = poiHistory.get(position);
+        String fileName = context.getFilesDir().getPath()+"/"+language
                 +"/"+busRoute+"/"+audioKey(readableKey(currentPoi.imageName));
         if (!fileExist(fileName)) {
-            fileName = context.getFilesDir().getPath()+"/"+RoutePreviewActivity.language
+            fileName = context.getFilesDir().getPath()+"/"+language
                     +"/"+busRoute+"/filler/"+audioKey(readableKey(currentPoi.imageName));
             if (!fileExist(fileName)) {
                 Toast.makeText(context, "Can't find audio", Toast.LENGTH_SHORT).show();
@@ -401,39 +440,36 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             e.printStackTrace();
         }
         startMusic(null);
-
     }
 
-    public void checkSwipedToLast() {
-        Log.d(TAG, "checkSwipedToLast");
+    private void showNewTitle(int position) {
+        String title = userFriendlyName(poiHistory.get(position).imageName);
+        binding.closestPoiToolbar.setText(title);
+    }
+
+    private void isLiked(int position) {
+        //TODO once database is updated
+//        if (poiHistory.get(position).likes)
+    }
+
+    private void shouldShowCurrentButton() {
         LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
         int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
-        if (firstCompletelyVisibleItemPosition < poiHistory.size()-2 && firstCompletelyVisibleItemPosition!=-1) {
-            Log.d(TAG, "checkSwipedToLast-- newer poi available");
-            binding.btCurrentPoi.setVisibility(View.VISIBLE);
+        if (firstCompletelyVisibleItemPosition == -1 )
+        {
+            return;
+        }
+        if (firstCompletelyVisibleItemPosition < poiHistory.size()-1) {
+            if (poiHistory.get(poiHistory.size()-1).index!=null
+                    && poiHistory.get(poiHistory.size()-1).index.equals("filler")) {
+                binding.btCurrentPoi.setVisibility(View.GONE);
+            } else {
+                binding.btCurrentPoi.setVisibility(View.VISIBLE);
+            }
         } else {
             binding.btCurrentPoi.setVisibility(View.GONE);
         }
-        if (firstCompletelyVisibleItemPosition == previouslyFirstCompletelyVisibleItemPosition) {
-            Log.d(TAG, "checkSwipedToLast-- wasn't changed to a new POI");
-            return;
-        }
-        if (firstCompletelyVisibleItemPosition == -1 )
-        {
-            Log.d(TAG, "firstCompletelyVisibleItemPosition = " + firstCompletelyVisibleItemPosition);
-            return;
-        }
-        previouslyFirstCompletelyVisibleItemPosition = firstCompletelyVisibleItemPosition;
-        playAudio(firstCompletelyVisibleItemPosition);
-        Log.d(TAG, "current position = " + firstCompletelyVisibleItemPosition);
-        Log.d(TAG, "previouslyFirstCompletelyVisibleItemPosition = " + previouslyFirstCompletelyVisibleItemPosition);
-
-        //Check if swiped to last
-        if (firstCompletelyVisibleItemPosition == poiHistory.size()-1) {
-            addPOIOnDeck();
-        }
     }
-
 
     private POI fillerPoi(){
         Random rand = new Random();
@@ -468,15 +504,21 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             }
         }
         if (closestPoi.imageName != null) {
-            if (poiOnDeck.index!=null && poiOnDeck.index.equals("filler")||
-                    poiOnDeck.distanceFrom(latitude, longitude) > closestPoi.distanceFrom(latitude, longitude)) {
-                Log.d(TAG, "replacePOIOnDeck-- poiOnDeck is no longer closest");
+            if (poiOnDeck.index!=null && poiOnDeck.index.equals("filler")) {
+                Log.d(TAG, "replacePOIOnDeck-- removing filler to add nearby POI");
                 //Fillers were not appearing at all when they were put on deck (removed from fillerpoihashmap), then removed from history
-                if (poiOnDeck.index.equals("filler")) {
-                    mFillerPOIHashMap.put(poiOnDeck.imageName, poiOnDeck);
-                }
+                mFillerPOIHashMap.put(poiOnDeck.imageName, poiOnDeck);
+                Log.d(TAG, "replacePOIOnDeck-- (fillerReplace) before changing poiHistory, poiHistory.size() = " + poiHistory.size());
                 poiHistory.remove(poiOnDeck);
                 poiHistory.add(closestPoi);
+                Log.d(TAG, "replacePOIOnDeck-- (fillerReplace) after changing poiHistory, poiHistory.size() = " + poiHistory.size());
+                mAdapter.notifyDataSetChanged();
+            } else if (poiOnDeck.distanceFrom(latitude, longitude) > closestPoi.distanceFrom(latitude, longitude)) {
+//                Log.d(TAG, "replacePOIOnDeck-- poiOnDeck is no longer closest");
+                Log.d(TAG, "replacePOIOnDeck-- (nearbyReplace) before changing poiHistory, poiHistory.size() = " + poiHistory.size());
+                poiHistory.remove(poiOnDeck);
+                poiHistory.add(closestPoi);
+                Log.d(TAG, "replacePOIOnDeck-- (nearbyReplace) after changing poiHistory, poiHistory.size() = " + poiHistory.size());
                 mAdapter.notifyDataSetChanged();
             }
         }
@@ -493,13 +535,16 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
         if (closestPoi.imageName != null) {
             Log.d(TAG, "adding " + closestPoi.imageName + ", distance = " + minDistance);
+            Log.d(TAG, "addPOIOnDeck-- (nearby) before changing poiHistory, poiHistory.size() = " + poiHistory.size());
             poiHistory.add(closestPoi);
+            Log.d(TAG, "addPOIOnDeck-- (nearby) after changing poiHistory, poiHistory.size() = " + poiHistory.size());
             mAdapter.notifyDataSetChanged();
         } else {
             Log.d(TAG, "addPOIOnDeck- close poi unavailable, grabbing filler");
+            Log.d(TAG, "addPOIOnDeck-- (filler) before changing poiHistory, poiHistory.size() = " + poiHistory.size());
             POI fillerPOI = fillerPoi();
             if (fillerPOI !=null) {
-                poiHistory.add(fillerPoi());
+                poiHistory.add(fillerPOI);
                 mAdapter.notifyDataSetChanged();
             }
         }
@@ -516,6 +561,25 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         } else {
             replacePOIOnDeck();
             //If poiOnDeck is no longer the closest, or of it's filler... replace it
+        }
+        showLocation();
+        //Should show current position?
+        shouldShowCurrentButton();
+    }
+
+    public void showLocation() {
+        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
+        int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+        if (poiHistory.size()<=firstCompletelyVisibleItemPosition
+                || firstCompletelyVisibleItemPosition == -1) {
+            return;
+        }
+        if (poiHistory.get(firstCompletelyVisibleItemPosition).index!=null &&
+                poiHistory.get(firstCompletelyVisibleItemPosition).index.equals("filler")) {
+            binding.distance.setText("filler");
+        } else {
+            double distance = poiHistory.get(firstCompletelyVisibleItemPosition).distanceFrom(latitude, longitude);
+            binding.distance.setText(String.valueOf((int)distance)+"m");
         }
     }
 
@@ -556,7 +620,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         } else {
             POI fillerPOI = fillerPoi();
             if (fillerPOI !=null) {
-                poiHistory.add(fillerPoi());
+                poiHistory.add(fillerPOI);
                 mAdapter.notifyDataSetChanged();
             }
         }
@@ -565,7 +629,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     public void currentPOI(View view) {
         if (poiHistory.size()>1) {
-            binding.rvTourPois.smoothScrollToPosition(poiHistory.size()-2);
+            binding.rvTourPois.smoothScrollToPosition(poiHistory.size()-1);
         }
     }
 
@@ -595,35 +659,19 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
     public void like(View view) {
-//        POI poi = mPOIHashMap.get(displayedKey);
-//        if (poi == null) {
-//            poi = mFillerPOIHashMap.get(displayedKey);
-//            Log.d(TAG, "filler! poi.index = " + poi.index);
-//            if (poi.index == null) {
-//                Toast.makeText(context, "Not set up to be liked, update database", Toast.LENGTH_SHORT).show();
-//                return;
-//            }
-//            mDatabaseRef.child(poi.index).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
-//        } else {
-//            if (poi.index == null) {
-//                Toast.makeText(context, "poi.index is null!", Toast.LENGTH_LONG).show();
-//            }
-////        if (poi.coordinates.equals("0,0"))
-//            mDatabaseRef.child(poi.index).child(poi.coordinates).child(displayedKey).child("likes").child(user.getUid()).setValue("true");
-//        }
+        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
+        int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+        POI poi = poiHistory.get(firstCompletelyVisibleItemPosition);
+        if (poi.index == null) {
+            Toast.makeText(context, "Not set up to be liked, update database", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (poi.index.equals("filler")) {
+            mDatabaseRef.child(poi.index).child(poi.imageName).child("likes").child(user.getUid()).setValue("true");
+        } else {
+            mDatabaseRef.child(poi.index).child(poi.coordinates).child(poi.imageName).child("likes").child(user.getUid()).setValue("true");
+        }
     }
 
     public void dislike(View view) {
@@ -651,7 +699,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             return;
         }
         if (mMediaPlayer.isPlaying()) {
-            binding.ibStart.setImageResource(R.drawable.pause);
+            binding.ibStart.setImageResource(R.drawable.ic_pause_white_24dp);
             binding.ibStart.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -659,7 +707,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 }
             });
         } else {
-            binding.ibStart.setImageResource(R.drawable.play);
+            binding.ibStart.setImageResource(R.drawable.ic_play_arrow_white_24dp);
             binding.ibStart.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -696,6 +744,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public void setMediaPlayer(Object object) throws IOException {
         mMediaPlayer = new MediaPlayer();
         mMetaRetriever = new MediaMetadataRetriever();
+        mMediaPlayer.setOnCompletionListener(onCompletionListener);
 
         if (object instanceof Uri) {
             Log.d(TAG, "Uri object = " + object);
@@ -714,5 +763,24 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public void endTour(View view) {
         Intent intent = new Intent(context, EndOfTourActivity.class);
         startActivity(intent);
+    }
+
+    private void makeGlow() {
+        if (scaleDown == null) {
+            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
+                    binding.ivAlight,
+                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
+                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
+            scaleDown.setDuration(700);
+
+            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
+            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
+        }
+
+        scaleDown.start();
+    }
+
+    public void alight(View view) {
+        Toast.makeText(context, "Alight!", Toast.LENGTH_SHORT).show();
     }
 }
