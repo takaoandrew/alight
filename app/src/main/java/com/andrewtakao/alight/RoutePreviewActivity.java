@@ -86,7 +86,9 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         context = getBaseContext();
         binding = DataBindingUtil.setContentView(this, R.layout.activity_route_preview);
         final Intent receivingIntent = getIntent();
-        language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
+        if (receivingIntent.hasExtra(LANGUAGE_EXTRA)) {
+            language = receivingIntent.getStringExtra(LANGUAGE_EXTRA);
+        }
 
         polylineOptions = new PolylineOptions();
         polylineOptionsHashMap = new HashMap<>();

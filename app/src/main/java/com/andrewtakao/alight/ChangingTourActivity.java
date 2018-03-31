@@ -32,9 +32,19 @@ import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.DecelerateInterpolator;
 import android.view.animation.RotateAnimation;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import com.andrewtakao.alight.databinding.ActivityChangingTourBinding;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
@@ -42,7 +52,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,7 +66,7 @@ import static com.andrewtakao.alight.Utils.fileExist;
 import static com.andrewtakao.alight.Utils.readableKey;
 import static com.andrewtakao.alight.Utils.userFriendlyName;
 
-public class ChangingTourActivity extends AppCompatActivity implements SensorEventListener{
+public class ChangingTourActivity extends AppCompatActivity implements SensorEventListener, OnMapReadyCallback {
 
     //Context
     private Context context;
@@ -73,7 +85,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public static HashMap<String, POI> mPOIHashMap;
     public static HashMap<String, POI> mFillerPOIHashMap;
     public static ArrayList<POI> poiHistory;
-//    private final double mMinDistance = 5750.22644;
+    //    private final double mMinDistance = 5750.22644;
     private final double mMinDistance = 50;
     private int previouslyFirstCompletelyVisibleItemPosition = -1;
 
@@ -92,6 +104,13 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     MediaPlayer.OnCompletionListener onCompletionListener;
     Handler handler;
     Runnable runnable;
+
+    //Map
+    SupportMapFragment mapFragment;
+    private GoogleMap mMap;
+    private PolylineOptions polylineOptions;
+    private MarkerOptions lastMarkerOptions;
+    private Marker lastMarker;
 
     //Compass
     private SensorManager mSensorManager;
@@ -134,6 +153,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             Toast.makeText(this, "Error- no user!", Toast.LENGTH_LONG).show();
         }
 
+        //Map
+        polylineOptions = new PolylineOptions();
+        mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
         //Initialize
         mPOIHashMap = new HashMap<>();
         mFillerPOIHashMap = new HashMap<>();
@@ -174,13 +199,13 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         longitude = 0;
         poiLatitude = 0;
         poiLongitude = 0;
-        mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+        mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
 
         database = Utils.getDatabase();
-        mDatabaseRef = database.getReference(language+"/routes").child(busRoute);
+        mDatabaseRef = database.getReference(language + "/routes").child(busRoute);
         mDatabaseRef.addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
@@ -205,11 +230,18 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                             (ArrayList<String>) poiChildSnapshot.child("theme").getValue(),
                                             (String) poiChildSnapshot.child("transcript").getValue()
                                     );
-//                                    Log.d(TAG, "latitude = " + poiChildSnapshot.child("latitude").getValue());
+//                                    Log.d(TAG, "key = " + poiChildSnapshot.getKey());
+                                    Log.d(TAG, "index = " + poiChildSnapshot.child("index").getValue());
                                     mFillerPOIHashMap.put(poiChildSnapshot.getKey(), addedPoi);
                                 }
                             } else {
-                                for (DataSnapshot coordinateChildSnapshot: indexChildSnapshot.getChildren()) {
+                                for (DataSnapshot coordinateChildSnapshot : indexChildSnapshot.getChildren()) {
+                                    String thisLongitudeString = coordinateChildSnapshot.getKey()
+                                            .substring(0, coordinateChildSnapshot.getKey().indexOf(",")).replace("*", ".");
+                                    String thisLatitudeString = coordinateChildSnapshot.getKey()
+                                            .substring(coordinateChildSnapshot.getKey().indexOf(",") + 1).replace("*", ".");
+                                    LatLng latLng = new LatLng(Double.valueOf(thisLatitudeString), Double.valueOf(thisLongitudeString));
+                                    polylineOptions.add(latLng);
                                     for (DataSnapshot poiChildSnapshot : coordinateChildSnapshot.getChildren()) {
 
                                         //Set POI
@@ -235,6 +267,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                                 }
                             }
                         }
+                        setMap(polylineOptions);
                     }
 
                     @Override
@@ -247,20 +280,23 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         //Location
         locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
         locationListener = new LocationListener() {
-            
+
             @Override
             public void onLocationChanged(Location location) {
                 //Commented out while using button to debug
 //                Log.d(TAG, "onLocationChanged");
                 makeUseOfNewLocation(location);
             }
+
             @Override
             public void onStatusChanged(String s, int i, Bundle bundle) {
             }
+
             @Override
             public void onProviderEnabled(String s) {
                 Log.d(TAG, "onProviderEnabled");
             }
+
             @Override
             public void onProviderDisabled(String s) {
             }
@@ -295,7 +331,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         if (locationManager != null) {
             locationManager.removeUpdates(locationListener);
         }
-        if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
             pauseMusic(null);
         }
     }
@@ -304,7 +340,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     protected void onPause() {
         super.onPause();
         Log.d(TAG, "onPause");
-        if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
             pauseMusic(null);
         }
         //Compass
@@ -332,7 +368,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                 SensorManager.getOrientation(R, orientation);
 //                azimuth = 180/(float)Math.PI*orientation[0]; // orientation contains: azimut, pitch and roll
 
-                azimuth = Float.valueOf(String.valueOf(-180/(float)Math.PI*orientation[0]+angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
+                azimuth = Float.valueOf(String.valueOf(-180 / (float) Math.PI * orientation[0] + angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
 //                azimuth = Float.valueOf(String.valueOf(orientation[0]+Math.PI/180*angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
 //                Log.d(TAG, "Azimuth = " + azimuth);
                 oldAzimuth = azimuth;
@@ -371,21 +407,21 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     public void recyclerViewScrolled() {
 //        Log.d(TAG, "recyclerViewScrolled");
-        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
         int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
 
         if (firstCompletelyVisibleItemPosition == previouslyFirstCompletelyVisibleItemPosition) {
 //            Log.d(TAG, "recyclerViewScrolled-- wasn't changed to a new POI");
             return;
         }
-        if (firstCompletelyVisibleItemPosition == -1 )
-        {
+        if (firstCompletelyVisibleItemPosition == -1) {
 //            Log.d(TAG, "firstCompletelyVisibleItemPosition = " + firstCompletelyVisibleItemPosition);
             return;
         }
         previouslyFirstCompletelyVisibleItemPosition = firstCompletelyVisibleItemPosition;
 
         showNewTitle(firstCompletelyVisibleItemPosition);
+        setMapImage();
         //Should show current position?
         shouldShowCurrentButton();
 
@@ -398,7 +434,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        Log.d(TAG, "previouslyFirstCompletelyVisibleItemPosition = " + previouslyFirstCompletelyVisibleItemPosition);
 
         //Check if swiped to last
-        if (firstCompletelyVisibleItemPosition == poiHistory.size()-1) {
+        if (firstCompletelyVisibleItemPosition == poiHistory.size() - 1) {
             addPOIOnDeck();
         }
     }
@@ -406,7 +442,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     private void isAlighting(int position) {
         POI currentPoi = poiHistory.get(position);
         Log.d(TAG, "purpose = " + currentPoi.purpose);
-        Toast.makeText(context, "purpose = " +currentPoi.purpose, Toast.LENGTH_SHORT).show();
+        Toast.makeText(context, "purpose = " + currentPoi.purpose, Toast.LENGTH_SHORT).show();
         if (currentPoi.purpose.equals("alighting")) {
             binding.ivAlight.setVisibility(View.VISIBLE);
             makeGlow();
@@ -418,17 +454,17 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public void playAudio(int position) {
         Log.d(TAG, "Position, poiHistory.get(position) = " + position + ", " + poiHistory.get(position));
         POI currentPoi = poiHistory.get(position);
-        String fileName = context.getFilesDir().getPath()+"/"+language
-                +"/"+busRoute+"/"+audioKey(readableKey(currentPoi.imageName));
+        String fileName = context.getFilesDir().getPath() + "/" + language
+                + "/" + busRoute + "/" + audioKey(readableKey(currentPoi.imageName));
         if (!fileExist(fileName)) {
-            fileName = context.getFilesDir().getPath()+"/"+language
-                    +"/"+busRoute+"/filler/"+audioKey(readableKey(currentPoi.imageName));
+            fileName = context.getFilesDir().getPath() + "/" + language
+                    + "/" + busRoute + "/filler/" + audioKey(readableKey(currentPoi.imageName));
             if (!fileExist(fileName)) {
                 Toast.makeText(context, "Can't find audio", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
-        if (mMediaPlayer!=null) {
+        if (mMediaPlayer != null) {
             if (mMediaPlayer.isPlaying()) {
                 mMediaPlayer.stop();
             }
@@ -453,15 +489,15 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     private void shouldShowCurrentButton() {
-        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
         int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
-        if (firstCompletelyVisibleItemPosition == -1 )
-        {
+        if (firstCompletelyVisibleItemPosition == -1) {
             return;
         }
-        if (firstCompletelyVisibleItemPosition < poiHistory.size()-1) {
-            if (poiHistory.get(poiHistory.size()-1).index!=null
-                    && poiHistory.get(poiHistory.size()-1).index.equals("filler")) {
+        if (firstCompletelyVisibleItemPosition < poiHistory.size() - 1) {
+            if (poiHistory.get(poiHistory.size() - 1).index == null) {
+                return;
+            } else if (poiHistory.get(poiHistory.size() - 1).index.equals("filler")) {
                 binding.btCurrentPoi.setVisibility(View.GONE);
             } else {
                 binding.btCurrentPoi.setVisibility(View.VISIBLE);
@@ -471,9 +507,9 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
     }
 
-    private POI fillerPoi(){
+    private POI fillerPoi() {
         Random rand = new Random();
-        if (mFillerPOIHashMap.size()==0) {
+        if (mFillerPOIHashMap.size() == 0) {
             Toast.makeText(context, "No filler content", Toast.LENGTH_SHORT).show();
             return null;
         }
@@ -490,21 +526,21 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void replacePOIOnDeck() {
-        if (poiHistory.size()==0) {
+        if (poiHistory.size() == 0) {
             Log.d(TAG, "replacePOIOnDeck-- Nothing to replace");
             return;
         }
-        POI poiOnDeck = poiHistory.get(poiHistory.size()-1);
+        POI poiOnDeck = poiHistory.get(poiHistory.size() - 1);
         double minDistance = mMinDistance;
         POI closestPoi = new POI();
         for (POI poi : mPOIHashMap.values()) {
-            if (!poiHistory.contains(poi) && poi.distanceFrom(latitude, longitude)<minDistance) {
+            if (!poiHistory.contains(poi) && poi.distanceFrom(latitude, longitude) < minDistance) {
                 minDistance = poi.distanceFrom(latitude, longitude);
                 closestPoi = poi;
             }
         }
         if (closestPoi.imageName != null) {
-            if (poiOnDeck.index!=null && poiOnDeck.index.equals("filler")) {
+            if (poiOnDeck.index != null && poiOnDeck.index.equals("filler")) {
                 Log.d(TAG, "replacePOIOnDeck-- removing filler to add nearby POI");
                 //Fillers were not appearing at all when they were put on deck (removed from fillerpoihashmap), then removed from history
                 mFillerPOIHashMap.put(poiOnDeck.imageName, poiOnDeck);
@@ -528,7 +564,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         double minDistance = mMinDistance;
         POI closestPoi = new POI();
         for (POI poi : mPOIHashMap.values()) {
-            if (!poiHistory.contains(poi) && poi.distanceFrom(latitude, longitude)<minDistance) {
+            if (!poiHistory.contains(poi) && poi.distanceFrom(latitude, longitude) < minDistance) {
                 minDistance = poi.distanceFrom(latitude, longitude);
                 closestPoi = poi;
             }
@@ -543,7 +579,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             Log.d(TAG, "addPOIOnDeck- close poi unavailable, grabbing filler");
             Log.d(TAG, "addPOIOnDeck-- (filler) before changing poiHistory, poiHistory.size() = " + poiHistory.size());
             POI fillerPOI = fillerPoi();
-            if (fillerPOI !=null) {
+            if (fillerPOI != null) {
                 poiHistory.add(fillerPOI);
                 mAdapter.notifyDataSetChanged();
             }
@@ -555,7 +591,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         Log.d(TAG, "makeUseOfNewLocation");
         latitude = location.getLatitude();
         longitude = location.getLongitude();
-        if (poiHistory.size()==0) {
+        if (poiHistory.size() == 0) {
             Log.d(TAG, "run me once!");
             addFirstPOI();
         } else {
@@ -568,26 +604,27 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void showLocation() {
-        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
         int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
-        if (poiHistory.size()<=firstCompletelyVisibleItemPosition
+        if (poiHistory.size() <= firstCompletelyVisibleItemPosition
                 || firstCompletelyVisibleItemPosition == -1) {
             return;
         }
-        if (poiHistory.get(firstCompletelyVisibleItemPosition).index!=null &&
+        if (poiHistory.get(firstCompletelyVisibleItemPosition).index != null &&
                 poiHistory.get(firstCompletelyVisibleItemPosition).index.equals("filler")) {
             binding.distance.setText("filler");
         } else {
             double distance = poiHistory.get(firstCompletelyVisibleItemPosition).distanceFrom(latitude, longitude);
-            binding.distance.setText(String.valueOf((int)distance)+"m");
+            binding.distance.setText(String.valueOf((int) distance) + "m" + " and pos = " + firstCompletelyVisibleItemPosition);
         }
     }
 
     public void addFirstPOI() {
+        binding.ivFindingLocation.setVisibility(View.INVISIBLE);
         double minDistance = mMinDistance;
         POI closestPoi = new POI();
         for (POI poi : mPOIHashMap.values()) {
-            if (poi.distanceFrom(latitude, longitude)<minDistance) {
+            if (poi.distanceFrom(latitude, longitude) < minDistance) {
                 minDistance = poi.distanceFrom(latitude, longitude);
                 closestPoi = poi;
             }
@@ -599,7 +636,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         } else {
             Log.d(TAG, "addFirstPOI- close poi unavailable, grabbing filler");
             POI fillerPOI = fillerPoi();
-            if (fillerPOI !=null) {
+            if (fillerPOI != null) {
                 poiHistory.add(fillerPOI);
                 mAdapter.notifyDataSetChanged();
             }
@@ -609,7 +646,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         minDistance = mMinDistance;
         closestPoi = new POI();
         for (POI poi : mPOIHashMap.values()) {
-            if (!poiHistory.contains(poi) && poi.distanceFrom(latitude, longitude)<minDistance) {
+            if (!poiHistory.contains(poi) && poi.distanceFrom(latitude, longitude) < minDistance) {
                 minDistance = poi.distanceFrom(latitude, longitude);
                 closestPoi = poi;
             }
@@ -619,7 +656,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             mAdapter.notifyDataSetChanged();
         } else {
             POI fillerPOI = fillerPoi();
-            if (fillerPOI !=null) {
+            if (fillerPOI != null) {
                 poiHistory.add(fillerPOI);
                 mAdapter.notifyDataSetChanged();
             }
@@ -628,8 +665,8 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void currentPOI(View view) {
-        if (poiHistory.size()>1) {
-            binding.rvTourPois.smoothScrollToPosition(poiHistory.size()-1);
+        if (poiHistory.size() > 1) {
+            binding.rvTourPois.smoothScrollToPosition(poiHistory.size() - 1);
         }
     }
 
@@ -660,8 +697,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void like(View view) {
-        LinearLayoutManager layoutManager = ((LinearLayoutManager)binding.rvTourPois.getLayoutManager());
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
         int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+        if (poiHistory.size() <= firstCompletelyVisibleItemPosition
+                || firstCompletelyVisibleItemPosition == -1) {
+            return;
+        }
         POI poi = poiHistory.get(firstCompletelyVisibleItemPosition);
         if (poi.index == null) {
             Toast.makeText(context, "Not set up to be liked, update database", Toast.LENGTH_SHORT).show();
@@ -694,8 +735,132 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 //        }
     }
 
+    public void endTour(View view) {
+        Intent intent = new Intent(context, EndOfTourActivity.class);
+        startActivity(intent);
+    }
+
+    private void makeGlow() {
+        if (scaleDown == null) {
+            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
+                    binding.ivAlight,
+                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
+                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
+            scaleDown.setDuration(700);
+
+            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
+            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
+        }
+
+        scaleDown.start();
+    }
+
+    public void alight(View view) {
+        Toast.makeText(context, "Alight!", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setPadding(30,0,0,0);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mMap.setMyLocationEnabled(true);
+        View mapView = mapFragment.getView();
+        @SuppressLint("ResourceType") View locationButton = ((View) mapView.findViewById(1).getParent()).findViewById(2);
+
+        // and next place it, for exemple, on bottom right (as Google Maps app)
+        RelativeLayout.LayoutParams rlp = (RelativeLayout.LayoutParams) locationButton.getLayoutParams();
+        // position on right bottom
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_TOP, 0);
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
+        rlp.addRule(RelativeLayout.ALIGN_PARENT_END, 0);
+        rlp.setMargins(30, 0, 0, 30);
+    }
+
+    public void setMap(PolylineOptions options) {
+        if (mMap==null) {
+            Log.d(TAG, "map is null");
+            return;
+        }
+        mMap.clear();
+        mMap.addPolyline(options);
+//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        if (options.getPoints().get(0) == null) {
+            Log.d(TAG, "polylineoptions latlng was null");
+            return;
+        }
+
+        LatLngBounds.Builder boundsBuilder = new LatLngBounds.Builder();
+        for (LatLng latLngPoint : options.getPoints()) {
+            boundsBuilder.include(latLngPoint);
+        }
+
+        int routePadding = 100;
+        LatLngBounds latLngBounds = boundsBuilder.build();
+
+        mMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, routePadding));
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(polylineOptionsHashMap.get(route).getPoints().get(center)));
+//        mMap.moveCamera(CameraUpdateFactory.zoomTo(12f));
+    }
+
+    public void toggleMapImage(View view) {
+        if (binding.rvTourPois.getVisibility()==View.VISIBLE) {
+            binding.rvTourPois.setVisibility(View.INVISIBLE);
+            setMapImage();
+        } else {
+            binding.rvTourPois.setVisibility(View.VISIBLE);
+            binding.toggleMapImage.setImageResource(R.drawable.map_image);
+        }
+    }
+
+    public void setMapImage() {
+        if (binding.rvTourPois.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
+        int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+        if (poiHistory.size() <= firstCompletelyVisibleItemPosition
+                || firstCompletelyVisibleItemPosition == -1) {
+            return;
+        }
+        POI currentPoi = poiHistory.get(firstCompletelyVisibleItemPosition);
+        String route = currentPoi.route;
+        String key = currentPoi.imageName;
+        String fileName = (String) context.getFilesDir().getPath()+"/"+language+"/"+route+"/"+readableKey(key);
+//        Log.d(TAG, "addImage-- check fileexists for " + fileName);
+        if (!fileExist(fileName)) {
+//            Log.d(TAG, "onBindViewHolder-- couldn't find non-filler poi, key = " + key);
+            fileName = context.getFilesDir().getPath()+"/"+language+"/"+route+"/filler/"+readableKey(key);
+            if (!fileExist(fileName)) {
+                Log.d(TAG, "onBindViewHolder-- couldn't find filler poi, key = " + key);
+                return;
+            }
+        }
+        binding.toggleMapImage.setImageDrawable(null);
+        Picasso.with(context).load(new File(fileName))
+//                    .placeholder(R.drawable.profile_wall_picture)
+//                    .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
+                .fit()
+                .centerCrop()
+                .into(binding.toggleMapImage);
+    }
+
+
+
     public void setPlayPauseButton() {
-        if (mMediaPlayer==null) {
+        if (mMediaPlayer == null) {
             return;
         }
         if (mMediaPlayer.isPlaying()) {
@@ -720,7 +885,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public void startMusic(View v) {
         Log.d(TAG, "startMusic");
         Log.d(TAG, "View v = " + v);
-        if (mMediaPlayer!=null&&!mMediaPlayer.isPlaying()){
+        if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
             mMediaPlayer.start();
         }
         setPlayPauseButton();
@@ -728,14 +893,14 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
     public void pauseMusic(View v) {
         Log.d(TAG, "pauseMusic");
-        if (mMediaPlayer!=null&&mMediaPlayer.isPlaying()){
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
             mMediaPlayer.pause();
         }
         setPlayPauseButton();
     }
 
     public void rewindMusic(View v) {
-        if (mMediaPlayer!=null) {
+        if (mMediaPlayer != null) {
             int position = mMediaPlayer.getCurrentPosition();
             mMediaPlayer.seekTo(position - mSkipTime);
         }
@@ -751,8 +916,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             mMetaRetriever.setDataSource(this, (Uri) object);
             mMediaPlayer.setDataSource(this, (Uri) object);
             mMetaRetriever.setDataSource(this, (Uri) object);
-        }
-        else {
+        } else {
             Log.d(TAG, "What's the instanceof");
         }
         mMediaPlayer.prepare();
@@ -760,27 +924,4 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         startMusic(null);
     }
 
-    public void endTour(View view) {
-        Intent intent = new Intent(context, EndOfTourActivity.class);
-        startActivity(intent);
-    }
-
-    private void makeGlow() {
-        if (scaleDown == null) {
-            scaleDown = ObjectAnimator.ofPropertyValuesHolder(
-                    binding.ivAlight,
-                    PropertyValuesHolder.ofFloat("scaleX", 1.1f),
-                    PropertyValuesHolder.ofFloat("scaleY", 1.1f));
-            scaleDown.setDuration(700);
-
-            scaleDown.setRepeatCount(ObjectAnimator.INFINITE);
-            scaleDown.setRepeatMode(ObjectAnimator.REVERSE);
-        }
-
-        scaleDown.start();
-    }
-
-    public void alight(View view) {
-        Toast.makeText(context, "Alight!", Toast.LENGTH_SHORT).show();
-    }
 }

@@ -65,8 +65,17 @@
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1">
-
+            <fragment
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:map="http://schemas.android.com/apk/res-auto"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:id="@+id/map"
+                android:name="com.google.android.gms.maps.SupportMapFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="com.andrewtakao.alight.ChangingTourActivity" />
             <ImageView
+                android:id="@+id/iv_finding_location"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="fitXY"
@@ -107,6 +116,16 @@
                 android:background="@android:color/black"
                 style="@style/busRouteTextStyle"
                 android:id="@+id/distance"/>
+
+            <de.hdodenhof.circleimageview.CircleImageView
+                android:id="@+id/toggle_map_image"
+                android:layout_margin="8dp"
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:visibility="visible"
+                android:src="@drawable/map_image"
+                android:layout_gravity="end|top"
+                android:onClick="toggleMapImage" />
 
         </FrameLayout>
         <android.support.constraint.ConstraintLayout
