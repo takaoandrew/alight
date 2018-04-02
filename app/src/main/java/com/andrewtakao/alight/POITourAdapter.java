@@ -11,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 import java.io.File;
@@ -78,7 +79,18 @@ public class POITourAdapter extends RecyclerView.Adapter<POITourAdapter.POIViewH
 //                    .resize(holder.backgroundImage.getWidth(), holder.backgroundImage.getHeight())
                 .fit()
                 .centerCrop()
-                .into(holder.backgroundImage);
+                .into(holder.backgroundImage
+                , new Callback() {
+                            @Override
+                            public void onSuccess() {
+
+                            }
+
+                            @Override
+                            public void onError() {
+
+                            }}
+                            );
 
         String location = poi.latitude + ", " + poi.longitude;
         holder.locationView.setText(location);

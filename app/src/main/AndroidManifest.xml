@@ -5,10 +5,11 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <uses-feature android:name="android.hardware.location.gps" />
-
     <uses-feature
         android:glEsVersion="0x00020000"
         android:required="true" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -38,13 +39,15 @@
         <activity
             android:name=".SplashActivity"
             android:noHistory="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
         </activity>
-        <activity android:name=".BoardingActivity" />
+        <activity android:name=".BoardingActivity">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        </activity>
+        <activity android:name=".BoardingMITActivity" />
         <activity android:name=".EndOfTourActivity" />
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
@@ -60,12 +63,13 @@
 
         <activity
             android:name=".MapsActivity"
-            android:label="@string/title_activity_maps">
-        </activity>
+            android:label="@string/title_activity_maps"></activity>
+
         <meta-data
             android:name="io.fabric.ApiKey"
             android:value="3853a533c41a2601093d1ba5eef49c24108cb444" />
+
+        <activity android:name=".AlightActivity"></activity>
     </application>
 
-    <uses-permission android:name="android.permission.INTERNET" />
 </manifest>

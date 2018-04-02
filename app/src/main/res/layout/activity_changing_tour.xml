@@ -50,15 +50,6 @@
                     android:paddingBottom="4dp"
                     android:layout_gravity="center_horizontal|bottom"/>
 
-                <ImageView
-                    android:layout_width="30dp"
-                    android:layout_height="30dp"
-                    android:layout_gravity="center_vertical|end"
-                    android:layout_marginRight="20dp"
-                    android:visibility="gone"
-                    android:src="@drawable/ic_keyboard_arrow_up_white_24dp"
-                    android:id="@+id/arrow"/>
-
             </FrameLayout>
         </android.support.v7.widget.Toolbar>
         <FrameLayout
@@ -108,24 +99,83 @@
                 android:src="@drawable/tilted_pin"
                 android:onClick="alight"/>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="end|bottom"
-                android:layout_margin="20dp"
-                android:background="@android:color/black"
-                style="@style/busRouteTextStyle"
-                android:id="@+id/distance"/>
-
             <de.hdodenhof.circleimageview.CircleImageView
                 android:id="@+id/toggle_map_image"
-                android:layout_margin="8dp"
+                android:layout_margin="20dp"
                 android:layout_width="60dp"
                 android:layout_height="60dp"
                 android:visibility="visible"
                 android:src="@drawable/map_image"
                 android:layout_gravity="end|top"
                 android:onClick="toggleMapImage" />
+
+            <android.support.constraint.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_margin="20dp">
+
+                <ImageView
+                    android:id="@+id/circle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/circle"/>
+
+                <ImageView
+                    android:id="@+id/arrow"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@drawable/ic_navigation_white_24dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_marginBottom="4dp"
+                    style="@style/compassDistanceTextStyle"
+                    android:id="@+id/distance"/>
+            </android.support.constraint.ConstraintLayout>
+            <android.support.constraint.ConstraintLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|end"
+                android:layout_marginEnd="20dp"
+                android:visibility="gone"
+                android:layout_marginBottom="80dp">
+
+
+                <ImageView
+                    android:id="@+id/true_north_circle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/red_circle"/>
+
+                <ImageView
+                    android:id="@+id/true_north_arrow"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:src="@drawable/ic_navigation_white_24dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    android:layout_marginBottom="4dp"
+                    android:text="compass"
+                    style="@style/compassDistanceTextStyle"
+                    android:id="@+id/true_north_distance"/>
+            </android.support.constraint.ConstraintLayout>
+
 
         </FrameLayout>
         <android.support.constraint.ConstraintLayout

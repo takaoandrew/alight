@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        tools:context="com.andrewtakao.alight.BoardingMITActivity">
+        <ImageView
+            android:id="@+id/bus_image"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:src="@drawable/board_me"
+            android:scaleType="fitXY"
+            />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimaryLight"
+            android:elevation="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/description_title"
+                style="@style/boardingTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_description_title"/>
+            <TextView
+                android:id="@+id/description"
+                style="@style/boardingText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_description"/>
+            <TextView
+                android:id="@+id/time_title"
+                style="@style/boardingTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_time_title"/>
+            <TextView
+                android:id="@+id/time"
+                style="@style/boardingText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_time"/>
+            <TextView
+                android:id="@+id/cost_title"
+                style="@style/boardingTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_cost_title"/>
+            <TextView
+                android:id="@+id/cost"
+                style="@style/boardingText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_cost"/>
+            <TextView
+                android:id="@+id/instructions_title"
+                style="@style/boardingTitleText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_instructions_title"/>
+            <TextView
+                android:id="@+id/instructions"
+                style="@style/boardingText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/board_instructions"/>
+            <Button
+                android:id="@+id/start"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_margin="8dp"
+                android:background="@color/colorPrimary"
+                android:textColor="@android:color/white"
+                android:text="@string/board_start"
+                android:onClick="startTour"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</layout>

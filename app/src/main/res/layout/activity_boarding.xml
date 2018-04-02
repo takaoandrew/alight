@@ -1,88 +1,142 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout>
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
+    <FrameLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
-        tools:context="com.andrewtakao.alight.BoardingActivity">
-        <ImageView
-            android:id="@+id/bus_image"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:src="@drawable/board_me"
-            android:scaleType="fitXY"
-            />
+        android:background="@android:color/black"
+        android:layout_margin="20dp"
+        android:padding="2dp">
         <LinearLayout
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@color/colorPrimaryLight"
-            android:elevation="8dp"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/description_title"
-                style="@style/boardingTitleText"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            tools:context="com.andrewtakao.alight.BoardingActivity"
+            android:id="@+id/root_layout"
+            android:background="@android:color/white">
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/board_description_title"/>
+                android:orientation="horizontal"
+                android:background="@color/colorPrimary">
+                <TextView
+                    android:id="@+id/boarding_route"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@android:color/white"
+                    android:textSize="28sp"
+                    android:paddingStart="20dp"
+                    android:textStyle="bold"
+                    android:text="Route #47"/>
+                <ImageView
+                    android:id="@+id/boarding_download"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginEnd="20dp"
+                    android:src="@drawable/ic_file_download_white_24dp"/>
+            </LinearLayout>
             <TextView
-                android:id="@+id/description"
-                style="@style/boardingText"
-                android:layout_width="match_parent"
+                android:id="@+id/boarding_arrives_in"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/board_description"/>
+                android:layout_margin="4dp"
+                android:textStyle="bold"
+                android:text="Arrives in"
+                android:textColor="@android:color/black"
+                android:textSize="22sp"/>
             <TextView
-                android:id="@+id/time_title"
-                style="@style/boardingTitleText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/board_time_title"/>
-            <TextView
-                android:id="@+id/time"
-                style="@style/boardingText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/board_time"/>
-            <TextView
-                android:id="@+id/cost_title"
-                style="@style/boardingTitleText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/board_cost_title"/>
-            <TextView
-                android:id="@+id/cost"
-                style="@style/boardingText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/board_cost"/>
-            <TextView
-                android:id="@+id/instructions_title"
-                style="@style/boardingTitleText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/board_instructions_title"/>
-            <TextView
-                android:id="@+id/instructions"
-                style="@style/boardingText"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/board_instructions"/>
-            <Button
-                android:id="@+id/start"
+                android:id="@+id/boarding_arrival_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_margin="8dp"
-                android:background="@color/colorPrimary"
+                android:text="5 min"
+                android:textColor="@android:color/black"
+                android:textSize="38sp"/>
+            <TextView
+                android:id="@+id/boarding_extra_arrival_times"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="7 min, 12 min"
+                android:textColor="@android:color/black"/>
+            <TextView
+                android:id="@+id/boarding_departs_from"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:textStyle="bold"
+                android:text="Departs from"
+                android:textColor="@android:color/black"
+                android:textSize="22sp"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/boarding_map"
+                    android:layout_margin="20dp"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:src="@drawable/map_image" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:orientation="vertical">
+                    <TextView
+                        android:id="@+id/boarding_location_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:layout_marginBottom="20dp"
+                        android:text="Central Sq"
+                        android:textColor="@android:color/black"
+                        android:textSize="22sp"/>
+                    <TextView
+                        android:id="@+id/boarding_location_address"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="Mass Ave and Pearl St."
+                        android:textColor="@android:color/black"
+                        android:textSize="22sp"/>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView
+                android:id="@+id/boarding_payment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                android:textStyle="bold"
+                android:text="On board pay"
+                android:textColor="@android:color/black"
+                android:textSize="22sp"/>
+            <TextView
+                android:id="@+id/boarding_payment_amount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="$2.00"
+                android:textColor="@android:color/black"
+                android:textSize="24sp"/>
+
+            <Button
+                android:id="@+id/boarding_board_now"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Board Now"
+                android:textSize="36sp"
                 android:textColor="@android:color/white"
-                android:text="@string/board_start"
-                android:onClick="startTour"/>
+                android:background="@color/colorPrimary"/>
 
         </LinearLayout>
+    </FrameLayout>
 
-    </LinearLayout>
 
 </layout>

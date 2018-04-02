@@ -14,6 +14,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Toast;
 
 import com.andrewtakao.alight.databinding.ActivityRoutePreviewBinding;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -135,7 +136,9 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 
                 //Count how many pois there should be
                 for (DataSnapshot indexSnapshot : routeSnapshot.getChildren()) {
-                    if (indexSnapshot.getKey().equals("filler")) {
+                    if (indexSnapshot.getKey().equals("stops")) {
+                    }
+                    else if (indexSnapshot.getKey().equals("filler")) {
                         for (DataSnapshot individualSnapshot: indexSnapshot.getChildren()) {
                             if (Utils.fileExist((String) context.getFilesDir().getPath()+"/"+language+"/"+routeSnapshot.getKey()+"/filler/"+
                                     readableKey(individualSnapshot.getKey()))) {
@@ -174,7 +177,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                                             (String) individualSnapshot.child("transcript").getValue()
                                     );
                                     poiArrayList.add(addedPoi);
-                                    Log.d(TAG, "Important: addedPoi " + addedPoi.imageName);
+//                                    Log.d(TAG, "Important: addedPoi " + addedPoi.imageName);
                                     childCount += 1;
                                 }
                             }
@@ -332,7 +335,9 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                         for (DataSnapshot indexChildSnapshot : dataSnapshot.getChildren()) {
 
                             //Different procedure for filler content
-                            if (indexChildSnapshot.getKey().equals("filler")) {
+                            if (indexChildSnapshot.getKey().equals("stops")) {
+                            }
+                            else if (indexChildSnapshot.getKey().equals("filler")) {
                                 for (DataSnapshot poiChildSnapshot : indexChildSnapshot.getChildren()) {
                                     try {
                                         addFillerImageToFile(poiChildSnapshot.getKey(), (String) poiChildSnapshot.child("route").getValue());
@@ -361,6 +366,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
 
                         }
                         listenToDatabase();
+                        binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
                     }
 
                     @Override
@@ -382,6 +388,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 listenToDatabase();
+                binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
             }
         }).addOnFailureListener(new OnFailureListener() {
             //Try wav?
@@ -404,6 +411,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 listenToDatabase();
+                binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -411,8 +419,6 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG, "addAudioToFile--Failure: attempted to add key " + readableKey(key) + " into local file " + localFile);
             }
         });
-
-        binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
     private void addFillerAudioToFile(final String key, final String route) throws IOException {
         StorageReference mAudioRef = mStorageRef.child("filler").child(audioKey(readableKey(key)));
@@ -426,6 +432,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 listenToDatabase();
+                binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
             }
         }).addOnFailureListener(new OnFailureListener() {
             //Try wav?
@@ -435,7 +442,6 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG, "failed for key" + localFile);
             }
         });
-        binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
 
     private void addFillerImageToFile(final String key, final String route) throws IOException {
@@ -450,6 +456,7 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 listenToDatabase();
+                binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -457,7 +464,6 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
                 Log.d(TAG, "failed for key" + localFile);
             }
         });
-        binding.rvPreviewPois.getAdapter().notifyDataSetChanged();
     }
 
     public void scrollToPosition(int position) {
@@ -546,6 +552,10 @@ public class RoutePreviewActivity extends AppCompatActivity implements OnMapRead
         Log.d(TAG, "current position = " + firstCompletelyVisibleItemPosition);
 //                Should have poi at 0 if hiding empty routes
         Log.d(TAG, "current route = " + poiArrayListArrayList.get(firstCompletelyVisibleItemPosition).get(0).route);
+        if (poiArrayListArrayList.get(firstCompletelyVisibleItemPosition).get(0).route == null) {
+            Toast.makeText(context, "route is null", Toast.LENGTH_SHORT).show();
+            return;
+        }
         changeRoute(poiArrayListArrayList.get(firstCompletelyVisibleItemPosition).get(0).route,
                 poiArrayListArrayList.get(firstCompletelyVisibleItemPosition)
         );

@@ -80,7 +80,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
                 if (firstPOI.route == null) {
                     return;
                 }
-                Intent intent = new Intent(context, BoardingActivity.class);
+                Intent intent;
+                if (firstPOI.route.equals("mit")||firstPOI.route.equals("home")) {
+                    intent = new Intent(context, BoardingMITActivity.class);
+                } else {
+                    intent = new Intent(context, BoardingActivity.class);
+                }
                 intent.putExtra(BUS_ROUTE_EXTRA, firstPOI.route);
                 intent.putExtra(LANGUAGE_EXTRA, RoutePreviewActivity.language);
                 context.startActivity(intent);

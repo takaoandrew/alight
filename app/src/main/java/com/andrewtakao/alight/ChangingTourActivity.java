@@ -78,7 +78,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     public static DatabaseReference mDatabaseRef;
 
     private String language = "English";
-    private static String busRoute = "mit";
+    private static String busRoute = "home";
     private final String TAG = ChangingTourActivity.class.getSimpleName();
     private final String BUS_ROUTE_EXTRA = "bus_route_extra";
     private final String LANGUAGE_EXTRA = "language_extra";
@@ -119,11 +119,13 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     float[] mGravity;
     float[] mGeomagnetic;
     Float azimuth;
+    Float trueNorthAzimuth;
     Float oldAzimuth;
+    Float oldTrueNorthAzimuth;
     double latitude;
     double longitude;
-    double poiLatitude;
-    double poiLongitude;
+//    double poiLatitude;
+//    double poiLongitude;
 
     //Animation
     ObjectAnimator scaleDown;
@@ -195,10 +197,13 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
 
         //Compass
         azimuth = 0f;
+        trueNorthAzimuth = 0f;
+        oldAzimuth = 1000f;
+        oldTrueNorthAzimuth = 1000f;
         latitude = 0;
         longitude = 0;
-        poiLatitude = 0;
-        poiLongitude = 0;
+//        poiLatitude = 0;
+//        poiLongitude = 0;
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         magnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
@@ -211,7 +216,10 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         for (DataSnapshot indexChildSnapshot : dataSnapshot.getChildren()) {
-                            if (indexChildSnapshot.getKey().equals("filler")) {
+                            if (indexChildSnapshot.getKey().equals("stops")) {
+
+                            }
+                            else if (indexChildSnapshot.getKey().equals("filler")) {
                                 for (DataSnapshot poiChildSnapshot : indexChildSnapshot.getChildren()) {
                                     //Set POI
                                     Log.d(TAG, "indexChildSnapshot.getKey() = " + indexChildSnapshot.getKey());
@@ -366,17 +374,25 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             if (success) {
                 float orientation[] = new float[3];
                 SensorManager.getOrientation(R, orientation);
-//                azimuth = 180/(float)Math.PI*orientation[0]; // orientation contains: azimut, pitch and roll
+                LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
+                int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+                if (firstCompletelyVisibleItemPosition == -1) {
+                    return;
+                }
+                if (poiHistory.size()<=firstCompletelyVisibleItemPosition) {
+                    return;
+                }
+                POI poi = poiHistory.get(firstCompletelyVisibleItemPosition);
+                Double poiLatitude = Double.valueOf(poi.latitude);
+                Double poiLongitude = Double.valueOf(poi.longitude);
 
                 azimuth = Float.valueOf(String.valueOf(-180 / (float) Math.PI * orientation[0] + angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
+                trueNorthAzimuth = Float.valueOf(String.valueOf(-180 / (float) Math.PI * orientation[0])); // orientation contains: azimut, pitch and roll
 //                azimuth = Float.valueOf(String.valueOf(orientation[0]+Math.PI/180*angleFromCoordinate(latitude, longitude, poiLatitude, poiLongitude))); // orientation contains: azimut, pitch and roll
 //                Log.d(TAG, "Azimuth = " + azimuth);
-                oldAzimuth = azimuth;
-                RotateAnimation rotateAnimation = new RotateAnimation(oldAzimuth, azimuth, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-                rotateAnimation.setInterpolator(new DecelerateInterpolator());
-                rotateAnimation.setRepeatCount(0);
-                rotateAnimation.setDuration(100);
-                rotateAnimation.setFillAfter(true);
+                //round to nearest 1/16 of 360 degrees
+                azimuth = 22.5f*(Math.round(azimuth/22.5f));
+                trueNorthAzimuth = 22.5f*(Math.round(trueNorthAzimuth/22.5f));
             }
         }
     }
@@ -421,9 +437,12 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         previouslyFirstCompletelyVisibleItemPosition = firstCompletelyVisibleItemPosition;
 
         showNewTitle(firstCompletelyVisibleItemPosition);
+
         setMapImage();
         //Should show current position?
         shouldShowCurrentButton();
+
+        addMarkerToMap(firstCompletelyVisibleItemPosition);
 
         isLiked(firstCompletelyVisibleItemPosition);
 
@@ -439,10 +458,43 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         }
     }
 
+    private void addMarkerToMap(int position) {
+        if (mMap == null) {
+            return;
+        }
+        POI currentPoi = poiHistory.get(position);
+        if (lastMarker != null) {
+            lastMarker.remove();
+        }
+        lastMarkerOptions = new MarkerOptions()
+                .position(new LatLng(Double.valueOf(currentPoi.latitude), Double.valueOf(currentPoi.longitude)));
+
+        lastMarker = mMap.addMarker(lastMarkerOptions);
+    }
+
+    private void updateCompass() {
+        if (azimuth.equals(oldAzimuth)) {
+            return;
+        }
+        oldAzimuth = azimuth;
+        oldTrueNorthAzimuth = trueNorthAzimuth;
+        RotateAnimation rotateAnimation = new RotateAnimation(oldAzimuth, azimuth, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        rotateAnimation.setInterpolator(new DecelerateInterpolator());
+        rotateAnimation.setRepeatCount(0);
+        rotateAnimation.setDuration(1000);
+        rotateAnimation.setFillAfter(true);
+        RotateAnimation trueNorthRotateAnimation = new RotateAnimation(oldTrueNorthAzimuth, trueNorthAzimuth, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+        trueNorthRotateAnimation.setInterpolator(new DecelerateInterpolator());
+        trueNorthRotateAnimation.setRepeatCount(0);
+        trueNorthRotateAnimation.setDuration(1000);
+        trueNorthRotateAnimation.setFillAfter(true);
+        binding.arrow.startAnimation(rotateAnimation);
+        binding.trueNorthArrow.startAnimation(trueNorthRotateAnimation);
+    }
+
     private void isAlighting(int position) {
         POI currentPoi = poiHistory.get(position);
         Log.d(TAG, "purpose = " + currentPoi.purpose);
-        Toast.makeText(context, "purpose = " + currentPoi.purpose, Toast.LENGTH_SHORT).show();
         if (currentPoi.purpose.equals("alighting")) {
             binding.ivAlight.setVisibility(View.VISIBLE);
             makeGlow();
@@ -489,20 +541,27 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     private void shouldShowCurrentButton() {
+        Log.d(TAG, "shouldShowCurrentButton-- ?");
         LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
         int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
         if (firstCompletelyVisibleItemPosition == -1) {
+            Log.d(TAG, "shouldShowCurrentButton-- do nothing, still scrolling");
             return;
         }
         if (firstCompletelyVisibleItemPosition < poiHistory.size() - 1) {
+            Log.d(TAG, "shouldShowCurrentButton-- position is less than where we would scroll to");
             if (poiHistory.get(poiHistory.size() - 1).index == null) {
+                Log.d(TAG, "shouldShowCurrentButton-- where we would scroll to, index is null. Do nothing");
                 return;
             } else if (poiHistory.get(poiHistory.size() - 1).index.equals("filler")) {
+                Log.d(TAG, "shouldShowCurrentButton-- Where we would scroll to, index is filler. Make Invisible!");
                 binding.btCurrentPoi.setVisibility(View.GONE);
             } else {
+                Log.d(TAG, "shouldShowCurrentButton-- Place to scroll to should be closest POI. Make Visible!");
                 binding.btCurrentPoi.setVisibility(View.VISIBLE);
             }
         } else {
+            Log.d(TAG, "shouldShowCurrentButton-- position is already at or past where we would scroll to. Make Invisible.");
             binding.btCurrentPoi.setVisibility(View.GONE);
         }
     }
@@ -601,6 +660,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         showLocation();
         //Should show current position?
         shouldShowCurrentButton();
+        updateCompass();
     }
 
     public void showLocation() {
@@ -615,7 +675,7 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
             binding.distance.setText("filler");
         } else {
             double distance = poiHistory.get(firstCompletelyVisibleItemPosition).distanceFrom(latitude, longitude);
-            binding.distance.setText(String.valueOf((int) distance) + "m" + " and pos = " + firstCompletelyVisibleItemPosition);
+            binding.distance.setText(String.valueOf((int) distance) + "m");
         }
     }
 
@@ -756,7 +816,15 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
     }
 
     public void alight(View view) {
-        Toast.makeText(context, "Alight!", Toast.LENGTH_SHORT).show();
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
+        int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+        if (firstCompletelyVisibleItemPosition == -1) {
+            return;
+        }
+        String imageName = poiHistory.get(firstCompletelyVisibleItemPosition).imageName;
+        Intent intent = new Intent(context, AlightActivity.class);
+        intent.putExtra("TESTSTRING", imageName);
+        startActivity(intent);
     }
 
     @Override
@@ -787,6 +855,15 @@ public class ChangingTourActivity extends AppCompatActivity implements SensorEve
         rlp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, 0);
         rlp.addRule(RelativeLayout.ALIGN_PARENT_END, 0);
         rlp.setMargins(30, 0, 0, 30);
+
+        LinearLayoutManager layoutManager = ((LinearLayoutManager) binding.rvTourPois.getLayoutManager());
+        int firstCompletelyVisibleItemPosition = layoutManager.findFirstCompletelyVisibleItemPosition();
+
+        if (firstCompletelyVisibleItemPosition == -1) {
+//            Log.d(TAG, "firstCompletelyVisibleItemPosition = " + firstCompletelyVisibleItemPosition);
+            return;
+        }
+        addMarkerToMap(firstCompletelyVisibleItemPosition);
     }
 
     public void setMap(PolylineOptions options) {
