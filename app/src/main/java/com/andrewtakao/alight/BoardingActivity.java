@@ -1,5 +1,7 @@
 package com.andrewtakao.alight;
 
+import android.*;
+import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -62,6 +64,7 @@ public class BoardingActivity extends AppCompatActivity {
     ProgressDialog pd;
     ArrayList<Stop> stopList;
     ArrayList<String> arrivalTimes;
+    String arrivalTime;
     long highMinToArrival = 999999;
 
     //GPS
@@ -83,6 +86,7 @@ public class BoardingActivity extends AppCompatActivity {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_boarding);
         Typeface ticketing = Typeface.createFromAsset(getAssets(), "fonts/ticketing.ttf");
         arrivalTimes = new ArrayList<>();
+        arrivalTime = "";
         stopList = new ArrayList<>();
 
         binding.boardingRoute.setTypeface(ticketing);
@@ -94,8 +98,8 @@ public class BoardingActivity extends AppCompatActivity {
         binding.boardingLocationName.setTypeface(ticketing);
         binding.boardingPayment.setTypeface(ticketing);
         binding.boardingPaymentAmount.setTypeface(ticketing);
-
-        new JsonTask().execute("https://api-v3.mbta.com/schedules?filter[stop]=43551");
+//
+//        new JsonTask().execute("https://api-v3.mbta.com/schedules?filter[stop]=43551");
 
         database = Utils.getDatabase();
         routesRef = database.getReference(language + "/routes");
@@ -126,7 +130,11 @@ public class BoardingActivity extends AppCompatActivity {
             @Override
             public void onLocationChanged(Location location) {
                 //Commented out while using button to debug
-                findClosestStop(location);
+                try {
+                    findClosestStop(location);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -165,21 +173,15 @@ public class BoardingActivity extends AppCompatActivity {
             binding.boardingBoardNow.setText(R.string.board_start);
         }
 
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            Toast.makeText(context, "no permission", Toast.LENGTH_SHORT).show();
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+        checkPermission();
 
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+        checkPermission();
+    }
 
     @Override
     protected void onStop() {
@@ -189,6 +191,45 @@ public class BoardingActivity extends AppCompatActivity {
             locationManager.removeUpdates(locationListener);
         }
     }
+
+    public void checkPermission() {
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            Toast.makeText(context, "no permission", Toast.LENGTH_SHORT).show();
+//                ActivityCompat#requestPermissions
+//             here to request the missing permissions, and then overriding
+//               public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//                                                      int[] grantResults)
+//             to handle the case where the user grants the permission. See the documentation
+//             for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(this,
+                    new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                    MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+            return;
+        }
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+    }
+
+    @SuppressLint("MissingPermission")
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "permission granted");
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+                    return;
+
+                } else {
+                    Log.d(TAG, "permission denied");
+                }
+            }
+        }
+    }
+
 
     public void startTour(View view) {
 
@@ -261,12 +302,17 @@ public class BoardingActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
+            Log.d(TAG, "result = " + result);
+            arrivalTimes = new ArrayList<>();
 //            JSONArray arr = null;
 //            try {
 //                arr = new JSONArray(result);
 //            } catch (JSONException e) {
 //                e.printStackTrace();
 //            }
+            if (result == null) {
+                return;
+            }
             JSONObject json = null;
             try {
                 json = new JSONObject(result);
@@ -280,8 +326,9 @@ public class BoardingActivity extends AppCompatActivity {
                 for (int i=0; i < dataArray.length(); i++) {
                     JSONObject firstObject = dataArray.getJSONObject(i);
                     JSONObject attributesObject = firstObject.getJSONObject("attributes");
-                    String arrivalTime = attributesObject.getString("arrival_time");
-                    arrivalTimes.add(arrivalTime);
+                    String newArrivalTime = attributesObject.getString("arrival_time");
+                    arrivalTimes.add(newArrivalTime);
+//                    arrivalTime = newArrivalTime;
                     Log.d(TAG, "arrivalTimes.length = " + arrivalTimes.size());
                 }
 //                JSONObject firstObject = dataArray.getJSONObject(0);
@@ -300,7 +347,36 @@ public class BoardingActivity extends AppCompatActivity {
         }
     }
 
+//    private String closestArrivalTime(String arrivalTime) throws ParseException {
+//        //Function for prediction API
+//        //Using the prediction API, we only get one time.
+//        //Using the schedule API, we get three times.
+//
+//        SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+////        "2001-07-04T12:08:56.235-07:00"
+//        Date currentTime = Calendar.getInstance().getTime();
+//        long minToArrival;
+//        Date date = df2.parse(arrivalTime);
+//        Log.d(TAG, "date = " + date.toString());
+//        Log.d(TAG, "now date = " + currentTime.toString());
+////            Log.d(TAG, ""+(date.getTime()-currentTime.getTime()));
+//        Log.d(TAG, "date.getTime() = " + date.getTime());
+//        Log.d(TAG, "currentTime.getTime() = " + currentTime.getTime());
+//        long diff = date.getTime() - currentTime.getTime();
+//        long diffMinutes = diff / (60 * 1000) % 60;
+//        long diffHours = diff / (60 * 60 * 1000) % 24;
+//        minToArrival = diffMinutes + diffHours*60;
+//        if (minToArrival<0) {
+////                continue;
+//            return "missed";
+//        }
+//        Log.d(TAG, "min = " + (diffMinutes+diffHours*60));
+//        return minToArrival+" min";
+//    }
+
     private String closestArrivalTime(ArrayList<String> arrivalTimes) throws ParseException {
+        //Using the prediction API, we only get one time.
+        //Using the schedule API, we get three times.
 
         SimpleDateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
 //        "2001-07-04T12:08:56.235-07:00"
@@ -322,7 +398,8 @@ public class BoardingActivity extends AppCompatActivity {
             long diffHours = diff / (60 * 60 * 1000) % 24;
             minToArrival = diffMinutes + diffHours*60;
             if (minToArrival<0) {
-                continue;
+//                continue;
+                return "missed";
             }
             if (minToArrival<smallestMinToArrival) {
                 thirdSmallestMinToArrival = secondSmallestMinToArrival;
@@ -341,10 +418,10 @@ public class BoardingActivity extends AppCompatActivity {
             Log.d(TAG, "min = " + (diffMinutes+diffHours*60));
         }
         Log.d(TAG, "first, second, and third arrival times = " + smallestMinToArrival+","+secondSmallestMinToArrival+","+thirdSmallestMinToArrival);
-        return "";
+        return smallestMinToArrival+" min";
     }
 
-    public void findClosestStop(Location location) {
+    public void findClosestStop(Location location) throws ParseException {
         Log.d(TAG, String.valueOf(location.getLatitude()));
 
         Stop closestStop = new Stop();
@@ -353,13 +430,35 @@ public class BoardingActivity extends AppCompatActivity {
             if (stop.distanceFrom(location.getLatitude(), location.getLongitude())<minDistance) {
                 minDistance = stop.distanceFrom(location.getLatitude(), location.getLongitude());
                 closestStop = stop;
+                Log.d(TAG, "closestStop address = " + closestStop.address);
 //                Log.d(TAG, String.valueOf(minDistance));
             }
         }
         if (closestStop.address != null) {
-            binding.boardingLocationName.setText(closestStop.address);
-            binding.boardingLocationAddress.setText(closestStop.id);
-//            new JsonTask().execute("https://api-v3.mbta.com/predictions?filter[stop]="+closestStop.id);
+            Log.d(TAG, "id = " + closestStop.id);
+            if (!binding.boardingLocationAddress.getText().equals(closestStop.id)) {
+                //Stop has changed, new call to api
+                Log.d(TAG, "Stop has changed, new call to api");
+                new JsonTask().execute("https://api-v3.mbta.com/predictions?filter[stop]="+closestStop.id);
+                binding.boardingLocationName.setText(closestStop.address);
+                binding.boardingLocationAddress.setText(closestStop.id);
+            }
+//            else if (arrivalTime.equals("")) {
+//                //First attempt, new call to api
+                  //stop has changed should take care of first attempt
+//                Log.d(TAG, "First attempt, new call to api");
+//                new JsonTask().execute("https://api-v3.mbta.com/predictions?filter[stop]="+closestStop.id);
+//            }
+            else if (closestArrivalTime(arrivalTimes).equals("missed")) {
+                //Missed the bus, new call to api
+                Log.d(TAG, "Missed the bus, new call to api");
+                new JsonTask().execute("https://api-v3.mbta.com/predictions?filter[stop]="+closestStop.id);
+            } else {
+                binding.boardingArrivalTime.setText(closestArrivalTime(arrivalTimes));
+                binding.boardingLocationName.setText(closestStop.address);
+                binding.boardingLocationAddress.setText(closestStop.id);
+            }
+//            new JsonTask().execute("https://api-v3.mbta.com/schedules?filter[stop]="+closestStop.id);
         } else {
             Log.d(TAG, "was no closest stop");
         }

@@ -45,7 +45,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="4dp"
                 android:textStyle="bold"
-                android:text="Arrives in"
+                android:text="@string/board_time_title"
                 android:textColor="@android:color/black"
                 android:textSize="22sp"/>
             <TextView
@@ -53,7 +53,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="5 min"
                 android:textColor="@android:color/black"
                 android:textSize="38sp"/>
             <TextView
@@ -62,6 +61,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
                 android:text="7 min, 12 min"
+                android:visibility="gone"
                 android:textColor="@android:color/black"/>
             <TextView
                 android:id="@+id/boarding_departs_from"
